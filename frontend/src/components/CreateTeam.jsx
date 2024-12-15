@@ -1,58 +1,110 @@
-import React, { useState } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import api from '../utils/api';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const CreateTeam = () => {
-  const { eventId } = useParams();
-  const location = useLocation();
-  const event = location.state?.event;
   const [formData, setFormData] = useState({
+    event_id: '',
     name: '',
-    event_id: parseInt(eventId) // Convert to integer
   });
+  const [events, setEvents] = useState([]);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`, { withCredentials: true });
+        setEvents(response.data);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+        setError('Failed to load events');
+      }
+    };
+
+    fetchEvents();
+
+    // Check if there's an event_id in the query params
+    const params = new URLSearchParams(location.search);
+    const eventId = params.get('event');
+    if (eventId) {
+      setFormData(prevState => ({ ...prevState, event_id: eventId }));
+    }
+  }, [location]);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/api/teams', formData);
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/teams`, formData, { withCredentials: true });
+      console.log('Team created:', response.data);
       navigate(`/events/${formData.event_id}`);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create team');
-      console.error('Error creating team:', err);
+    } catch (error) {
+      console.error('Error creating team:', error);
+      setError('Failed to create team. Please try again.');
     }
   };
 
+  if (!user) {
+    return <div>Please log in to create a team.</div>;
+  }
+
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow">
-      <h2 className="text-2xl font-bold mb-6">Create New Team</h2>
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-          {error}
-        </div>
-      )}
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2" htmlFor="name">
-            Team Name
-          </label>
-          <input
-            type="text"
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-        >
-          Create Team
-        </button>
-      </form>
+    <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div className="px-4 py-6 sm:px-0">
+        <h1 className="text-2xl font-semibold text-gray-900">Create Team</h1>
+        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        <form onSubmit={handleSubmit} className="mt-5 space-y-6">
+          <div>
+            <label htmlFor="event_id" className="block text-sm font-medium text-gray-700">
+              Event
+            </label>
+            <select
+              id="event_id"
+              name="event_id"
+              value={formData.event_id}
+              onChange={handleChange}
+              required
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            >
+              <option value="">Select an event</option>
+              {events.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              Team Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              id="name"
+              required
+              value={formData.name}
+              onChange={handleChange}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+          <div>
+            <button
+              type="submit"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Create Team
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
