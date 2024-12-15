@@ -1,36 +1,41 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-export default function CreateProject() {
+export default function SubmitProject() {
   const [formData, setFormData] = useState({
     event_id: '',
     team_id: '',
     title: '',
     description: '',
     github_url: '',
-    demo_url: ''
+    demo_url: '',
   });
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const value = e.target.type === 'number' ? Number(e.target.value) : e.target.value;
-    setFormData({ ...formData, [e.target.name]: value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${API_URL}/api/projects`, formData);
-      console.log('Project created:', response.data);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_URL}/api/projects`, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      console.log('Project submitted:', response.data);
+      navigate('/events');
     } catch (error) {
-      console.error('Error creating project:', error);
+      console.error('Error submitting project:', error);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-5 text-gray-900">Create Project</h2>
+    <div className="max-w-md mx-auto mt-10">
+      <h2 className="text-2xl font-bold mb-5">Submit Project</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="event_id" className="block text-sm font-medium text-gray-700">Event ID</label>
@@ -57,7 +62,7 @@ export default function CreateProject() {
           />
         </div>
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
+          <label htmlFor="title" className="block text-sm font-medium text-gray-700">Project Title</label>
           <input
             type="text"
             id="title"
@@ -103,11 +108,12 @@ export default function CreateProject() {
         </div>
         <div>
           <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            Create Project
+            Submit Project
           </button>
         </div>
       </form>
     </div>
   );
 }
+
 
