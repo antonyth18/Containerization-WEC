@@ -1,49 +1,182 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import Button from './Button';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const canCreateEvent = user?.role === 'ADMIN' || user?.role === 'ORGANIZER';
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (event.target.closest('.mobile-menu-button')) return;
+      
+      if (mobileMenuOpen && !event.target.closest('.mobile-menu-container')) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname, location.hash]);
+
+  const handleMobileMenuClick = (callback) => {
+    setMobileMenuOpen(false);
+    if (callback) callback();
+  };
+
+  const toggleMobileMenu = (e) => {
+    e.stopPropagation();
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
 
   return (
-    <nav className="bg-white shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
-            <Link to="/" className="flex-shrink-0 flex items-center">
-              <img className="h-8 w-auto" src="/logo.png" alt="Logo" />
+    <nav className={`fixed w-full z-50 top-0 left-0 right-0 transition-all duration-300 ${
+      scrolled ? 'bg-white/90 backdrop-blur-sm py-4' : 'bg-transparent py-6'
+    }`}>
+      <div className="container-width">
+        <div className="flex items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="text-2xl tracking-tight font-medium z-20">
+            <span className="text-black">Orbis</span>
+            <span className="text-xs text-gray-400 ml-2">by NITK</span>
+          </Link>
+
+          {/* Mobile Menu Button */}
+          <button 
+            onClick={toggleMobileMenu}
+            className="md:hidden z-20 p-2 mobile-menu-button"
+          >
+            <div className={`w-6 h-0.5 bg-black transition-all ${mobileMenuOpen ? 'rotate-45 translate-y-0.5' : ''}`} />
+            <div className={`w-6 h-0.5 bg-black my-1 transition-all ${mobileMenuOpen ? 'opacity-0' : ''}`} />
+            <div className={`w-6 h-0.5 bg-black transition-all ${mobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`} />
+          </button>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-12">
+            <a href="/#about" className="text-sm text-gray-500 hover:text-black transition-colors tracking-wide">
+              About
+            </a>
+            <Link to="/events" className="text-sm text-gray-500 hover:text-black transition-colors tracking-wide">
+              Events
             </Link>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <Link to="/events" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                Events
-              </Link>
-              {user && user.role === 'organizer' && (
-                <Link to="/create-event" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                  Create Event
-                </Link>
-              )}
-            </div>
+            <a href="/#testimonials" className="text-sm text-gray-500 hover:text-black transition-colors tracking-wide">
+              Testimonials
+            </a>
           </div>
-          <div className="hidden sm:ml-6 sm:flex sm:items-center">
+
+          {/* Desktop Auth Buttons */}
+          <div className="hidden md:flex items-center space-x-6">
             {user ? (
               <>
-                <Link to="/profile" className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                  Profile
-                </Link>
-                <button onClick={logout} className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                  Logout
-                </button>
+                <Button variant="text" to="/profile">Profile</Button>
+                {canCreateEvent && (
+                  <Button variant="secondary" to="/create-event">Create Event</Button>
+                )}
+                <Button variant="primary" onClick={logout}>Logout</Button>
               </>
             ) : (
               <>
-                <Link to="/login" className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                  Login
-                </Link>
-                <Link to="/register" className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                  Register
-                </Link>
+                <Button variant="text" to="/login">Login</Button>
+                <Button variant="primary" to="/register">Register</Button>
               </>
             )}
+          </div>
+
+          {/* Mobile Menu */}
+          <div 
+            className={`fixed inset-0 bg-white/95 backdrop-blur-md shadow-xl z-10 transition-transform duration-300 md:hidden mobile-menu-container ${
+              mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+            }`}
+          >
+            <div className="flex flex-col pt-24 px-6 space-y-6 bg-white min-h-screen">
+              <a 
+                href="/#about" 
+                className="text-lg text-gray-500 hover:text-black transition-colors px-4 py-2 rounded-lg hover:bg-gray-50"
+                onClick={() => handleMobileMenuClick()}
+              >
+                About
+              </a>
+              <Link 
+                to="/events" 
+                className="text-lg text-gray-500 hover:text-black transition-colors px-4 py-2 rounded-lg hover:bg-gray-50"
+                onClick={() => handleMobileMenuClick()}
+              >
+                Events
+              </Link>
+              <a 
+                href="/#testimonials" 
+                className="text-lg text-gray-500 hover:text-black transition-colors px-4 py-2 rounded-lg hover:bg-gray-50"
+                onClick={() => handleMobileMenuClick()}
+              >
+                Testimonials
+              </a>
+              
+              <div className="pt-6 border-t mt-4">
+                {user ? (
+                  <div className="space-y-4 p-4">
+                    <Button 
+                      variant="text" 
+                      to="/profile" 
+                      className="w-full bg-white hover:bg-gray-50"
+                      onClick={() => handleMobileMenuClick()}
+                    >
+                      Profile
+                    </Button>
+                    {canCreateEvent && (
+                      <Button 
+                        variant="secondary" 
+                        to="/create-event" 
+                        className="w-full bg-white"
+                        onClick={() => handleMobileMenuClick()}
+                      >
+                        Create Event
+                      </Button>
+                    )}
+                    <Button 
+                      variant="primary" 
+                      onClick={() => handleMobileMenuClick(logout)}
+                      className="w-full"
+                    >
+                      Logout
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4 p-4">
+                    <Button 
+                      variant="text" 
+                      to="/login" 
+                      className="w-full bg-white hover:bg-gray-50"
+                      onClick={() => handleMobileMenuClick()}
+                    >
+                      Login
+                    </Button>
+                    <Button 
+                      variant="primary" 
+                      to="/register" 
+                      className="w-full"
+                      onClick={() => handleMobileMenuClick()}
+                    >
+                      Register
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
