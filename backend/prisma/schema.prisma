@@ -1,0 +1,360 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  ORGANIZER
+  PARTICIPANT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum DegreeType {
+  HIGH_SCHOOL
+  ASSOCIATE
+  BACHELOR
+  MASTER
+  PHD
+}
+
+enum ExpertiseLevel {
+  BEGINNER
+  INTERMEDIATE
+  EXPERT
+}
+
+enum SocialPlatform {
+  GITHUB
+  LINKEDIN
+  TWITTER
+  PORTFOLIO
+  OTHER
+}
+
+enum EventType {
+  HACKATHON
+  GENERAL_EVENT
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WAITLISTED
+}
+
+enum RSVPStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+}
+
+enum SponsorTier {
+  PLATINUM
+  GOLD
+  SILVER
+  BRONZE
+}
+
+enum EventPersonRole {
+  SPEAKER
+  JUDGE
+}
+
+enum ScheduleItemType {
+  EVENT
+  WORKSHOP
+  PRE_EVENT
+}
+
+enum TeamMemberRole {
+  LEADER
+  MEMBER
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  email        String     @unique
+  username     String     @unique
+  passwordHash String
+  role         UserRole
+  status       UserStatus
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  profile        UserProfile?
+  education      UserEducation[]
+  experience     UserExperience[]
+  skills         UserSkill[]
+  socialProfiles UserSocialProfile[]
+  createdEvents  Event[]
+  applications   Application[]
+  teamMembers    TeamMember[]
+}
+
+model UserProfile {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  firstName String?
+  lastName  String?
+  avatarUrl String?
+  bio       String?
+  gender    Gender?
+  phone     String?
+  country   String?
+  city      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model UserEducation {
+  id              Int        @id @default(autoincrement())
+  userId          Int
+  institutionName String
+  degree          DegreeType
+  fieldOfStudy    String
+  graduationYear  Int
+  createdAt       DateTime   @default(now())
+  user            User       @relation(fields: [userId], references: [id])
+}
+
+model UserExperience {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  company     String
+  position    String
+  startDate   DateTime
+  endDate     DateTime?
+  current     Boolean   @default(false)
+  description String?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+}
+
+model UserSkill {
+  id             Int            @id @default(autoincrement())
+  userId         Int
+  skillName      String
+  expertiseLevel ExpertiseLevel
+  user           User           @relation(fields: [userId], references: [id])
+}
+
+model UserSocialProfile {
+  id       Int            @id @default(autoincrement())
+  userId   Int
+  platform SocialPlatform
+  url      String
+  user     User           @relation(fields: [userId], references: [id])
+}
+
+model Event {
+  id              Int       @id @default(autoincrement())
+  name            String
+  type            EventType
+  tagline         String?
+  about           String?
+  maxParticipants Int?
+  minTeamSize     Int?
+  maxTeamSize     Int?
+  status          String    @default("draft")
+  createdAt       DateTime  @default(now())
+  createdById     Int
+
+  createdBy         User                @relation(fields: [createdById], references: [id])
+  eventThemes       EventTheme[]
+  applicationForm   ApplicationForm?
+  applications      Application[]
+  eventLinks        EventLink?
+  eventBranding     EventBranding?
+  eventTimeline     EventTimeline?
+  sponsors          Sponsor[]
+  tracks            Track[]
+  eventPeople       EventPerson[]
+  scheduleItems     ScheduleItem[]
+  faqs              FAQ[]
+  teams             Team[]
+  Prize             Prize[]
+  ProjectSubmission ProjectSubmission[]
+}
+
+model Theme {
+  id          Int          @id @default(autoincrement())
+  name        String
+  eventThemes EventTheme[]
+}
+
+model EventTheme {
+  id      Int   @id @default(autoincrement())
+  eventId Int
+  themeId Int
+  event   Event @relation(fields: [eventId], references: [id])
+  theme   Theme @relation(fields: [themeId], references: [id])
+}
+
+model ApplicationForm {
+  id                 Int     @id @default(autoincrement())
+  eventId            Int     @unique
+  educationRequired  Boolean @default(false)
+  experienceRequired Boolean @default(false)
+  profilesRequired   Boolean @default(false)
+  contactRequired    Boolean @default(false)
+  event              Event   @relation(fields: [eventId], references: [id])
+}
+
+model Application {
+  id         Int               @id @default(autoincrement())
+  eventId    Int
+  userId     Int
+  teamId     Int?
+  status     ApplicationStatus
+  rsvpStatus RSVPStatus
+  createdAt  DateTime          @default(now())
+  event      Event             @relation(fields: [eventId], references: [id])
+  user       User              @relation(fields: [userId], references: [id])
+  team       Team?             @relation(fields: [teamId], references: [id])
+}
+
+model EventLink {
+  id               Int     @id @default(autoincrement())
+  eventId          Int     @unique
+  websiteUrl       String?
+  micrositeUrl     String?
+  contactEmail     String?
+  codeOfConductUrl String?
+  socialLinks      Json?
+  event            Event   @relation(fields: [eventId], references: [id])
+}
+
+model EventBranding {
+  id            Int     @id @default(autoincrement())
+  eventId       Int     @unique
+  brandColor    String?
+  logoUrl       String?
+  faviconUrl    String?
+  coverImageUrl String?
+  event         Event   @relation(fields: [eventId], references: [id])
+}
+
+model EventTimeline {
+  id                Int      @id @default(autoincrement())
+  eventId           Int      @unique
+  timezone          String
+  applicationsStart DateTime
+  applicationsEnd   DateTime
+  rsvpDeadlineDays  Int
+  eventStart        DateTime
+  eventEnd          DateTime
+  event             Event    @relation(fields: [eventId], references: [id])
+}
+
+model Sponsor {
+  id         Int         @id @default(autoincrement())
+  eventId    Int
+  name       String
+  logoUrl    String?
+  tier       SponsorTier
+  websiteUrl String?
+  event      Event       @relation(fields: [eventId], references: [id])
+}
+
+model Track {
+  id          Int     @id @default(autoincrement())
+  eventId     Int
+  name        String
+  description String?
+  prizes      Prize[]
+  event       Event   @relation(fields: [eventId], references: [id])
+}
+
+model Prize {
+  id          Int     @id @default(autoincrement())
+  eventId     Int
+  trackId     Int
+  title       String
+  description String?
+  value       Decimal
+  event       Event   @relation(fields: [eventId], references: [id])
+  track       Track   @relation(fields: [trackId], references: [id])
+}
+
+model EventPerson {
+  id          Int             @id @default(autoincrement())
+  eventId     Int
+  name        String
+  role        EventPersonRole
+  bio         String?
+  imageUrl    String?
+  linkedinUrl String?
+  event       Event           @relation(fields: [eventId], references: [id])
+}
+
+model ScheduleItem {
+  id          Int              @id @default(autoincrement())
+  eventId     Int
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  type        ScheduleItemType
+  event       Event            @relation(fields: [eventId], references: [id])
+}
+
+model FAQ {
+  id         Int    @id @default(autoincrement())
+  eventId    Int
+  question   String
+  answer     String
+  orderIndex Int
+  event      Event  @relation(fields: [eventId], references: [id])
+}
+
+model Team {
+  id           Int                 @id @default(autoincrement())
+  eventId      Int
+  name         String
+  createdAt    DateTime            @default(now())
+  event        Event               @relation(fields: [eventId], references: [id])
+  members      TeamMember[]
+  applications Application[]
+  projects     ProjectSubmission[]
+}
+
+model TeamMember {
+  id     Int            @id @default(autoincrement())
+  teamId Int
+  userId Int
+  role   TeamMemberRole
+  team   Team           @relation(fields: [teamId], references: [id])
+  user   User           @relation(fields: [userId], references: [id])
+}
+
+model ProjectSubmission {
+  id             Int      @id @default(autoincrement())
+  eventId        Int
+  teamId         Int
+  title          String
+  description    String
+  githubUrl      String?
+  demoUrl        String?
+  submissionTime DateTime @default(now())
+  event          Event    @relation(fields: [eventId], references: [id])
+  team           Team     @relation(fields: [teamId], references: [id])
+}
