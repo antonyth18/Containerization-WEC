@@ -68,6 +68,4 @@ Orbis is a sophisticated event management platform designed to simplify and elev
 - Use feature branches for new features and bug fixes. For example, `feature/add-user-authentication`.
 - Keep the `main` branch in a deployable state.
 - Regularly pull changes from the `main` branch to keep your branch up to date.
-- Write unit tests for new features and bug fixes.
 - Perform code reviews and seek feedback from team members.
-- Ensure code passes all tests and linting checks before merging.
