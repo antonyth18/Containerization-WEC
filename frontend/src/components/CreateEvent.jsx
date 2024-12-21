@@ -45,7 +45,7 @@ const CreateEvent = () => {
           {
             title: '',
             description: '',
-            value: '0'
+            value: 0
           }
         ]
       }
@@ -139,10 +139,59 @@ const CreateEvent = () => {
   };
 
   const handleSubmit = async (e) => {
+    
+    // Sanitize form data into a structured payload before sending the API request
+    const payload = {
+      name: formData.name,
+      type: formData.type,
+      tagline: formData.tagline || null,
+      about: formData.about || null, 
+      maxParticipants: parseInt(formData.maxParticipants, 10) || null,
+      minTeamSize: parseInt(formData.minTeamSize, 10) || null,
+      maxTeamSize: parseInt(formData.maxTeamSize, 10) || null,
+      eventTimeline: {
+        eventStart: new Date(formData.eventTimeline.eventStart).toISOString(),
+        eventEnd: new Date(formData.eventTimeline.eventEnd).toISOString(),
+        applicationsStart: new Date(formData.eventTimeline.applicationsStart).toISOString(),
+        applicationsEnd: new Date(formData.eventTimeline.applicationsEnd).toISOString(),
+        timezone: formData.eventTimeline.timezone,
+        rsvpDeadlineDays: parseInt(formData.eventTimeline.rsvpDeadlineDays, 10)
+      },
+      ...(formData.eventLinks.contactEmail && {
+        eventLinks: {
+          websiteUrl: formData.eventLinks.websiteUrl || null,
+          micrositeUrl: formData.eventLinks.micrositeUrl || null,
+          contactEmail: formData.eventLinks.contactEmail,
+          codeOfConductUrl: formData.eventLinks.codeOfConductUrl || null
+        }
+      }),
+      eventBranding: {
+        brandColor: formData.eventBranding.brandColor,
+        logoUrl: formData.eventBranding.logoUrl || null,
+        faviconUrl: formData.eventBranding.faviconUrl || null,
+        coverImageUrl: formData.eventBranding.coverImageUrl || null
+      },
+      eventPeople: formData.eventPeople.filter(person => person.name && person.name.trim() !== ''),
+      sponsors: formData.sponsors.filter(sponsor => sponsor.name && sponsor.name.trim() !== ''),
+      tracks: formData.tracks
+      .filter(track => track.name && track.name.trim() !== '')
+      .map(track => ({
+        ...track,
+        description: track.description && track.description.trim() !== '' ? track.description : null,
+        prizes: track.prizes
+        .filter(prize => prize.title && prize.title.trim() !== '' )
+        .map(prize => ({
+          ...prize,
+          description: prize.description && prize.description.trim() !== '' ? prize.description : null,
+          value: parseInt(prize.value, 10)
+        }))
+      }))
+    };
+
     e.preventDefault();
     setError('');
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/events`, formData, { withCredentials: true });
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/events`, payload, { withCredentials: true });
       console.log('Event created:', response.data);
       navigate('/events');
     } catch (error) {
@@ -163,7 +212,8 @@ const CreateEvent = () => {
   });
 
   // Increments toggle variable by 1 when the button is clicked
-  const handleClick = () => {
+  const handleClick = async (e) => {
+    e.preventDefault();
     setToggle(toggle + 1); 
     window.scrollTo({
       top: 0,

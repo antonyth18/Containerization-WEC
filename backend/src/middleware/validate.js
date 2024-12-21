@@ -4,11 +4,11 @@ import { z } from 'zod';
 export const eventSchema = z.object({
   name: z.string().min(3).max(255),
   type: z.enum(['HACKATHON', 'GENERAL_EVENT']),
-  tagline: z.string().optional(),
-  about: z.string().optional(),
-  maxParticipants: z.number().positive().optional(),
-  minTeamSize: z.number().positive().optional(),
-  maxTeamSize: z.number().positive().optional(),
+  tagline: z.string().optional().nullable(),
+  about: z.string().optional().nullable(),
+  maxParticipants: z.number().positive().optional().nullable(),
+  minTeamSize: z.number().positive().optional().nullable(),
+  maxTeamSize: z.number().positive().optional().nullable(),
   eventTimeline: z.object({
     timezone: z.string(),
     applicationsStart: z.string().datetime(),
@@ -18,10 +18,10 @@ export const eventSchema = z.object({
     rsvpDeadlineDays: z.number()
   }),
   eventLinks: z.object({
-    websiteUrl: z.string().url().optional(),
-    micrositeUrl: z.string().url().optional(),
+    websiteUrl: z.string().url().optional().nullable(),
+    micrositeUrl: z.string().url().optional().nullable(),
     contactEmail: z.string().email(),
-    codeOfConductUrl: z.string().url().optional()
+    codeOfConductUrl: z.string().url().optional().nullable()
   }).optional()
 });
 
