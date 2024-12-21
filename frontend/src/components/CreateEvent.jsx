@@ -5,6 +5,9 @@ import axios from 'axios';
 const CreateEvent = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  
+  //This block of code stores the initalization of all the state variables (fields and entries)
+
   const [formData, setFormData] = useState({
     name: '',
     type: 'HACKATHON',
@@ -148,12 +151,82 @@ const CreateEvent = () => {
     }
   };
 
+  // To switch between different modules in the create event page
+  const [toggle, setToggle] = useState(1);
+  function updateToggle(id) {
+    setToggle(id)
+  }
+
+  //shows the content only if fieldIndex is equal to the toggle value
+  const fieldStyle = (fieldIndex) => ({
+    display: toggle === fieldIndex ? 'block' : 'none',
+  });
+
+  // Increments toggle variable by 1 when the button is clicked
+  const handleClick = () => {
+    setToggle(toggle + 1); 
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-3xl font-bold mb-6">Create Event</h2>
       {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">{error}</div>}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
+        <ul className="flex justify-center items-center space-x-4 border-b border-gray-300">
+          <li
+            className={`px-4 py-2 cursor-pointer 
+            ${toggle === 1 
+              ? 'text-indigo-600 bg-indigo-100 font-bold' 
+              : 'hover:text-indigo-500 hover:bg-indigo-50'}`}
+            onClick={() => updateToggle(1)}>
+              EVENT DETAILS
+          </li>
+          <li
+            className={`px-4 py-2 cursor-pointer 
+            ${toggle === 2 
+              ? 'text-indigo-600 bg-indigo-100 font-bold' 
+              : 'hover:text-indigo-500 hover:bg-indigo-50'}`}
+            onClick={() => updateToggle(2)}>
+              EVENT TIMELINE
+          </li>
+          <li
+            className={`px-4 py-2 cursor-pointer 
+            ${toggle === 3 
+              ? 'text-indigo-600 bg-indigo-100 font-bold' 
+              : 'hover:text-indigo-500 hover:bg-indigo-50'}`}
+            onClick={() => updateToggle(3)}>
+              EVENT LINKS AND BRANDING
+          </li>
+          <li
+            className={`px-4 py-2 cursor-pointer 
+            ${toggle === 4 
+              ? 'text-indigo-600 bg-indigo-100 font-bold' 
+              : 'hover:text-indigo-500 hover:bg-indigo-50'}`}
+            onClick={() => updateToggle(4)}>
+              TRACKS AND PRIZES
+          </li>
+          <li
+            className={`px-4 py-2 cursor-pointer 
+            ${toggle === 5 
+              ? 'text-indigo-600 bg-indigo-100 font-bold' 
+              : 'hover:text-indigo-500 hover:bg-indigo-50'}`}
+            onClick={() => updateToggle(5)}>
+              SPONSORS
+          </li>
+          <li
+            className={`px-4 py-2 cursor-pointer 
+            ${toggle === 6 
+              ? 'text-indigo-600 bg-indigo-100 font-bold' 
+              : 'hover:text-indigo-500 hover:bg-indigo-50'}`}
+            onClick={() => updateToggle(6)}>
+              EVENT PEOPLE
+          </li>
+        </ul>
+        <div style={fieldStyle(1)}>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">Event Name</label>
           <input
             type="text"
@@ -166,7 +239,7 @@ const CreateEvent = () => {
           />
         </div>
 
-        <div>
+        <div style={fieldStyle(1)}>
           <label htmlFor="type" className="block text-sm font-medium text-gray-700">Event Type</label>
           <select
             id="type"
@@ -180,7 +253,7 @@ const CreateEvent = () => {
           </select>
         </div>
 
-        <div>
+        <div style={fieldStyle(1)}>
           <label htmlFor="tagline" className="block text-sm font-medium text-gray-700">Tagline</label>
           <input
             type="text"
@@ -192,7 +265,7 @@ const CreateEvent = () => {
           />
         </div>
 
-        <div>
+        <div style={fieldStyle(1)}>
           <label htmlFor="about" className="block text-sm font-medium text-gray-700">About</label>
           <textarea
             id="about"
@@ -204,7 +277,7 @@ const CreateEvent = () => {
           ></textarea>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-4" style={fieldStyle(1)}>
           <div>
             <label htmlFor="maxParticipants" className="block text-sm font-medium text-gray-700">Max Participants</label>
             <input
@@ -217,7 +290,7 @@ const CreateEvent = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
           </div>
-          <div>
+          <div style={fieldStyle(1)}>
             <label htmlFor="minTeamSize" className="block text-sm font-medium text-gray-700">Min Team Size</label>
             <input
               type="number"
@@ -229,7 +302,7 @@ const CreateEvent = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
           </div>
-          <div>
+          <div style={fieldStyle(1)}>
             <label htmlFor="maxTeamSize" className="block text-sm font-medium text-gray-700">Max Team Size</label>
             <input
               type="number"
@@ -241,9 +314,12 @@ const CreateEvent = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
           </div>
+          <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
+            Next
+          </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4" style={fieldStyle(2)}>
           <h3 className="text-lg font-medium text-gray-700">Event Timeline</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -257,7 +333,7 @@ const CreateEvent = () => {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
               />
             </div>
-            <div>
+            <div style={fieldStyle(2)}>
               <label htmlFor="eventEnd" className="block text-sm font-medium text-gray-700">Event End</label>
               <input
                 type="datetime-local"
@@ -268,7 +344,7 @@ const CreateEvent = () => {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
               />
             </div>
-            <div>
+            <div style={fieldStyle(2)}>
               <label htmlFor="applicationsStart" className="block text-sm font-medium text-gray-700">Applications Start</label>
               <input
                 type="datetime-local"
@@ -279,7 +355,7 @@ const CreateEvent = () => {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
               />
             </div>
-            <div>
+            <div style={fieldStyle(2)}>
               <label htmlFor="applicationsEnd" className="block text-sm font-medium text-gray-700">Applications End</label>
               <input
                 type="datetime-local"
@@ -291,7 +367,7 @@ const CreateEvent = () => {
               />
             </div>
           </div>
-          <div>
+          <div style={fieldStyle(2)}>
             <label htmlFor="timezone" className="block text-sm font-medium text-gray-700">Timezone</label>
             <input
               type="text"
@@ -302,7 +378,7 @@ const CreateEvent = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
           </div>
-          <div>
+          <div style={fieldStyle(2)}>
             <label htmlFor="rsvpDeadlineDays" className="block text-sm font-medium text-gray-700">RSVP Deadline (days before event)</label>
             <input
               type="number"
@@ -314,9 +390,13 @@ const CreateEvent = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
           </div>
+          <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
+            Next
+          </button>
         </div>
+        
 
-        <div className="space-y-4">
+        <div className="space-y-4" style={fieldStyle(3)}>
           <h3 className="text-lg font-medium text-gray-700">Event Links</h3>
           <div>
             <label htmlFor="websiteUrl" className="block text-sm font-medium text-gray-700">Website URL</label>
@@ -329,7 +409,7 @@ const CreateEvent = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
           </div>
-          <div>
+          <div style={fieldStyle(3)}>
             <label htmlFor="micrositeUrl" className="block text-sm font-medium text-gray-700">Microsite URL</label>
             <input
               type="url"
@@ -340,7 +420,7 @@ const CreateEvent = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
           </div>
-          <div>
+          <div style={fieldStyle(3)}>
             <label htmlFor="contactEmail" className="block text-sm font-medium text-gray-700">Contact Email</label>
             <input
               type="email"
@@ -351,7 +431,7 @@ const CreateEvent = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
           </div>
-          <div>
+          <div style={fieldStyle(3)}>
             <label htmlFor="codeOfConductUrl" className="block text-sm font-medium text-gray-700">Code of Conduct URL</label>
             <input
               type="url"
@@ -364,7 +444,7 @@ const CreateEvent = () => {
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4" style={fieldStyle(3)}>
           <h3 className="text-lg font-medium text-gray-700">Event Branding</h3>
           <div>
             <label htmlFor="brandColor" className="block text-sm font-medium text-gray-700">Brand Color</label>
@@ -377,7 +457,7 @@ const CreateEvent = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
           </div>
-          <div>
+          <div style={fieldStyle(3)}>
             <label htmlFor="logoUrl" className="block text-sm font-medium text-gray-700">Logo URL</label>
             <input
               type="url"
@@ -388,7 +468,7 @@ const CreateEvent = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
           </div>
-          <div>
+          <div style={fieldStyle(3)}>
             <label htmlFor="faviconUrl" className="block text-sm font-medium text-gray-700">Favicon URL</label>
             <input
               type="url"
@@ -399,7 +479,7 @@ const CreateEvent = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
           </div>
-          <div>
+          <div style={fieldStyle(3)}>
             <label htmlFor="coverImageUrl" className="block text-sm font-medium text-gray-700">Cover Image URL</label>
             <input
               type="url"
@@ -410,9 +490,12 @@ const CreateEvent = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
           </div>
+          <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
+            Next
+          </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4" style={fieldStyle(4)}>
           <h3 className="text-lg font-medium text-gray-700">Tracks & Prizes</h3>
           {formData.tracks.map((track, trackIndex) => (
             <div key={trackIndex} className="border p-4 rounded">
@@ -479,9 +562,12 @@ const CreateEvent = () => {
           >
             Add Track
           </button>
+          <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
+            Next
+          </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4" style={fieldStyle(5)}>
           <h3 className="text-lg font-medium text-gray-700">Sponsors</h3>
           {formData.sponsors.map((sponsor, index) => (
             <div key={index} className="space-y-2">
@@ -517,9 +603,12 @@ const CreateEvent = () => {
           <button type="button" onClick={() => addArrayItem('sponsors')} className="text-blue-500">
             Add Sponsor
           </button>
+          <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
+            Next
+          </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4" style={fieldStyle(6)}>
           <h3 className="text-lg font-medium text-gray-700">Event People</h3>
           {formData.eventPeople.map((person, index) => (
             <div key={index} className="border p-4 rounded">
@@ -574,9 +663,10 @@ const CreateEvent = () => {
           </button>
         </div>
 
-        <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+        <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" style={fieldStyle(6)}>
           Create Event
         </button>
+        
       </form>
     </div>
   );
