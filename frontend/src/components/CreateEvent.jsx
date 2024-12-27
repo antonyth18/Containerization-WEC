@@ -174,7 +174,7 @@ const CreateEvent = () => {
       eventPeople: formData.eventPeople.filter(person => person.name && person.name.trim() !== ''),
       sponsors: formData.sponsors.filter(sponsor => sponsor.name && sponsor.name.trim() !== ''),
       tracks: formData.tracks
-      .filter(track => track.name && track.name.trim() !== '')
+      .filter(track => (track.name && track.name.trim() !== '') || (track.prizes && track.prizes.length !== 0))
       .map(track => ({
         ...track,
         description: track.description && track.description.trim() !== '' ? track.description : null,

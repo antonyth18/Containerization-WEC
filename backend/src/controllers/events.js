@@ -65,24 +65,42 @@ export const createEvent = async (req, res) => {
         }
       });
 
-      if (tracks && tracks.length > 0 ) {
+      if (tracks && tracks.length > 0) {
         await Promise.all(
           tracks.map(async (track) => {
-            const createdTrack = await prisma.track.create({
-              data: {
-                ...track,
-                eventId: event.id,
-                prizes: {
-                  create: track.prizes.map(prize => ({
-                    ...prize,
-                    eventId: event.id,
-                  }))
+            // Adds only prizes in case track name is empty
+            if (track.name.trim() === '' && track.prizes && track.prizes.length > 0) {
+              await Promise.all(
+                track.prizes.map(async (prize) => {
+                  if (prize.title.trim() !== '') {
+                    await prisma.prize.create({
+                      data: {
+                        ...prize,
+                        trackId: null,
+                        eventId: event.id,
+                      }
+                    });
+                  }
+                })
+              );
+            } else if (track.name.trim() !== '') {
+              const createdTrack = await prisma.track.create({
+                data: {
+                  ...track,
+                  eventId: event.id,
+                  prizes: {
+                    create: track.prizes.map(prize => ({
+                      ...prize,
+                      eventId: event.id,
+                    }))
+                  }
                 }
-              }
-            });
+              });
+            }
           })
         );
       }
+      
 
       if (sponsors && sponsors.length > 0 ) {
         await prisma.sponsor.createMany({

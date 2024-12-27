@@ -287,12 +287,12 @@ model Track {
 model Prize {
   id          Int     @id @default(autoincrement())
   eventId     Int
-  trackId     Int
+  trackId     Int?
   title       String
   description String?
   value       Decimal
   event       Event   @relation(fields: [eventId], references: [id])
-  track       Track   @relation(fields: [trackId], references: [id])
+  track       Track ?  @relation(fields: [trackId], references: [id])
 }
 
 model EventPerson {
