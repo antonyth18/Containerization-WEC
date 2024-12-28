@@ -223,59 +223,113 @@ const CreateEvent = () => {
 
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-3xl font-bold mb-6">Create Event</h2>
+      <h2 className="text-3xl font-bold mb-6 mt-2">Create Event</h2>
       {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">{error}</div>}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <ul className="flex justify-center items-center space-x-4 border-b border-gray-300">
+        <ul className="hidden md:flex justify-center items-center space-x-4 border-b border-gray-300">
           <li
-            className={`px-4 py-2 cursor-pointer 
+            className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
             ${toggle === 1 
-              ? 'text-indigo-600 bg-indigo-100 font-bold' 
-              : 'hover:text-indigo-500 hover:bg-indigo-50'}`}
+              ? 'text-blue-500 border-blue-500 font-medium' 
+              : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
             onClick={() => updateToggle(1)}>
-              EVENT DETAILS
+              Details
           </li>
           <li
-            className={`px-4 py-2 cursor-pointer 
+            className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
             ${toggle === 2 
-              ? 'text-indigo-600 bg-indigo-100 font-bold' 
-              : 'hover:text-indigo-500 hover:bg-indigo-50'}`}
+              ? 'text-blue-500 border-blue-500 font-medium' 
+              : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
             onClick={() => updateToggle(2)}>
-              EVENT TIMELINE
+              Timeline
           </li>
           <li
-            className={`px-4 py-2 cursor-pointer 
+            className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
             ${toggle === 3 
-              ? 'text-indigo-600 bg-indigo-100 font-bold' 
-              : 'hover:text-indigo-500 hover:bg-indigo-50'}`}
+              ? 'text-blue-500 border-blue-500 font-medium' 
+              : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
             onClick={() => updateToggle(3)}>
-              EVENT LINKS AND BRANDING
+              Links And Branding
           </li>
           <li
-            className={`px-4 py-2 cursor-pointer 
+            className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
             ${toggle === 4 
-              ? 'text-indigo-600 bg-indigo-100 font-bold' 
-              : 'hover:text-indigo-500 hover:bg-indigo-50'}`}
+              ? 'text-blue-500 border-blue-500 font-medium' 
+              : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
             onClick={() => updateToggle(4)}>
-              TRACKS AND PRIZES
+              Tracks And Prizes
           </li>
           <li
-            className={`px-4 py-2 cursor-pointer 
+            className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
             ${toggle === 5 
-              ? 'text-indigo-600 bg-indigo-100 font-bold' 
-              : 'hover:text-indigo-500 hover:bg-indigo-50'}`}
+              ? 'text-blue-500 border-blue-500 font-medium' 
+              : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
             onClick={() => updateToggle(5)}>
-              SPONSORS
+              Sponsors
           </li>
           <li
-            className={`px-4 py-2 cursor-pointer 
+            className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
             ${toggle === 6 
-              ? 'text-indigo-600 bg-indigo-100 font-bold' 
-              : 'hover:text-indigo-500 hover:bg-indigo-50'}`}
+              ? 'text-blue-500 border-blue-500 font-medium' 
+              : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
             onClick={() => updateToggle(6)}>
-              EVENT PEOPLE
+              People
           </li>
         </ul>
+        {/* Navigation bar for small screens */}
+        <div className="w-full overflow-x-auto border-b border-gray-300 pb-3 md:hidden">
+          <ul className="md:hidden flex justify-start items-center space-x-2">
+            <li
+              className={`px-5 py-1 cursor-pointer text-base font-medium text-center rounded-full border 
+              ${toggle === 1 
+              ? 'text-blue-500 border-blue-500 bg-blue-50' 
+              : 'text-gray-500 hover:text-gray-600 hover:border-gray-600 border-gray-200 shadow-sm'}`}
+              onClick={() => updateToggle(1)}>
+              Details
+            </li>
+            <li
+              className={`px-5 py-1 cursor-pointer text-base font-medium text-center rounded-full border 
+              ${toggle === 2 
+              ? 'text-blue-500 border-blue-500 bg-blue-50' 
+              : 'text-gray-500 hover:text-gray-600 hover:border-gray-600 border-gray-200 shadow-sm'}`}
+              onClick={() => updateToggle(2)}>
+              Timeline
+            </li>
+            <li
+              className={`px-5 py-1 cursor-pointer text-base font-medium text-center rounded-full border 
+              ${toggle === 3 
+              ? 'text-blue-500 border-blue-500 bg-blue-50' 
+              : 'text-gray-500 hover:text-gray-600 hover:border-gray-600 border-gray-200 shadow-sm'}`}
+              onClick={() => updateToggle(3)}>
+              Links
+            </li>
+            <li
+              className={`px-5 py-1 cursor-pointer text-base font-medium text-center rounded-full border 
+              ${toggle === 4 
+              ? 'text-blue-500 border-blue-500 bg-blue-50' 
+              : 'text-gray-500 hover:text-gray-600 hover:border-gray-600 border-gray-200 shadow-sm'}`}
+              onClick={() => updateToggle(4)}>
+              Prizes
+            </li>
+            <li
+              className={`px-5 py-1 cursor-pointer text-base font-medium text-center rounded-full border 
+              ${toggle === 5 
+              ? 'text-blue-500 border-blue-500 bg-blue-50' 
+              : 'text-gray-500 hover:text-gray-600 hover:border-gray-600 border-gray-200 shadow-sm'}`}
+              onClick={() => updateToggle(5)}>
+              Sponsors
+            </li>
+            <li
+              className={`px-5 py-1 cursor-pointer text-base font-medium text-center rounded-full border 
+              ${toggle === 6 
+              ? 'text-blue-500 border-blue-500 bg-blue-50' 
+              : 'text-gray-500 hover:text-gray-600 hover:border-gray-600 border-gray-200 shadow-sm'}`}
+              onClick={() => updateToggle(6)}>
+              People
+            </li>
+          </ul>
+        </div>  
+
         <div style={fieldStyle(1)}>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">Event Name</label>
           <input
@@ -285,7 +339,7 @@ const CreateEvent = () => {
             value={formData.name}
             onChange={handleChange}
             required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
           />
         </div>
 
@@ -296,7 +350,7 @@ const CreateEvent = () => {
             name="type"
             value={formData.type}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
           >
             <option value="HACKATHON">Hackathon</option>
             <option value="GENERAL_EVENT">General Event</option>
@@ -311,7 +365,7 @@ const CreateEvent = () => {
             name="tagline"
             value={formData.tagline}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
           />
         </div>
 
@@ -323,7 +377,7 @@ const CreateEvent = () => {
             value={formData.about}
             onChange={handleChange}
             rows="4"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
           ></textarea>
         </div>
 
@@ -337,11 +391,11 @@ const CreateEvent = () => {
               value={formData.maxParticipants}
               onChange={handleChange}
               min="0"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
             />
           </div>
           <div style={fieldStyle(1)}>
-            <label htmlFor="minTeamSize" className="block text-sm font-medium text-gray-700">Min Team Size</label>
+            <label htmlFor="minTeamSize" className="block text-sm font-medium text-gray-700 mt-5">Min Team Size</label>
             <input
               type="number"
               id="minTeamSize"
@@ -349,11 +403,11 @@ const CreateEvent = () => {
               value={formData.minTeamSize}
               onChange={handleChange}
               min="1"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
             />
           </div>
           <div style={fieldStyle(1)}>
-            <label htmlFor="maxTeamSize" className="block text-sm font-medium text-gray-700">Max Team Size</label>
+            <label htmlFor="maxTeamSize" className="block text-sm font-medium text-gray-700 mt-5">Max Team Size</label>
             <input
               type="number"
               id="maxTeamSize"
@@ -361,10 +415,10 @@ const CreateEvent = () => {
               value={formData.maxTeamSize}
               onChange={handleChange}
               min="1"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
             />
           </div>
-          <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
+          <button className="w-full bg-blue-500 text-white py-2 px-4 mt-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
             Next
           </button>
         </div>
@@ -380,7 +434,7 @@ const CreateEvent = () => {
                 name="eventStart"
                 value={formData.eventTimeline.eventStart}
                 onChange={(e) => handleChange(e, 'eventTimeline')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
             </div>
             <div style={fieldStyle(2)}>
@@ -391,7 +445,7 @@ const CreateEvent = () => {
                 name="eventEnd"
                 value={formData.eventTimeline.eventEnd}
                 onChange={(e) => handleChange(e, 'eventTimeline')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
             </div>
             <div style={fieldStyle(2)}>
@@ -402,7 +456,7 @@ const CreateEvent = () => {
                 name="applicationsStart"
                 value={formData.eventTimeline.applicationsStart}
                 onChange={(e) => handleChange(e, 'eventTimeline')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
             </div>
             <div style={fieldStyle(2)}>
@@ -413,7 +467,7 @@ const CreateEvent = () => {
                 name="applicationsEnd"
                 value={formData.eventTimeline.applicationsEnd}
                 onChange={(e) => handleChange(e, 'eventTimeline')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
             </div>
           </div>
@@ -425,7 +479,7 @@ const CreateEvent = () => {
               name="timezone"
               value={formData.eventTimeline.timezone}
               onChange={(e) => handleChange(e, 'eventTimeline')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
             />
           </div>
           <div style={fieldStyle(2)}>
@@ -437,7 +491,7 @@ const CreateEvent = () => {
               value={formData.eventTimeline.rsvpDeadlineDays}
               onChange={(e) => handleChange(e, 'eventTimeline')}
               min="0"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
             />
           </div>
           <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
@@ -537,7 +591,7 @@ const CreateEvent = () => {
               name="coverImageUrl"
               value={formData.eventBranding.coverImageUrl}
               onChange={(e) => handleChange(e, 'eventBranding')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
             />
           </div>
           <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
@@ -555,27 +609,27 @@ const CreateEvent = () => {
                 onChange={(e) => handleArrayChange(e, 'tracks', trackIndex)}
                 name="name"
                 placeholder="Track Name"
-                className="input-field"
+                className="input-field rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               <textarea
                 value={track.description}
                 onChange={(e) => handleArrayChange(e, 'tracks', trackIndex)}
                 name="description"
                 placeholder="Track Description"
-                className="input-field mt-2"
+                className="input-field mt-2 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               
               <div className="mt-4">
                 <h4 className="font-medium">Prizes for this track</h4>
                 {track.prizes.map((prize, prizeIndex) => (
-                  <div key={prizeIndex} className="mt-2">
+                  <div key={prizeIndex} className="mt-2 flex space-x-6">
                     <input
                       type="text"
                       value={prize.title}
                       onChange={(e) => handleArrayChange(e, 'tracks', trackIndex, 'prizes', prizeIndex)}
                       name="title"
                       placeholder="Prize Title"
-                      className="input-field"
+                      className="input-field w-1/3 mt-2 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     />
                     <input
                       type="text"
@@ -583,7 +637,7 @@ const CreateEvent = () => {
                       onChange={(e) => handleArrayChange(e, 'tracks', trackIndex, 'prizes', prizeIndex)}
                       name="description"
                       placeholder="Prize Description"
-                      className="input-field mt-2"
+                      className="input-field w-1/3 mt-2 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     />
                     <input
                       type="number"
@@ -591,14 +645,14 @@ const CreateEvent = () => {
                       onChange={(e) => handleArrayChange(e, 'tracks', trackIndex, 'prizes', prizeIndex)}
                       name="value"
                       placeholder="Prize Value"
-                      className="input-field mt-2"
+                      className="input-field w-1/3 mt-2 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     />
                   </div>
                 ))}
                 <button
                   type="button"
                   onClick={() => addPrizeToTrack(trackIndex)}
-                  className="btn-secondary mt-2"
+                  className="btn-secondary mt-4"
                 >
                   Add Prize to Track
                 </button>
@@ -627,7 +681,7 @@ const CreateEvent = () => {
                 onChange={(e) => handleArrayChange(e, 'sponsors', index)}
                 name="name"
                 placeholder="Sponsor Name"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               <input
                 type="url"
@@ -635,7 +689,7 @@ const CreateEvent = () => {
                 onChange={(e) => handleArrayChange(e, 'sponsors', index)}
                 name="logoUrl"
                 placeholder="Sponsor Logo URL"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               <input
                 type="url"
@@ -643,7 +697,7 @@ const CreateEvent = () => {
                 onChange={(e) => handleArrayChange(e, 'sponsors', index)}
                 name="websiteUrl"
                 placeholder="Sponsor Website URL"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               <button type="button" onClick={() => removeArrayItem('sponsors', index)} className="text-red-500">
                 Remove Sponsor
@@ -668,13 +722,13 @@ const CreateEvent = () => {
                 onChange={(e) => handleArrayChange(e, 'eventPeople', index)}
                 name="name"
                 placeholder="Name"
-                className="input-field"
+                className="input-field w-1/3 mr-4 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               <select
                 value={person.role}
                 onChange={(e) => handleArrayChange(e, 'eventPeople', index)}
                 name="role"
-                className="input-field mt-2"
+                className="input-field mt-2 w-1/3 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               >
                 <option value="JUDGE">Judge</option>
                 <option value="SPEAKER">Speaker</option>
@@ -684,7 +738,7 @@ const CreateEvent = () => {
                 onChange={(e) => handleArrayChange(e, 'eventPeople', index)}
                 name="bio"
                 placeholder="Bio"
-                className="input-field mt-2"
+                className="input-field mt-2 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               <input
                 type="url"
@@ -692,7 +746,7 @@ const CreateEvent = () => {
                 onChange={(e) => handleArrayChange(e, 'eventPeople', index)}
                 name="imageUrl"
                 placeholder="Image URL"
-                className="input-field mt-2"
+                className="input-field mt-2 w-1/3 mr-4 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               <input
                 type="url"
@@ -700,7 +754,7 @@ const CreateEvent = () => {
                 onChange={(e) => handleArrayChange(e, 'eventPeople', index)}
                 name="linkedinUrl"
                 placeholder="LinkedIn URL"
-                className="input-field mt-2"
+                className="input-field mt-2 w-1/3 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
             </div>
           ))}
