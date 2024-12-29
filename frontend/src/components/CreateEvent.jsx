@@ -6,8 +6,7 @@ const CreateEvent = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
   
-  //This block of code stores the initalization of all the state variables (fields and entries)
-
+  // This block of code stores the initalization of all the state variables (fields and entries) in the form
   const [formData, setFormData] = useState({
     name: '',
     type: 'HACKATHON',
@@ -69,6 +68,7 @@ const CreateEvent = () => {
     ]
   });
 
+  // This block of code changes the state of the form data when the user types in the input fields
   const handleChange = (e, section = null) => {
     const { name, value } = e.target;
     if (section) {
@@ -87,6 +87,7 @@ const CreateEvent = () => {
     }
   };
 
+  // This block of code changes the state of the form data when the user types in the input fields of an array
   const handleArrayChange = (e, section, index, subSection = null, subIndex = null) => {
     const { name, value } = e.target;
     setFormData(prevState => {
@@ -138,30 +139,171 @@ const CreateEvent = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  // This block of code stores the errors in the form validation
+  const [errorsInValidation, setErrorsInValidation] = useState('');
+  const validateForm = (data) => {
+    let validationErrors = {};
+
+    if(!data.name || data.name.trim().length < 3) {
+      validationErrors.name = 'Event name is required (minimum 3 characters).';
+    }
+    if (!data.eventTimeline.eventStart || data.eventTimeline.eventStart.trim() === '') {
+      validationErrors.eventStart = 'Event start date is required.';
+    }
+    if (!data.eventTimeline.eventEnd || data.eventTimeline.eventEnd.trim() === '') {
+      validationErrors.eventEnd = 'Event end date is required.';
+    }
+    if (!data.eventTimeline.applicationsStart || data.eventTimeline.applicationsStart.trim() === '') {
+      validationErrors.applicationsStart = 'Applications start date is required.';
+    }
+    if (!data.eventTimeline.applicationsEnd || data.eventTimeline.applicationsEnd.trim() === '') {
+      validationErrors.applicationsEnd = 'Applications end date is required.';
+    }
+    if (!data.eventLinks.contactEmail || !data.eventLinks.contactEmail.trim().includes('@')) {
+      validationErrors.contactEmail = 'Contact email is required and must be a valid email address.';
+    }
+    if(data.sponsors && Array.isArray(data.sponsors)) {
+      data.sponsors.forEach((sponsor, index) => {
+        // If a sponsor logo or website URL is provided, a name is required
+        if((sponsor.logoUrl || sponsor.websiteUrl) && !sponsor.name) {
+          validationErrors[`sponsors[${index}].name`] = 'Sponsor name is required if a sponsor logo or website URL is provided.';
+        }
+      });
+    }
+    if(data.eventPeople && Array.isArray(data.eventPeople)) {
+      data.eventPeople.forEach((person, index) => {
+        // If an event person exists, a name is required
+        if(person.name && person.name.trim().length === 0) {
+          validationErrors[`eventPeople[${index}].name`] = 'Event person name is required.';
+        }
+        // If details of a event person is provided, the person name is required
+        if((person.bio || person.imageUrl || person.linkedinUrl) && !person.name) {
+          validationErrors[`eventPeople[${index}].name`] = 'Event person name is required if details of a event person is provided.';
+        }
+      });
+    }
+    if (data.tracks && Array.isArray(data.tracks)) {
+      data.tracks.forEach((track, index) => {
+        // If a track exists, it must have a valid name (minimum 3 characters)
+        if (track.name && track.name.trim().length >= 0 && track.name.trim().length < 3) {
+          validationErrors[`tracks[${index}].name`] = 'Track name must be at least 3 characters if provided.';
+        }
+        // If a track description is provided, a name is required
+        if (track.description && !track.name) {
+          validationErrors[`tracks[${index}].name`] = 'Track name is required if a track description is provided.';
+        }
+        if (track.prizes && Array.isArray(track.prizes)) {
+          track.prizes.forEach((prize, prizeIndex) => {
+            const { title, description, value } = prize;
+            if ((description.trim().length !== 0 || value) && (!title || title.trim().length === 0)) {
+              // If prize details are given, prize name is required
+              validationErrors[`tracks[${index}].prizes[${prizeIndex}].title`] =
+                'Prize title is required if description or quantity is provided.';
+            }
+          });
+        }
+      });
+    }
     
+    return validationErrors;
+  };
+
+  // This block of code sends the form data to the backend to create a new event
+  const handleSubmit = async (e) => {
+
+    e.preventDefault();
+    const ValidationError = validateForm(formData);
+    setErrorsInValidation(ValidationError);
+    
+    if (!formData.name || formData.name.trim().length < 3) {
+      return;
+    }
+    if (!formData.eventTimeline.eventStart || formData.eventTimeline.eventStart.trim() === '') {
+      return;
+    }
+    if (!formData.eventTimeline.eventEnd || formData.eventTimeline.eventEnd.trim() === '') {
+      return;
+    }
+    if (!formData.eventTimeline.applicationsStart || formData.eventTimeline.applicationsStart.trim() === '') {
+      return;
+    }
+    if (!formData.eventTimeline.applicationsEnd || formData.eventTimeline.applicationsEnd.trim() === '') {
+      return;
+    }
+    if (!formData.eventLinks.contactEmail || !formData.eventLinks.contactEmail.trim().includes('@')) {
+      return;
+    }
+    if (formData.sponsors && Array.isArray(formData.sponsors)) {
+      for (let i = 0; i < formData.sponsors.length; i++) {
+        const sponsor = formData.sponsors[i];
+        // If a sponsor logo or website URL is provided, a name is required.
+        if ((sponsor.logoUrl || sponsor.websiteUrl) && !sponsor.name) {
+          return;
+        }
+      }
+    }
+    if(formData.eventPeople && Array.isArray(formData.eventPeople)) {
+      for (let i = 0; i < formData.eventPeople.length; i++) {
+        const person = formData.eventPeople[i];
+        // If an event person exists, a name is required
+        if (person.name && person.name.trim().length === 0) {
+          return;
+        }
+        // If details of a event person is provided, the person name is required
+        if ((person.bio || person.imageUrl || person.linkedinUrl) && !person.name) {
+          if (!person.name) {
+            return;
+          }
+        }
+      }
+    }
+    if (formData.tracks && Array.isArray(formData.tracks)) {
+      for (let i = 0; i < formData.tracks.length; i++) {
+        const track = formData.tracks[i];
+        // If a track exists, it must have a valid name (minimum 3 characters)
+        if (track.name && track.name.trim().length >= 0 && track.name.trim().length < 3) {
+          return;
+        }
+        // If a track description is provided, a name is required
+        if (track.description && !track.name) {
+          return;
+        }
+        if (track.prizes && Array.isArray(track.prizes)) {
+          for (let j = 0; j < track.prizes.length; j++) {
+            const prize = track.prizes[j];
+            const { title, description, value } = prize;
+            // If description or quantity exists, prize title must also be valid
+            if ((description.trim().length !== 0 || value) && (!title || title.trim().length === 0)) {
+              return;
+            }
+          }
+        }
+      }
+    }
+    
+
     // Sanitize form data into a structured payload before sending the API request
     const payload = {
-      name: formData.name,
+      name: formData.name,     // Event name is a mandatory field
       type: formData.type,
       tagline: formData.tagline || null,
       about: formData.about || null, 
       maxParticipants: parseInt(formData.maxParticipants, 10) || null,
       minTeamSize: parseInt(formData.minTeamSize, 10) || null,
       maxTeamSize: parseInt(formData.maxTeamSize, 10) || null,
-      eventTimeline: {
+      eventTimeline: {         // Event timeline is a mandatory field
         eventStart: new Date(formData.eventTimeline.eventStart).toISOString(),
         eventEnd: new Date(formData.eventTimeline.eventEnd).toISOString(),
         applicationsStart: new Date(formData.eventTimeline.applicationsStart).toISOString(),
         applicationsEnd: new Date(formData.eventTimeline.applicationsEnd).toISOString(),
         timezone: formData.eventTimeline.timezone,
-        rsvpDeadlineDays: parseInt(formData.eventTimeline.rsvpDeadlineDays, 10)
+        rsvpDeadlineDays: parseInt(formData.eventTimeline.rsvpDeadlineDays, 10) || 0
       },
       ...(formData.eventLinks.contactEmail && {
         eventLinks: {
           websiteUrl: formData.eventLinks.websiteUrl || null,
           micrositeUrl: formData.eventLinks.micrositeUrl || null,
-          contactEmail: formData.eventLinks.contactEmail,
+          contactEmail: formData.eventLinks.contactEmail,       // Contact email is a mandatory field
           codeOfConductUrl: formData.eventLinks.codeOfConductUrl || null
         }
       }),
@@ -171,21 +313,46 @@ const CreateEvent = () => {
         faviconUrl: formData.eventBranding.faviconUrl || null,
         coverImageUrl: formData.eventBranding.coverImageUrl || null
       },
-      eventPeople: formData.eventPeople.filter(person => person.name && person.name.trim() !== ''),
-      sponsors: formData.sponsors.filter(sponsor => sponsor.name && sponsor.name.trim() !== ''),
+      eventPeople: formData.eventPeople
+      .filter(person => person.name || person.bio || person.imageUrl || person.linkedinUrl)       // Event people are optional, but if provided, persons name must be present
+      .map(person => ({
+        name: person.name?.trim(),       
+        role: person.role,
+        bio: person.bio || null,
+        imageUrl: person.imageUrl || null,
+        linkedinUrl: person.linkedinUrl || null,
+      })),
+      sponsors: formData.sponsors
+      .filter(sponsor => sponsor.name || sponsor.logoUrl || sponsor.websiteUrl)       // Sponsors are optional, but if provided, each sponsor must have a name
+      .map(sponsor => ({
+        name: sponsor.name.trim(),
+        logoUrl: sponsor.logoUrl || null,
+        websiteUrl: sponsor.websiteUrl || null,
+        tier: sponsor.tier ?? "GOLD"
+      })
+      ),
       tracks: formData.tracks
-      .filter(track => (track.name && track.name.trim() !== '') || (track.prizes && track.prizes.length !== 0))
-      .map(track => ({
-        ...track,
-        description: track.description && track.description.trim() !== '' ? track.description : null,
-        prizes: track.prizes
-        .filter(prize => prize.title && prize.title.trim() !== '' )
+      .filter(track => {
+      const hasTrackDetails = track.name.trim() !== '' || track.description.trim() !== '';
+      const hasPrizes = track.prizes && track.prizes.some(prize => 
+        prize.title.trim() !== '' || prize.description.trim() !== '' || prize.value != 0
+      );
+
+      // Include the track if it has either track details or valid prizes
+      return hasTrackDetails || hasPrizes;
+    })
+    .map(track => ({
+      ...track,
+      description: track.description.trim() !== '' ? track.description : null,
+      prizes: track.prizes
+        .filter(prize => prize.title.trim() !== '' || prize.description.trim() !== '' || prize.value != 0)  // If any details of a prize is provided, only then considered
         .map(prize => ({
           ...prize,
-          description: prize.description && prize.description.trim() !== '' ? prize.description : null,
-          value: parseInt(prize.value, 10)
+          description: prize.description.trim() !== '' ? prize.description : null,
+          value: parseInt(prize.value, 10) || 0
         }))
-      }))
+    }))
+
     };
 
     e.preventDefault();
@@ -221,6 +388,7 @@ const CreateEvent = () => {
     });
   };
 
+  // This block of code returns the form to be displayed on the page (every element is a part of the form)
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-3xl font-bold mb-6 mt-2">Create Event</h2>
@@ -249,7 +417,7 @@ const CreateEvent = () => {
               ? 'text-blue-500 border-blue-500 font-medium' 
               : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
             onClick={() => updateToggle(3)}>
-              Links And Branding
+              Links and Branding
           </li>
           <li
             className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
@@ -257,7 +425,7 @@ const CreateEvent = () => {
               ? 'text-blue-500 border-blue-500 font-medium' 
               : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
             onClick={() => updateToggle(4)}>
-              Tracks And Prizes
+              Tracks and Prizes
           </li>
           <li
             className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
@@ -338,7 +506,6 @@ const CreateEvent = () => {
             name="name"
             value={formData.name}
             onChange={handleChange}
-            required
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
           />
         </div>
@@ -770,7 +937,61 @@ const CreateEvent = () => {
         <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" style={fieldStyle(6)}>
           Create Event
         </button>
-        
+
+        {/* This block of code displays the validation errors on the form */}
+        <div>
+        <div className="space-y-2">
+          {errorsInValidation.name && <span className="text-red-500 block">{errorsInValidation.name}</span>}
+          {errorsInValidation.eventStart && <span className="text-red-500 block">{errorsInValidation.eventStart}</span>}
+          {errorsInValidation.eventEnd && <span className="text-red-500 block">{errorsInValidation.eventEnd}</span>}
+          {errorsInValidation.applicationsStart && <span className="text-red-500 block">{errorsInValidation.applicationsStart}</span>}
+          {errorsInValidation.applicationsEnd && <span className="text-red-500 block">{errorsInValidation.applicationsEnd}</span>}
+          {errorsInValidation.contactEmail && <span className="text-red-500 block">{errorsInValidation.contactEmail}</span>}
+          {/* Track Validation Errors */}
+          {formData.tracks &&
+            formData.tracks.map((track, index) => (
+              <div key={index}>
+                {errorsInValidation[`tracks[${index}].name`] && (
+                  <span className="text-red-500 block">
+                    Track {index + 1}: {errorsInValidation[`tracks[${index}].name`]}
+                  </span>
+                )}
+                {track.prizes &&
+                  track.prizes.map((prize, prizeIndex) => (
+                    <div key={prizeIndex}>
+                      {errorsInValidation[`tracks[${index}].prizes[${prizeIndex}].title`] && (
+                        <span className="text-red-500 block">
+                          Track {index + 1}, Prize {prizeIndex + 1}: {errorsInValidation[`tracks[${index}].prizes[${prizeIndex}].title`]}
+                        </span>
+                      )}    
+                    </div>
+                  ))}
+              </div>
+            ))}
+          {/* Sponsor Validation Errors */}
+          {formData.sponsors &&
+            formData.sponsors.map((sponsor, index) => (
+              <div key={index}>
+                {errorsInValidation[`sponsors[${index}].name`] && (
+                  <span className="text-red-500 block">
+                    Sponsor {index + 1}: {errorsInValidation[`sponsors[${index}].name`]}
+                  </span>
+                )}
+              </div>
+            ))}
+          {/* Event Person Validation Errors */}
+          {formData.eventPeople &&
+            formData.eventPeople.map((person, index) => (
+              <div key={index}>
+                {errorsInValidation[`eventPeople[${index}].name`] && (
+                  <span className="text-red-500 block">
+                    Event Person {index + 1}: {errorsInValidation[`eventPeople[${index}].name`]}
+                  </span>
+                )}
+              </div>
+            ))}
+        </div>
+        </div>
       </form>
     </div>
   );
