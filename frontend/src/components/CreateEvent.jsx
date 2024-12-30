@@ -388,6 +388,27 @@ const CreateEvent = () => {
     });
   };
 
+  const removeTrack = (trackIndex) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      tracks: prevFormData.tracks.filter((_, index) => index !== trackIndex),
+    }));
+  };
+
+  const removePrize = (trackIndex, prizeIndex) => {
+    setFormData((prevFormData) => {
+      const updatedTracks = [...prevFormData.tracks];
+      updatedTracks[trackIndex].prizes = updatedTracks[trackIndex].prizes.filter(
+        (_, index) => index !== prizeIndex
+      );
+      return { ...prevFormData, tracks: updatedTracks };
+    });
+  };
+  
+  const removePerson = (index) => {
+    removeArrayItem('eventPeople', index);
+  };
+  
   // This block of code returns the form to be displayed on the page (every element is a part of the form)
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
@@ -767,17 +788,37 @@ const CreateEvent = () => {
         </div>
 
         <div className="space-y-4" style={fieldStyle(4)}>
-          <h3 className="text-lg font-medium text-gray-700">Tracks & Prizes</h3>
+          <div className="flex items-center justify-between space-x-4">
+            <h3 className="text-lg font-medium text-gray-700">Tracks & Prizes</h3>
+            <button
+              type="button"
+              onClick={addTrack}
+              className="mt-2 text-blue-500 border border-blue-500 bg-white rounded-md p-2 hover:bg-blue-500 hover:text-white"
+            >
+              Add new Track
+            </button>
+          </div>
+
           {formData.tracks.map((track, trackIndex) => (
             <div key={trackIndex} className="border p-4 rounded">
-              <input
-                type="text"
-                value={track.name}
-                onChange={(e) => handleArrayChange(e, 'tracks', trackIndex)}
-                name="name"
-                placeholder="Track Name"
-                className="input-field rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-              />
+              <div className="flex items-center justify-between space-x-4">
+                <input
+                  type="text"
+                  value={track.name}
+                  onChange={(e) => handleArrayChange(e, 'tracks', trackIndex)}
+                  name="name"
+                  placeholder="Track Name"
+                  className="input-field rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => removeTrack(trackIndex)}
+                  className="mt-2 text-red-500 hover:text-red-600"
+                >
+                  Remove this Track
+                </button>
+              </div>
               <textarea
                 value={track.description}
                 onChange={(e) => handleArrayChange(e, 'tracks', trackIndex)}
@@ -789,14 +830,14 @@ const CreateEvent = () => {
               <div className="mt-4">
                 <h4 className="font-medium">Prizes for this track</h4>
                 {track.prizes.map((prize, prizeIndex) => (
-                  <div key={prizeIndex} className="mt-2 flex space-x-6">
+                  <div key={prizeIndex} className="mt-2 flex flex-col sm:flex-row sm:space-x-4 md:space-x-6">
                     <input
                       type="text"
                       value={prize.title}
                       onChange={(e) => handleArrayChange(e, 'tracks', trackIndex, 'prizes', prizeIndex)}
                       name="title"
                       placeholder="Prize Title"
-                      className="input-field w-1/3 mt-2 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                      className="input-field w-full md:w-1/3 mt-2 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     />
                     <input
                       type="text"
@@ -804,7 +845,7 @@ const CreateEvent = () => {
                       onChange={(e) => handleArrayChange(e, 'tracks', trackIndex, 'prizes', prizeIndex)}
                       name="description"
                       placeholder="Prize Description"
-                      className="input-field w-1/3 mt-2 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                      className="input-field w-full md:w-1/3 mt-2 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     />
                     <input
                       type="number"
@@ -812,27 +853,28 @@ const CreateEvent = () => {
                       onChange={(e) => handleArrayChange(e, 'tracks', trackIndex, 'prizes', prizeIndex)}
                       name="value"
                       placeholder="Prize Value"
-                      className="input-field w-1/3 mt-2 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                      className="input-field w-full md:w-1/3 mt-2 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     />
+                    <button
+                      type="button"
+                      onClick={() => removePrize(trackIndex, prizeIndex)}
+                      className="mt-2 text-red-500 border border-red-500 bg-white hover:bg-red-500 hover:text-white rounded-md p-2 w-1/2 sm:w-1/3 md:w-1/6"
+                    >
+                      Remove
+                    </button>
                   </div>
                 ))}
                 <button
                   type="button"
                   onClick={() => addPrizeToTrack(trackIndex)}
-                  className="btn-secondary mt-4"
+                  className="mt-4 text-blue-500 border border-blue-500 rounded-md p-2 hover:bg-blue-500 hover:text-white"
                 >
-                  Add Prize to Track
+                  Add more prizes
                 </button>
               </div>
             </div>
           ))}
-          <button
-            type="button"
-            onClick={addTrack}
-            className="btn-primary"
-          >
-            Add Track
-          </button>
+          
           <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
             Next
           </button>
@@ -866,12 +908,12 @@ const CreateEvent = () => {
                 placeholder="Sponsor Website URL"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
-              <button type="button" onClick={() => removeArrayItem('sponsors', index)} className="text-red-500">
+              <button type="button" onClick={() => removeArrayItem('sponsors', index)} className="text-red-500 hover:text-red-600">
                 Remove Sponsor
               </button>
             </div>
           ))}
-          <button type="button" onClick={() => addArrayItem('sponsors')} className="text-blue-500">
+          <button type="button" onClick={() => addArrayItem('sponsors')} className="text-blue-500 hover:text-blue-600">
             Add Sponsor
           </button>
           <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
@@ -905,7 +947,7 @@ const CreateEvent = () => {
                 onChange={(e) => handleArrayChange(e, 'eventPeople', index)}
                 name="bio"
                 placeholder="Bio"
-                className="input-field mt-2 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                className="input-field mt-2 w-2/3 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               <input
                 type="url"
@@ -923,14 +965,21 @@ const CreateEvent = () => {
                 placeholder="LinkedIn URL"
                 className="input-field mt-2 w-1/3 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
+              <button
+                type="button"
+                onClick={() => removePerson(index)}
+                className="block mt-4 text-red-500 border border-red-500 bg-white rounded-md p-2 hover:bg-red-500 hover:text-white"
+              >
+                Remove
+              </button>
             </div>
           ))}
           <button
             type="button"
             onClick={() => addArrayItem('eventPeople')}
-            className="btn-primary"
+            className="mt-4 text-blue-500 border border-blue-500 rounded-md p-2 hover:bg-blue-500 hover:text-white"
           >
-            Add Person
+            Add new Person
           </button>
         </div>
 
