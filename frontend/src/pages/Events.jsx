@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -8,6 +9,7 @@ const Events = () => {
   const { user } = useAuth();
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [applicationResponses, setApplicationResponses] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchEvents();
@@ -47,6 +49,10 @@ const Events = () => {
     }));
   };
 
+  const handleEventClick = (id) => {
+    navigate(`/events/${id}`);
+  }
+
   return (
     <div className="max-w-4xl mx-auto mt-10">
       <h2 className="text-2xl font-bold mb-5">Events</h2>
@@ -57,7 +63,7 @@ const Events = () => {
       )}
       <div className="grid gap-6">
         {events.map(event => (
-          <div key={event.id} className="border p-4 rounded">
+          <div key={event.id} className="border p-4 rounded" >
             <h3 className="text-xl font-semibold">{event.name}</h3>
             <p>{event.tagline}</p>
             <p>Type: {event.type}</p>
@@ -67,10 +73,16 @@ const Events = () => {
                 <p>End Date: {new Date(event.eventTimeline.eventEnd).toLocaleDateString()}</p>
               </>
             )}
+            <button 
+              onClick={() => handleEventClick(event.id)} 
+              className="mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+              >
+              View
+            </button>
             {user && user.role === 'PARTICIPANT' && (
               <button 
                 onClick={() => setSelectedEvent(event)} 
-                className="mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                className="mt-2 ml-3 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
               >
                 Join Event
               </button>

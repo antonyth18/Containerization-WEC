@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import Events from './pages/Events';
 import CreateEvent from './components/CreateEvent';
 import Profile from './pages/Profile';
+import EventDetails from './pages/EventDetails';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, loading } = useAuth();
@@ -47,6 +48,7 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
+              <Route path="/events/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
               <Route path="/create-event" element={
                 <ProtectedRoute requiredRole="ADMIN">
                   <CreateEvent />
