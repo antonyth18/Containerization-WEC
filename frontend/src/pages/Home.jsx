@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 // Testimonial marquee component
 const TestimonialMarquee = () => (
-  <div className="overflow-hidden py-12 md:py-20 bg-gray-50">
+  <div id="testimonials" className="overflow-hidden py-12 md:py-20 bg-gray-50">
     <div className="flex space-x-6 md:space-x-16 animate-scroll">
       {[...Array(3)].map((_, i) => (
         <div key={i} className="flex space-x-6 md:space-x-16 animate-scroll">
