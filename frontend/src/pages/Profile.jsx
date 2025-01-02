@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import Button from '../components/Button';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -50,8 +51,10 @@ const Profile = () => {
   };
 
   const handleSubmit = async (e) => {
+    
     e.preventDefault();
     try {
+      console.log(formData);
       const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/profile`, formData, { withCredentials: true });
       setProfile(response.data);
       setIsEditing(false);
@@ -78,11 +81,24 @@ const Profile = () => {
     return <div>Loading...</div>;
   }
 
+  const renderField = (field) => (field ? field : '-');
+
+  const renderName = (firstName, lastName) => {
+    if(firstName && lastName) {
+      return firstName + ' ' + lastName;
+    } else if(firstName) {
+      return firstName;
+    } else {
+      return '-';
+    }
+  }
+
   return (
-    <div className="max-w-4xl mx-auto mt-10">
-      <h2 className="text-2xl font-bold mb-5">User Profile</h2>
+    <>
+      <div className="flex justify-center items-center min-h-screen bg-gray-100 px-4">
+        
       {isEditing ? (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-4xl bg-white shadow-md rounded-2xl p-12 mt-20 mb-20">
           {/* Basic Information */}
           <div>
             <h3 className="text-xl font-semibold mb-3">Basic Information</h3>
@@ -99,7 +115,7 @@ const Profile = () => {
               name="lastName"
               value={formData.profile.lastName || ''}
               onChange={(e) => handleChange(e, 'profile')}
-              placeholderplaceholder="Last Name"
+              placeholder="Last Name"
               className="w-full px-3 py-2 border rounded mb-2"
             />
             <textarea
@@ -124,12 +140,25 @@ const Profile = () => {
                   placeholder="Institution Name"
                   className="w-full px-3 py-2 border rounded mb-2"
                 />
-                <input
-                  type="text"
+                <select
                   name="degree"
                   value={edu.degree || ''}
                   onChange={(e) => handleChange(e, 'education', index)}
-                  placeholder="Degree"
+                  className="w-full px-3 py-2 border rounded mb-2"
+                >
+                  <option value="">Select Expertise Level</option>
+                  <option value="HIGH_SCHOOL">High School</option>
+                  <option value="ASSOCIATE">Associate</option>
+                  <option value="BACHELOR">Bachelor</option>
+                  <option value="MASTER">Master</option>
+                  <option value="PHD">PHD</option>
+                </select>
+                <input
+                  type="text"
+                  name="fieldOfStudy"
+                  value={edu.fieldOfStudy || ''}
+                  onChange={(e) => handleChange(e, 'education', index)}
+                  placeholder="Field of Study"
                   className="w-full px-3 py-2 border rounded mb-2"
                 />
                 <input
@@ -283,57 +312,68 @@ const Profile = () => {
             <button type="button" onClick={() => addItem('projects')} className="text-blue-500">Add Project</button>
           </div>
 
-          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          <Button type="submit">
             Save Changes
-          </button>
+          </Button>
         </form>
       ) : (
-        <div>
-          <h3 className="text-xl font-semibold mb-3">Basic Information</h3>
-          <p>Name: {profile.profile?.firstName} {profile.profile?.lastName}</p>
-          <p>Email: {user.email}</p>
-          <p>Bio: {profile.profile?.bio}</p>
-
-          <h3 className="text-xl font-semibold mt-6 mb-3">Education</h3>
-          {profile.education?.map((edu, index) => (
-            <div key={index} className="mb-2">
-              <p>{edu.institutionName} - {edu.degree} ({edu.graduationYear})</p>
+        
+        <div className="w-full max-w-4xl bg-white shadow-md rounded-2xl p-8 mt-20 mb-20">
+          <div className="flex mb-6">
+            <div className="w-32 h-32 rounded-full bg-gray-300 flex items-center justify-center text-3xl font-bold text-gray-500">
+              {profile.profile?.firstName?.[0]?.toUpperCase() || '?'}
             </div>
-          ))}
+          </div>
+          <div className='flex flex-col'>
+            <p className=' font-semibold text-xl'>{renderName(profile.profile?.firstName, profile.profile?.lastName)}</p>
+            <p className=' font-medium text-md'>{user.email}</p>
+            <p className='bg-gray-200 rounded text-sm p-2 mt-2'>{renderField(profile.profile?.bio)}</p>
+          </div>
+          
 
-          <h3 className="text-xl font-semibold mt-6 mb-3">Experience</h3>
-          {profile.experience?.map((exp, index) => (
-            <div key={index} className="mb-2">
-              <p>{exp.company} - {exp.position}</p>
-              <p>{new Date(exp.startDate).toLocaleDateString()} - {exp.endDate ? new Date(exp.endDate).toLocaleDateString() : 'Present'}</p>
-            </div>
-          ))}
+                  <h3 className="text-xl font-semibold mt-6 mb-3">Education</h3>
+        {profile.education?.map((edu, index) => (
+          <div key={index} className="mb-2">
+            <p>{index+1}. {renderField(edu.institutionName)} - {renderField(edu.degree)} in {renderField(edu.fieldOfStudy)} ({renderField(edu.graduationYear)})</p>
+          </div>
+        ))}
 
-          <h3 className="text-xl font-semibold mt-6 mb-3">Skills</h3>
-          {profile.skills?.map((skill, index) => (
-            <p key={index}>{skill.skillName} - {skill.expertiseLevel}</p>
-          ))}
+        <h3 className="text-xl font-semibold mt-6 mb-3">Experience</h3>
+        {profile.experience?.map((exp, index) => (
+          <div key={index} className="mb-2">
+            <p>{renderField(exp.company)} - {renderField(exp.position)}</p>
+            <p>{renderField(new Date(exp.startDate).toLocaleDateString())} - {exp.endDate ? renderField(new Date(exp.endDate).toLocaleDateString()) : 'Present'}</p>
+          </div>
+        ))}
 
-          <h3 className="text-xl font-semibold mt-6 mb-3">Social Profiles</h3>
-          {profile.socialProfiles?.map((profile, index) => (
-            <p key={index}>{profile.platform}: <a href={profile.url} target="_blank" rel="noopener noreferrer">{profile.url}</a></p>
-          ))}
+        <h3 className="text-xl font-semibold mt-6 mb-3">Skills</h3>
+        {profile.skills?.map((skill, index) => (
+          <p key={index}>{renderField(skill.skillName)} - {renderField(skill.expertiseLevel)}</p>
+        ))}
 
-          <h3 className="text-xl font-semibold mt-6 mb-3">Projects</h3>
-          {profile.projects?.map((project, index) => (
-            <div key={index} className="mb-2">
-              <p><strong>{project.name}</strong></p>
-              <p>{project.description}</p>
-              <p><a href={project.projectUrl} target="_blank" rel="noopener noreferrer">Project Link</a></p>
-            </div>
-          ))}
+        <h3 className="text-xl font-semibold mt-6 mb-3">Social Profiles</h3>
+        {profile.socialProfiles?.map((social, index) => (
+          <p key={index}>{renderField(social.platform)}: <a className="text-blue-500 italic" href={renderField(social.url)} target="_blank" rel="noopener noreferrer">{renderField(social.url)}</a></p>
+        ))}
 
-          <button onClick={() => setIsEditing(true)} className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+        <h3 className="text-xl font-semibold mt-6 mb-3">Projects</h3>
+        {profile.projects?.map((project, index) => (
+          <div key={index} className="mb-2">
+            <p><strong>{renderField(project.name)}</strong></p>
+            <p>{renderField(project.description)}</p>
+            <p><a href={renderField(project.projectUrl)} target="_blank" rel="noopener noreferrer">{renderField(project.projectUrl)}</a></p>
+          </div>
+        ))}
+
+          <Button onClick={() => setIsEditing(true)} className="mt-6">
             Edit Profile
-          </button>
+          </Button>
         </div>
+      
       )}
-    </div>
+      </div>
+    </>
+    
   );
 };
 
