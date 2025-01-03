@@ -95,10 +95,11 @@ const Profile = () => {
 
   return (
     <>
-      <div className="flex justify-center items-center min-h-screen bg-gray-100 px-4">
+      
+      <div className="flex justify-center items-center min-h-screen bg-white px-4">
         
       {isEditing ? (
-        <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-4xl bg-white shadow-md rounded-2xl p-12 mt-20 mb-20">
+        <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-4xl bg-white shadow-xl border-t-black border-solid border-4 rounded-2xl p-12 mt-20 mb-20">
           {/* Basic Information */}
           <div>
             <h3 className="text-xl font-semibold mb-3">Basic Information</h3>
@@ -318,7 +319,7 @@ const Profile = () => {
         </form>
       ) : (
         
-        <div className="w-full max-w-4xl bg-white shadow-md rounded-2xl p-8 mt-20 mb-20">
+        <div className="w-full max-w-4xl bg-white shadow-xl border-t-black border-solid border-4 rounded-2xl p-8 mt-20 mb-20">
           <div className="flex mb-6">
             <div className="w-32 h-32 rounded-full bg-gray-300 flex items-center justify-center text-3xl font-bold text-gray-500">
               {profile.profile?.firstName?.[0]?.toUpperCase() || '?'}
