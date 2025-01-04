@@ -8,7 +8,7 @@ const Button = ({
   onClick,
   className = '' 
 }) => {
-  const baseStyles = "px-6 py-2.5 rounded-full text-sm transition-all duration-300 font-medium tracking-wide";
+  const baseStyles = "px-6 py-2.5 rounded-full text-sm transition-all duration-300 font-medium tracking-wide hover:opacity-75";
   const variants = {
     primary: "bg-black text-white hover:bg-gray-900",
     secondary: "border border-black text-black hover:bg-black hover:text-white",
