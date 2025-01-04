@@ -76,6 +76,16 @@ export const eventsAPI = {
     api.post('/api/events', eventData),
 
   /**
+   * Save event as a draft with partial data
+   * @param {Object} eventData Event draft data including:
+   * - Basic info (name, type, event timeline)
+   * - optional or partial eventLinks, eventBranding, etc
+   * @returns {Promise} Response with draft event
+   */
+    saveDraft: (eventData) => 
+      api.post('/api/events/draft', eventData),
+
+  /**
    * Update existing event
    * @param {string} id Event ID
    * @param {Object} eventData Updated event data

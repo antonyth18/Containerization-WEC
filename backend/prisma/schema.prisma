@@ -205,7 +205,7 @@ model EventTheme {
   id      Int   @id @default(autoincrement())
   eventId Int
   themeId Int
-  event   Event @relation(fields: [eventId], references: [id])
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   theme   Theme @relation(fields: [themeId], references: [id])
 }
 
@@ -216,7 +216,7 @@ model ApplicationForm {
   experienceRequired Boolean @default(false)
   profilesRequired   Boolean @default(false)
   contactRequired    Boolean @default(false)
-  event              Event   @relation(fields: [eventId], references: [id])
+  event              Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Application {
@@ -227,7 +227,7 @@ model Application {
   status     ApplicationStatus
   rsvpStatus RSVPStatus
   createdAt  DateTime          @default(now())
-  event      Event             @relation(fields: [eventId], references: [id])
+  event      Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user       User              @relation(fields: [userId], references: [id])
   team       Team?             @relation(fields: [teamId], references: [id])
 }
@@ -240,7 +240,7 @@ model EventLink {
   contactEmail     String?
   codeOfConductUrl String?
   socialLinks      Json?
-  event            Event   @relation(fields: [eventId], references: [id])
+  event            Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model EventBranding {
@@ -250,7 +250,7 @@ model EventBranding {
   logoUrl       String?
   faviconUrl    String?
   coverImageUrl String?
-  event         Event   @relation(fields: [eventId], references: [id])
+  event         Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model EventTimeline {
@@ -262,7 +262,7 @@ model EventTimeline {
   rsvpDeadlineDays  Int
   eventStart        DateTime
   eventEnd          DateTime
-  event             Event    @relation(fields: [eventId], references: [id])
+  event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Sponsor {
@@ -272,7 +272,7 @@ model Sponsor {
   logoUrl    String?
   tier       SponsorTier
   websiteUrl String?
-  event      Event       @relation(fields: [eventId], references: [id])
+  event      Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Track {
@@ -281,7 +281,7 @@ model Track {
   name        String
   description String?
   prizes      Prize[]
-  event       Event   @relation(fields: [eventId], references: [id])
+  event       Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Prize {
@@ -291,8 +291,8 @@ model Prize {
   title       String
   description String?
   value       Decimal
-  event       Event   @relation(fields: [eventId], references: [id])
-  track       Track ?  @relation(fields: [trackId], references: [id])
+  event       Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  track       Track ?  @relation(fields: [trackId], references: [id], onDelete: Cascade)
 }
 
 model EventPerson {
@@ -303,7 +303,7 @@ model EventPerson {
   bio         String?
   imageUrl    String?
   linkedinUrl String?
-  event       Event           @relation(fields: [eventId], references: [id])
+  event       Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model ScheduleItem {
@@ -314,7 +314,7 @@ model ScheduleItem {
   startTime   DateTime
   endTime     DateTime
   type        ScheduleItemType
-  event       Event            @relation(fields: [eventId], references: [id])
+  event       Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model FAQ {
@@ -323,7 +323,7 @@ model FAQ {
   question   String
   answer     String
   orderIndex Int
-  event      Event  @relation(fields: [eventId], references: [id])
+  event      Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Team {
@@ -331,7 +331,7 @@ model Team {
   eventId      Int
   name         String
   createdAt    DateTime            @default(now())
-  event        Event               @relation(fields: [eventId], references: [id])
+  event        Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
   members      TeamMember[]
   applications Application[]
   projects     ProjectSubmission[]
@@ -355,6 +355,6 @@ model ProjectSubmission {
   githubUrl      String?
   demoUrl        String?
   submissionTime DateTime @default(now())
-  event          Event    @relation(fields: [eventId], references: [id])
+  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   team           Team     @relation(fields: [teamId], references: [id])
 }

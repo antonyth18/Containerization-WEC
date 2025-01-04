@@ -49,8 +49,12 @@ const Events = () => {
     }));
   };
 
-  const handleEventClick = (id) => {
+  const handleEventViewClick = (id) => {
     navigate(`/events/${id}`);
+  }
+
+  const handleEventEditClick = (id) => {
+    navigate(`/edit-event/${id}`);
   }
 
   return (
@@ -74,7 +78,7 @@ const Events = () => {
               </>
             )}
             <button 
-              onClick={() => handleEventClick(event.id)} 
+              onClick={() => handleEventViewClick(event.id)} 
               className="mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
               >
               View
@@ -86,6 +90,14 @@ const Events = () => {
               >
                 Join Event
               </button>
+            )}
+            {user && user.id === event.createdById && (
+              <button 
+              onClick={() => handleEventEditClick(event.id)} 
+              className="mt-2 ml-3 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+            >
+              Edit
+            </button>
             )}
           </div>
         ))}

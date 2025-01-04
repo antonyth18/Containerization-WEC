@@ -62,11 +62,12 @@ export const getEventById = async (req, res) => {
 };
 
 /**
- * Create new event - Admin/Organizer only
+ * Create new event or a draft - Admin/Organizer only
  */
 export const createEvent = async (req, res) => {
   try {
     const {
+      id,
       name,
       type,
       tagline,
@@ -77,10 +78,19 @@ export const createEvent = async (req, res) => {
       eventTimeline,
       eventLinks,
       eventBranding,
+      status,
       tracks,
       sponsors,
       eventPeople
     } = req.body;
+
+    if(id !== null){
+      const deleteEvent = await prisma.event.delete({
+        where: {
+          id: parseInt(id),
+        },
+      });
+    }
 
     const transaction = await prisma.$transaction(async (prisma) => {
       const event = await prisma.event.create({
@@ -92,7 +102,7 @@ export const createEvent = async (req, res) => {
           maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
           minTeamSize: minTeamSize ? parseInt(minTeamSize) : null,
           maxTeamSize: maxTeamSize ? parseInt(maxTeamSize) : null,
-          status: 'DRAFT',
+          status: status,
           createdById: req.session.userId,
           eventTimeline: { create: eventTimeline },
           eventLinks: { create: eventLinks },
@@ -161,6 +171,194 @@ export const createEvent = async (req, res) => {
   } catch (error) {
     throw error;
   }
+};
+
+/**
+ * Update event details based on event id
+ */
+export const updateEvent = async (req, res) => {
+  const { eventId } = req.params;
+  const {
+    name,
+    type,
+    tagline,
+    about,
+    maxParticipants,
+    minTeamSize,
+    maxTeamSize,
+    eventTimeline,
+    eventLinks,
+    eventBranding,
+    tracks,
+    status,
+    sponsors,
+    eventPeople
+  } = req.body;
+
+  try {
+    const transaction = await prisma.$transaction( async (prisma) => {
+
+      const event = await prisma.event.update({
+        where : {
+          id: parseInt(eventId)
+        },
+        data : {
+          name,
+          type: type.toUpperCase(),
+          tagline,
+          about,
+          maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
+          minTeamSize: minTeamSize ? parseInt(minTeamSize) : null,
+          maxTeamSize: maxTeamSize ? parseInt(maxTeamSize) : null,
+          status: status,
+          eventTimeline: eventTimeline ? {
+            update: {
+              where: {
+                eventId: parseInt(eventId)
+              },
+              data: eventTimeline
+            }
+          } : undefined,
+          eventLinks: eventLinks ? {
+          upsert: {
+            where: {
+              eventId: parseInt(eventId),
+            },
+            create: {
+              ...eventLinks,
+            },
+            update: {
+              ...eventLinks,
+            },
+          },
+        }
+      : undefined,
+          eventBranding: eventBranding ? { 
+            update : {
+              where : {
+                eventId: parseInt(eventId)
+              },
+              data: eventBranding
+            }
+           } : undefined
+        }
+      });
+
+      const getIdsToDelete = async (modelName, items) => {
+
+        const existingIds = await prisma[modelName].findMany({
+          where: { eventId: parseInt(eventId) },
+          select: { id: true },
+        });
+
+        const incomingIds = items
+        .filter((item) => item.id)
+        .map((item) => item.id);
+
+        const idsToDelete = existingIds
+        .map(items => items.id)
+        .filter((id) => !incomingIds.includes(id)
+        );
+
+        return idsToDelete;
+
+      }
+      
+      const sponsorsToDelete = await getIdsToDelete('sponsor', sponsors);
+
+      if (sponsorsToDelete.length > 0) {
+        await prisma.sponsor.deleteMany({
+          where: {
+            id : { in: sponsorsToDelete},
+          },
+        });
+      }
+
+      if (sponsors && sponsors.length > 0) {
+        await Promise.all(
+          sponsors.map(async (sponsor) => {
+            //deals with updation of existing sponsors
+            if (sponsor.id) {
+              await prisma.sponsor.update({
+                where: {
+                  id: sponsor.id,
+                },
+                data: {
+                  name: sponsor.name,
+                  logoUrl: sponsor.logoUrl,
+                  websiteUrl: sponsor.websiteUrl,
+                  tier: sponsor.tier,
+                },
+              });
+            } else {
+              //deals with adding new sponsors
+              await prisma.sponsor.create({
+                data: {
+                  name: sponsor.name,
+                  logoUrl: sponsor.logoUrl,
+                  websiteUrl: sponsor.websiteUrl,
+                  tier: sponsor.tier,
+                  eventId: parseInt(eventId),
+                },
+              });
+            }
+          })
+        );
+      }
+
+      const eventPeopleToDelete = await getIdsToDelete('eventPerson', eventPeople);
+
+      if (eventPeopleToDelete.length > 0) {
+        await prisma.eventPerson.deleteMany({
+          where: {
+            id : { in: eventPeopleToDelete},
+          },
+        });
+      }
+
+      if (eventPeople && eventPeople.length > 0) {
+        await Promise.all(
+          eventPeople.map(async (eventPeople) => {
+            //deals with updation of existing event people
+            if (eventPeople.id) {
+              await prisma.eventPerson.update({
+                where: {
+                  id: eventPeople.id,
+                },
+                data: {
+                  name: eventPeople.name,
+                  role: eventPeople.role,
+                  bio: eventPeople.bio,
+                  imageUrl: eventPeople.imageUrl,
+                  linkedUrl: eventPeople.linkedUrl,
+                },
+              });
+            } else {
+              //deals with adding new event people
+              await prisma.eventPerson.create({
+                data: {
+                  name: eventPeople.name,
+                  role: eventPeople.role,
+                  bio: eventPeople.bio,
+                  imageUrl: eventPeople.imageUrl,
+                  linkedUrl: eventPeople.linkedUrl,
+                  eventId: parseInt(eventId),
+                },
+              });
+            }
+          })
+        );
+      }
+
+
+    });
+
+    res.status(201).json(transaction);
+  }
+  catch (error) {
+    throw error;
+  }
+
 };
 
 /**
