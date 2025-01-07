@@ -89,7 +89,9 @@ const EventForm = ({
 
   // This block of code stores the errors in the form validation
   const [errorsInValidation, setErrorsInValidation] = useState('');
-  const validateForm = (data) => {
+
+  // Validations before creating a published event
+  const createValidationErrorHandling  = (data) => {
     let validationErrors = {};
 
     if(!data.name || data.name.trim().length < 3) {
@@ -143,7 +145,7 @@ const EventForm = ({
         if (track.prizes && Array.isArray(track.prizes)) {
           track.prizes.forEach((prize, prizeIndex) => {
             const { title, description, value } = prize;
-            if (( description && description.trim().length !== 0 || value) && (!title || title.trim().length === 0)) {
+            if (( (description && description.trim().length !== 0) || parseInt(value)) && (!title || title.trim().length === 0)) {
               // If prize details are given, prize name is required
               validationErrors[`tracks[${index}].prizes[${prizeIndex}].title`] =
                 'Prize title is required if description or quantity is provided.';
@@ -152,83 +154,13 @@ const EventForm = ({
         }
       });
     }
-    
-    return validationErrors;
+    if (Object.keys(validationErrors).length > 0) {
+      setErrorsInValidation(validationErrors);
+      return false;
+    } else {
+      return true;
+    }
   };
-
-
-  // Validations before creating a published event
-  const createValidationErrorHandling = () => {
-    const ValidationError = validateForm(formData);
-    setErrorsInValidation(ValidationError);
-    
-    if (!formData.name || formData.name.trim().length < 3) {
-      return false;
-    }
-    if (!formData.eventTimeline.eventStart || formData.eventTimeline.eventStart.trim() === '') {
-      return false;
-    }
-    if (!formData.eventTimeline.eventEnd || formData.eventTimeline.eventEnd.trim() === '') {
-      return false;
-    }
-    if (!formData.eventTimeline.applicationsStart || formData.eventTimeline.applicationsStart.trim() === '') {
-      return false;
-    }
-    if (!formData.eventTimeline.applicationsEnd || formData.eventTimeline.applicationsEnd.trim() === '') {
-      return false;
-    }
-    if (!formData.eventLinks.contactEmail || !formData.eventLinks.contactEmail.trim().includes('@')) {
-      return false;
-    }
-    if (formData.sponsors && Array.isArray(formData.sponsors)) {
-      for (let i = 0; i < formData.sponsors.length; i++) {
-        const sponsor = formData.sponsors[i];
-        // If a sponsor logo or website URL is provided, a name is required.
-        if ((sponsor.logoUrl || sponsor.websiteUrl) && !sponsor.name) {
-          return false;
-        }
-      }
-    }
-    if(formData.eventPeople && Array.isArray(formData.eventPeople)) {
-      for (let i = 0; i < formData.eventPeople.length; i++) {
-        const person = formData.eventPeople[i];
-        // If an event person exists, a name is required
-        if (person.name && person.name.trim().length === 0) {
-          return false;
-        }
-        // If details of a event person is provided, the person name is required
-        if ((person.bio || person.imageUrl || person.linkedinUrl) && !person.name) {
-          if (!person.name) {
-            return false;
-          }
-        }
-      }
-    }
-    if (formData.tracks && Array.isArray(formData.tracks)) {
-      for (let i = 0; i < formData.tracks.length; i++) {
-        const track = formData.tracks[i];
-        // If a track exists, it must have a valid name (minimum 3 characters)
-        if (track.name && track.name.trim().length >= 0 && track.name.trim().length < 3) {
-          return false;
-        }
-        // If a track description is provided, a name is required
-        if (track.description && !track.name) {
-          return false;
-        }
-        if (track.prizes && Array.isArray(track.prizes)) {
-          for (let j = 0; j < track.prizes.length; j++) {
-            const prize = track.prizes[j];
-            const { title, description, value } = prize;
-            // If description or quantity exists, prize title must also be valid
-            if ((description && description.trim().length !== 0 || value) && (!title || title.trim().length === 0)) {
-              return false;
-            }
-          }
-        }
-      }
-    }
-    return true;
-  }
 
   // Validations before creating a draft
   const draftValidationErrorHandling = () => {
@@ -264,7 +196,7 @@ const EventForm = ({
     const action = e.nativeEvent.submitter.value;
 
     if(action === 'create'){
-      const validationCheck = createValidationErrorHandling();
+      const validationCheck = createValidationErrorHandling(formData);
       if(validationCheck === false){
         return;
       }
@@ -277,6 +209,14 @@ const EventForm = ({
       }
     }
 
+    const convertToFormattedIST = (istDateString) => {
+      const date = new Date(istDateString);
+      const istOffset = 5.5 * 60 * 60 * 1000;
+      const adjustedTime = new Date(date.getTime() + istOffset);
+      const formattedDate = adjustedTime.toISOString();
+      return formattedDate;
+  }
+
     // Sanitize form data into a structured payload before sending the API request
     const payload = {
       id: formData.id ? formData.id : null,
@@ -288,10 +228,10 @@ const EventForm = ({
       minTeamSize: parseInt(formData.minTeamSize, 10) || null,
       maxTeamSize: parseInt(formData.maxTeamSize, 10) || null,
       eventTimeline: {         // Event timeline is a mandatory field
-        eventStart: new Date(formData.eventTimeline.eventStart).toISOString() || null,
-        eventEnd: new Date(formData.eventTimeline.eventEnd).toISOString() || null,
-        applicationsStart: new Date(formData.eventTimeline.applicationsStart).toISOString() || null,
-        applicationsEnd: new Date(formData.eventTimeline.applicationsEnd).toISOString() || null,
+        eventStart: convertToFormattedIST(formData.eventTimeline.eventStart),
+        eventEnd: convertToFormattedIST(formData.eventTimeline.eventEnd),
+        applicationsStart: convertToFormattedIST(formData.eventTimeline.applicationsStart),
+        applicationsEnd: convertToFormattedIST(formData.eventTimeline.applicationsEnd),
         timezone: formData.eventTimeline.timezone,
         rsvpDeadlineDays: parseInt(formData.eventTimeline.rsvpDeadlineDays, 10) || 0
       },
@@ -351,7 +291,7 @@ const EventForm = ({
     }))
 
     };
-
+  
     e.preventDefault();
 
     setError('');

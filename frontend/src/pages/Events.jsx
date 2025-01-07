@@ -14,6 +14,8 @@ const Events = () => {
   const canCreateEvent = user?.role === 'ADMIN' || user?.role === 'ORGANIZER';
   const [searchWord, setSearchWord] = useState('');
   const [selected, setSelected] = useState("All");
+  const [error, setError] = useState('');
+  
 
   useEffect(() => {
     fetchEvents();
@@ -78,6 +80,17 @@ const Events = () => {
 
   const handleEventEditClick = (id) => {
     navigate(`/edit-event/${id}`);
+  }
+
+  const handleEventDeleteClick = async (id) => {
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${id}`, { withCredentials: true });
+      console.log('Event deleted:', response.data);
+      fetchEvents();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      setError(error.response?.data?.error || 'An error occurred while deleting event. Please try again.');
+    }
   }
 
   function SegmentedControl() {
@@ -175,6 +188,14 @@ const Events = () => {
             >
               Edit
             </button>
+            )}
+            {user && user.id === event.createdById && (
+              <Button 
+              onClick={() => handleEventDeleteClick(event.id)} 
+              className="mt-2"
+            >
+              Delete
+            </Button>
             )}
 
           </div>
