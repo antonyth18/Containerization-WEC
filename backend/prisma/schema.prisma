@@ -216,6 +216,7 @@ model ApplicationForm {
   experienceRequired Boolean @default(false)
   profilesRequired   Boolean @default(false)
   contactRequired    Boolean @default(false)
+  tShirtSizeRequired Boolean @default(false)
   event              Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 

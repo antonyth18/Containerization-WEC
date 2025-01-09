@@ -67,7 +67,14 @@ const CreateEvent = () => {
         imageUrl: '',
         linkedinUrl: ''
       }
-    ]
+    ],
+    applicationForm: {
+      educationRequired: false,
+      experienceRequired: false,
+      profilesRequired: false,
+      contactRequired: false,
+      tShirtSizeRequired: false
+    }
   };
 
   const apiCall = async (payload) => {

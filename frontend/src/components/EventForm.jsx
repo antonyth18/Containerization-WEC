@@ -32,6 +32,25 @@ const EventForm = ({
     }
   };
 
+  const handleCheckboxChange = (e, group, field) => {
+    const { checked } = e.target;
+  
+    setFormData((prevState) => {
+      const applicationForm = typeof prevState.applicationForm === 'object' && prevState.applicationForm !== null
+        ? { ...prevState.applicationForm }
+        : {};
+  
+      applicationForm[field] = checked;
+  
+      return {
+        ...prevState,
+        applicationForm,
+      };
+    });
+  };
+  
+  
+
   // This block of code changes the state of the form data when the user types in the input fields of an array
   const handleArrayChange = (e, section, index, subSection = null, subIndex = null) => {
     const { name, value } = e.target;
@@ -288,13 +307,22 @@ const EventForm = ({
           description: (prize.description && prize.description.trim() !== '') ? prize.description : null,
           value: parseInt(prize.value, 10) || 0
         }))
-    }))
+    })),
+    applicationForm: {
+      contactRequired: formData.applicationForm.contactRequired || false,
+      educationRequired: formData.applicationForm.educationRequired || false,
+      experienceRequired: formData.applicationForm.experienceRequired || false,
+      profilesRequired: formData.applicationForm.profilesRequired || false,
+      tShirtSizeRequired: formData.applicationForm.tShirtSizeRequired || false
+    }
 
     };
   
     e.preventDefault();
 
     setError('');
+    console.log("gg");
+    console.log(payload);
     if ( action === 'draft') {
       payload.status = 'DRAFT';
       try {
@@ -414,6 +442,14 @@ const EventForm = ({
             onClick={() => updateToggle(6)}>
               People
           </li>
+          <li
+            className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
+            ${toggle === 7 
+              ? 'text-blue-500 border-blue-500 font-medium' 
+              : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
+            onClick={() => updateToggle(7)}>
+              Application
+          </li>
         </ul>
         {/* Navigation bar for small screens */}
         <div className="w-full overflow-x-auto border-b border-gray-300 pb-3 md:hidden">
@@ -465,6 +501,14 @@ const EventForm = ({
               : 'text-gray-500 hover:text-gray-600 hover:border-gray-600 border-gray-200 shadow-sm'}`}
               onClick={() => updateToggle(6)}>
               People
+            </li>
+            <li
+              className={`px-5 py-1 cursor-pointer text-base font-medium text-center rounded-full border 
+              ${toggle === 7 
+              ? 'text-blue-500 border-blue-500 bg-blue-50' 
+              : 'text-gray-500 hover:text-gray-600 hover:border-gray-600 border-gray-200 shadow-sm'}`}
+              onClick={() => updateToggle(7)}>
+              Application
             </li>
           </ul>
         </div>  
@@ -940,6 +984,101 @@ const EventForm = ({
         <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" name="action" value="create"  style={fieldStyle(6)}>
           {mode === 1 ? 'Create Event' : 'Edit Event'}
         </button>
+
+        <div style={fieldStyle(7)}>
+        <h3 className="text-xl font-semibold text-gray-800">Application Form</h3>
+        <h5 className="text-md font-medium text-gray-600">
+          (Choose the profile fields you want to make mandatory for participants.)
+        </h5>
+          <div className="space-y-2">
+            {/* Education Required */}
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                name="educationRequired"
+                value="educationRequired"
+                checked={
+                  formData.applicationForm?.educationRequired || false
+                }
+                onChange={(e) =>
+                  handleCheckboxChange(e, "applicationForm", "educationRequired")
+                }
+                className="checkbox-input rounded border-gray-300 text-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 mr-2"
+              />
+              Education Required
+            </label>
+
+            {/* Experience Required */}
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                name="experienceRequired"
+                value="experienceRequired"
+                checked={
+                  formData.applicationForm?.experienceRequired || false
+                }
+                onChange={(e) =>
+                  handleCheckboxChange(e, "applicationForm", "experienceRequired")
+                }
+                className="checkbox-input rounded border-gray-300 text-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 mr-2"
+              />
+              Experience Required
+            </label>
+
+            {/* Profiles Required */}
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                name="profilesRequired"
+                value="profilesRequired"
+                checked={
+                  formData.applicationForm?.profilesRequired || false
+                }
+                onChange={(e) =>
+                  handleCheckboxChange(e, "applicationForm", "profilesRequired")
+                }
+                className="checkbox-input rounded border-gray-300 text-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 mr-2"
+              />
+              Profiles Required
+            </label>
+
+            {/* Contact Required */}
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                name="contactRequired"
+                value="contactRequired"
+                checked={
+                  formData.applicationForm?.contactRequired || false
+                }
+                onChange={(e) =>
+                  handleCheckboxChange(e, "applicationForm", "contactRequired")
+                }
+                className="checkbox-input rounded border-gray-300 text-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 mr-2"
+              />
+              Contact Required
+            </label>
+
+            {/* T Shirt Size Required */}
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                name="tShirtSizeRequired"
+                value="tShirtSizeRequired"
+                checked={
+                  formData.applicationForm?.tShirtSizeRequired || false
+                }
+                onChange={(e) =>
+                  handleCheckboxChange(e, "applicationForm", "tShirtSizeRequired")
+                }
+                className="checkbox-input rounded border-gray-300 text-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 mr-2"
+              />
+              T-Shirt Size Required
+            </label>
+          </div>
+        </div>
+
+
 
         {/* This block of code displays the validation errors on the form */}
         <div>
