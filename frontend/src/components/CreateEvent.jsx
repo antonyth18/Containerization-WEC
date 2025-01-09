@@ -35,8 +35,11 @@ const CreateEvent = () => {
     eventBranding: {
       brandColor: '#000000',
       logoUrl: '',
+      logoFile: null,
       faviconUrl: '',
-      coverImageUrl: ''
+      faviconFile: null,
+      coverImageUrl: '',
+      coverImageFile: null
     },
     tracks: [
       {
