@@ -387,58 +387,138 @@ const EventForm = ({
     removeArrayItem('eventPeople', index);
   };
   
+
+  const [dragActive, setDragActive] = useState(false);
+
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // File size limit in bytes
+  const FILE_SIZE_LIMIT = 2 * 1024 * 1024; // 2MB
+
+  // Generalized handle file change function
+  const handleFileChange = (e, type) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      if (selectedFile.size > FILE_SIZE_LIMIT) {
+        setErrorMessage("File size exceeds 2MB. Please upload a smaller file.");
+        return;
+      }
+      setErrorMessage(""); // Clear any previous error messages
+      const fileURL = URL.createObjectURL(selectedFile);
+      setFormData((prevState) => ({
+        ...prevState,
+        eventBranding: {
+          ...prevState.eventBranding,
+          [`${type}Url`]: fileURL,
+          [`${type}File`]: selectedFile,
+        },
+      }));
+    }
+  };
+
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = () => {
+    setDragActive(false);
+  };
+
+  const handleDrop = (e, type) => {
+    e.preventDefault();
+    setDragActive(false);
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+      if (droppedFile.size > FILE_SIZE_LIMIT) {
+        setErrorMessage("File size exceeds 2MB. Please upload a smaller file.");
+        return;
+      }
+      setErrorMessage(""); // Clear any previous error messages
+      const fileURL = URL.createObjectURL(droppedFile);
+      setFormData((prevState) => ({
+        ...prevState,
+        eventBranding: {
+          ...prevState.eventBranding,
+          [`${type}Url`]: fileURL,
+          [`${type}File`]: droppedFile,
+        },
+      }));
+    }
+  };
+
+
+  // Reusable component for input field styling
+  const inputFieldStyle = "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50";
+
+  // Generalized handle remove image function
+  const handleRemoveImage = (type) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      eventBranding: {
+        ...prevState.eventBranding,
+        [`${type}Url`]: "",
+        [`${type}File`]: null,
+      },
+    }));
+    setErrorMessage(""); // Clear error message on remove
+  };
+
+
   // This block of code returns the form to be displayed on the page (every element is a part of the form)
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-3xl font-bold mb-6 mt-2">{mode === 1 ? 'Create Event' : 'Edit Event'}</h2>
+    <div className="bg-gray-100 py-12 pb-8">
+    <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md">
+      <h2 className="text-3xl font-bold mb-4 mt-2">{mode === 1 ? 'Create Event' : 'Edit Event'}</h2>
       {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">{error}</div>}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <ul className="hidden md:flex justify-center items-center space-x-4 border-b border-gray-300">
+        <ul className="hidden md:flex justify-center items-center space-x-3">
           <li
-            className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
+            className={`px-6 py-2 cursor-pointer text-base border rounded-full font-medium text-center
             ${toggle === 1 
-              ? 'text-blue-500 border-blue-500 font-medium' 
-              : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
+              ? 'text-white font-medium bg-black border-black' 
+              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
             onClick={() => updateToggle(1)}>
               Details
           </li>
           <li
-            className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
+            className={`px-6 py-2 cursor-pointer text-base border rounded-full font-medium text-center
             ${toggle === 2 
-              ? 'text-blue-500 border-blue-500 font-medium' 
-              : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
+              ? 'text-white font-medium bg-black border-black' 
+              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
             onClick={() => updateToggle(2)}>
               Timeline
           </li>
           <li
-            className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
+            className={`px-6 py-2 cursor-pointer text-base border rounded-full font-medium text-center
             ${toggle === 3 
-              ? 'text-blue-500 border-blue-500 font-medium' 
-              : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
+              ? 'text-white font-medium bg-black border-black' 
+              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
             onClick={() => updateToggle(3)}>
-              Links and Branding
+              Links &amp; Branding
           </li>
           <li
-            className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
+            className={`px-6 py-2 cursor-pointer text-base border rounded-full font-medium text-center
             ${toggle === 4 
-              ? 'text-blue-500 border-blue-500 font-medium' 
-              : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
+              ? 'text-white font-medium bg-black border-black' 
+              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
             onClick={() => updateToggle(4)}>
-              Tracks and Prizes
+              Track Prizes
           </li>
           <li
-            className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
+            className={`px-6 py-2 cursor-pointer text-base border rounded-full font-medium text-center
             ${toggle === 5 
-              ? 'text-blue-500 border-blue-500 font-medium' 
-              : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
+              ? 'text-white font-medium bg-black border-black' 
+              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
             onClick={() => updateToggle(5)}>
               Sponsors
           </li>
           <li
-            className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
+            className={`px-6 py-2 cursor-pointer text-base border rounded-full font-medium text-center
             ${toggle === 6 
-              ? 'text-blue-500 border-blue-500 font-medium' 
-              : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
+              ? 'text-white font-medium bg-black border-black' 
+              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
             onClick={() => updateToggle(6)}>
               People
           </li>
@@ -455,50 +535,50 @@ const EventForm = ({
         <div className="w-full overflow-x-auto border-b border-gray-300 pb-3 md:hidden">
           <ul className="md:hidden flex justify-start items-center space-x-2">
             <li
-              className={`px-5 py-1 cursor-pointer text-base font-medium text-center rounded-full border 
+              className={`px-6 py-2 cursor-pointer text-base font-medium text-center rounded-full border  
               ${toggle === 1 
-              ? 'text-blue-500 border-blue-500 bg-blue-50' 
-              : 'text-gray-500 hover:text-gray-600 hover:border-gray-600 border-gray-200 shadow-sm'}`}
+              ? 'text-white font-medium bg-black border-black' 
+              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
               onClick={() => updateToggle(1)}>
               Details
             </li>
             <li
-              className={`px-5 py-1 cursor-pointer text-base font-medium text-center rounded-full border 
+              className={`px-6 py-2 cursor-pointer text-base font-medium text-center rounded-full border 
               ${toggle === 2 
-              ? 'text-blue-500 border-blue-500 bg-blue-50' 
-              : 'text-gray-500 hover:text-gray-600 hover:border-gray-600 border-gray-200 shadow-sm'}`}
+              ? 'text-white font-medium bg-black border-black' 
+              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
               onClick={() => updateToggle(2)}>
               Timeline
             </li>
             <li
-              className={`px-5 py-1 cursor-pointer text-base font-medium text-center rounded-full border 
+              className={`px-6 py-2 cursor-pointer text-base font-medium text-center rounded-full border 
               ${toggle === 3 
-              ? 'text-blue-500 border-blue-500 bg-blue-50' 
-              : 'text-gray-500 hover:text-gray-600 hover:border-gray-600 border-gray-200 shadow-sm'}`}
+              ? 'text-white font-medium bg-black border-black' 
+              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
               onClick={() => updateToggle(3)}>
               Links
             </li>
             <li
-              className={`px-5 py-1 cursor-pointer text-base font-medium text-center rounded-full border 
+              className={`px-6 py-2 cursor-pointer text-base font-medium text-center rounded-full border  
               ${toggle === 4 
-              ? 'text-blue-500 border-blue-500 bg-blue-50' 
-              : 'text-gray-500 hover:text-gray-600 hover:border-gray-600 border-gray-200 shadow-sm'}`}
+              ? 'text-white font-medium bg-black border-black' 
+              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
               onClick={() => updateToggle(4)}>
               Prizes
             </li>
             <li
-              className={`px-5 py-1 cursor-pointer text-base font-medium text-center rounded-full border 
+              className={`px-6 py-2 cursor-pointer text-base font-medium text-center rounded-full border 
               ${toggle === 5 
-              ? 'text-blue-500 border-blue-500 bg-blue-50' 
-              : 'text-gray-500 hover:text-gray-600 hover:border-gray-600 border-gray-200 shadow-sm'}`}
+              ? 'text-white font-medium bg-black border-black' 
+              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
               onClick={() => updateToggle(5)}>
               Sponsors
             </li>
             <li
-              className={`px-5 py-1 cursor-pointer text-base font-medium text-center rounded-full border 
+              className={`px-6 py-2 cursor-pointer text-base font-medium text-center rounded-full border
               ${toggle === 6 
-              ? 'text-blue-500 border-blue-500 bg-blue-50' 
-              : 'text-gray-500 hover:text-gray-600 hover:border-gray-600 border-gray-200 shadow-sm'}`}
+              ? 'text-white font-medium bg-black border-black' 
+              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
               onClick={() => updateToggle(6)}>
               People
             </li>
@@ -521,7 +601,7 @@ const EventForm = ({
             name="name"
             value={formData.name || ''}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            className={inputFieldStyle}
           />
         </div>
 
@@ -532,7 +612,7 @@ const EventForm = ({
             name="type"
             value={formData.type} 
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            className={inputFieldStyle}
           >
             <option value="HACKATHON">Hackathon</option>
             <option value="GENERAL_EVENT">General Event</option>
@@ -547,7 +627,7 @@ const EventForm = ({
             name="tagline"
             value={formData.tagline || ''}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            className={inputFieldStyle}
           />
         </div>
 
@@ -559,7 +639,7 @@ const EventForm = ({
             value={formData.about || ''}
             onChange={handleChange}
             rows="4"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            className={inputFieldStyle}
           ></textarea>
         </div>
 
@@ -573,7 +653,7 @@ const EventForm = ({
               value={formData.maxParticipants || ''}
               onChange={handleChange}
               min="0"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              className={inputFieldStyle}
             />
           </div>
           <div style={fieldStyle(1)}>
@@ -585,7 +665,7 @@ const EventForm = ({
               value={formData.minTeamSize || 1}
               onChange={handleChange}
               min="1"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              className={inputFieldStyle}
             />
           </div>
           <div style={fieldStyle(1)}>
@@ -597,10 +677,10 @@ const EventForm = ({
               value={formData.maxTeamSize || 4}
               onChange={handleChange}
               min="1"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              className={inputFieldStyle}
             />
           </div>
-          <button className="w-full bg-blue-500 text-white py-2 px-4 mt-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
+          <button className="btn-primary mt-6 flex ml-auto !py-2.5" onClick={handleClick}>
             Next
           </button>
         </div>
@@ -616,7 +696,7 @@ const EventForm = ({
                 name="eventStart"
                 value={formData.eventTimeline.eventStart || ''}
                 onChange={(e) => handleChange(e, 'eventTimeline')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                className={inputFieldStyle}
               />
             </div>
             <div style={fieldStyle(2)}>
@@ -627,7 +707,7 @@ const EventForm = ({
                 name="eventEnd"
                 value={formData.eventTimeline.eventEnd || ''}
                 onChange={(e) => handleChange(e, 'eventTimeline')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                className={inputFieldStyle}
               />
             </div>
             <div style={fieldStyle(2)}>
@@ -638,7 +718,7 @@ const EventForm = ({
                 name="applicationsStart"
                 value={formData.eventTimeline.applicationsStart || ''}
                 onChange={(e) => handleChange(e, 'eventTimeline')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                className={inputFieldStyle}
               />
             </div>
             <div style={fieldStyle(2)}>
@@ -649,7 +729,7 @@ const EventForm = ({
                 name="applicationsEnd"
                 value={formData.eventTimeline.applicationsEnd || ''}
                 onChange={(e) => handleChange(e, 'eventTimeline')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                className={inputFieldStyle}
               />
             </div>
           </div>
@@ -661,7 +741,7 @@ const EventForm = ({
               name="timezone"
               value={formData.eventTimeline.timezone}
               onChange={(e) => handleChange(e, 'eventTimeline')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              className={inputFieldStyle}
               disabled
             />
           </div>
@@ -674,10 +754,10 @@ const EventForm = ({
               value={formData.eventTimeline.rsvpDeadlineDays || 7}
               onChange={(e) => handleChange(e, 'eventTimeline')}
               min="0"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              className={inputFieldStyle}
             />
           </div>
-          <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
+          <button className="btn-primary mt-6 flex ml-auto !py-2.5" onClick={handleClick}>
             Next
           </button>
         </div>
@@ -693,7 +773,7 @@ const EventForm = ({
               name="websiteUrl"
               value={formData.eventLinks.websiteUrl || ''}
               onChange={(e) => handleChange(e, 'eventLinks')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className={inputFieldStyle}
             />
           </div>
           <div style={fieldStyle(3)}>
@@ -704,7 +784,7 @@ const EventForm = ({
               name="micrositeUrl"
               value={formData.eventLinks.micrositeUrl || ''}
               onChange={(e) => handleChange(e, 'eventLinks')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className={inputFieldStyle}
             />
           </div>
           <div style={fieldStyle(3)}>
@@ -715,7 +795,7 @@ const EventForm = ({
               name="contactEmail"
               value={formData.eventLinks.contactEmail || ''}
               onChange={(e) => handleChange(e, 'eventLinks')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className={inputFieldStyle}
             />
           </div>
           <div style={fieldStyle(3)}>
@@ -726,7 +806,7 @@ const EventForm = ({
               name="codeOfConductUrl"
               value={formData.eventLinks.codeOfConductUrl || ''}
               onChange={(e) => handleChange(e, 'eventLinks')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className={inputFieldStyle}
             />
           </div>
         </div>
@@ -741,43 +821,215 @@ const EventForm = ({
               name="brandColor"
               value={formData.eventBranding.brandColor}
               onChange={(e) => handleChange(e, 'eventBranding')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className={inputFieldStyle}
             />
           </div>
-          <div style={fieldStyle(3)}>
-            <label htmlFor="logoUrl" className="block text-sm font-medium text-gray-700">Logo URL</label>
-            <input
-              type="url"
-              id="logoUrl"
-              name="logoUrl"
-              value={formData.eventBranding.logoUrl || ''}
-              onChange={(e) => handleChange(e, 'eventBranding')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            />
+
+          <div className="p-4 border rounded-lg shadow-md bg-white">
+            <h2 className="text-lg font-medium mb-4 text-gray-700">Upload Logo</h2>
+
+            <div style={fieldStyle(3)}>
+              <label htmlFor="logoUrl" className="block text-sm font-medium text-gray-700">Logo URL</label>
+              <input
+                type="url"
+                id="logoUrl"
+                name="logoUrl"
+                value={formData.eventBranding.logoUrl || ''}
+                onChange={(e) => handleChange(e, 'eventBranding')}
+                className={inputFieldStyle}
+              />
+
+            </div>
+                <div className="text-center mt-4">or</div>
+            {/* File Upload & Drag-and-Drop */}
+            
+              <label htmlFor="logoFile" className="block text-sm font-medium text-gray-700 mt-2 mb-2">
+                Logo File (Upload or Drag & Drop)
+              </label>
+
+              <p className="text-sm text-gray-500 mb-2">
+                Maximum file size: <strong>2MB</strong>
+              </p>
+
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, 'logo')}
+                className={`border-2 border-dashed p-4 rounded-lg text-center cursor-pointer ${
+                dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+                }`}
+              >
+                <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileChange(e, 'logo')}
+                className="hidden"
+                id="logoFile"
+                />
+                <label htmlFor="logoFile" className="cursor-pointer">
+                  {dragActive
+                  ? 'Drop the file here...'
+                  : formData.eventBranding.logoFile
+                  ? `Selected File: ${formData.eventBranding.logoFile.name}`
+                  : 'Click or drag to upload a logo file'}
+                </label>
+              </div>
+              {/* Error Message */}
+              {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
+
+              {/* File Preview */}
+              {formData.eventBranding.logoUrl && (
+              <div className="mt-4">
+              <img
+                src={formData.eventBranding.logoUrl}
+                alt="Logo Preview"
+                className="w-32 h-32 object-contain mx-auto border border-gray-300 rounded-md"
+              />
+              <button
+                onClick={() => handleRemoveImage('logo')}
+                className="mt-2 px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 mb-2"
+              >
+                Remove Image
+              </button>
+            </div>
+              )}
           </div>
-          <div style={fieldStyle(3)}>
-            <label htmlFor="faviconUrl" className="block text-sm font-medium text-gray-700">Favicon URL</label>
-            <input
-              type="url"
-              id="faviconUrl"
-              name="faviconUrl"
-              value={formData.eventBranding.faviconUrl || ''}
-              onChange={(e) => handleChange(e, 'eventBranding')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            />
+
+          <div className="p-4 border rounded-lg shadow-md bg-white">
+            <h2 className="text-lg font-medium mb-4 text-gray-700">Upload Favicon</h2>
+
+            <div style={fieldStyle(3)}>
+              <label htmlFor="faviconUrl" className="block text-sm font-medium text-gray-700">Favicon URL</label>
+              <input
+                type="url"
+                id="faviconUrl"
+                name="faviconUrl"
+                value={formData.eventBranding.faviconUrl || ''}
+                onChange={(e) => handleChange(e, 'eventBranding')}
+                className={inputFieldStyle}
+              />
+            </div>
+            <div className="text-center mt-4">or</div>
+
+            <label htmlFor="faviconFile" className="block text-sm font-medium text-gray-700 mt-2 mb-2">
+              Favicon File (Upload or Drag & Drop)
+            </label>
+
+            <p className="text-sm text-gray-500 mb-2">
+              Maximum file size: <strong>2MB</strong>
+            </p>
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, 'favicon')}
+              className={`border-2 border-dashed p-4 rounded-lg text-center cursor-pointer ${
+                dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+              }`}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileChange(e, 'favicon')}
+                className="hidden"
+                id="faviconFile"
+              />
+              <label htmlFor="faviconFile" className="cursor-pointer">
+                {dragActive
+                  ? 'Drop the file here...'
+                  : formData.eventBranding.faviconFile
+                  ? `Selected File: ${formData.eventBranding.faviconFile.name}`
+                  : 'Click or drag to upload a favicon file'}
+              </label>
+            </div>
+            {/* Error Message */}
+            {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
+
+            {/* File Preview */}
+            {formData.eventBranding.faviconUrl && (
+              <div className="mt-4">
+                <img
+                  src={formData.eventBranding.faviconUrl}
+                  alt="Favicon Preview"
+                  className="w-32 h-32 object-contain mx-auto border border-gray-300 rounded-md"
+                />
+                <button
+                  onClick={() => handleRemoveImage('favicon')}
+                  className="mt-2 px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 mb-2"
+                >
+                  Remove Image
+                </button>
+              </div>
+            )}
           </div>
-          <div style={fieldStyle(3)}>
-            <label htmlFor="coverImageUrl" className="block text-sm font-medium text-gray-700">Cover Image URL</label>
-            <input
-              type="url"
-              id="coverImageUrl"
-              name="coverImageUrl"
-              value={formData.eventBranding.coverImageUrl || ''}
-              onChange={(e) => handleChange(e, 'eventBranding')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-            />
+
+          <div className="p-4 border rounded-lg shadow-md bg-white">
+            <h2 className="text-lg font-medium mb-4 text-gray-700">Upload Cover Image</h2>
+
+            <div style={fieldStyle(3)}>
+              <label htmlFor="coverImageUrl" className="block text-sm font-medium text-gray-700">Cover Image URL</label>
+              <input
+                type="url"
+                id="coverImageUrl"
+                name="coverImageUrl"
+                value={formData.eventBranding.coverImageUrl || ''}
+                onChange={(e) => handleChange(e, 'eventBranding')}
+                className={inputFieldStyle}
+              />
+            </div>
+            <div className="text-center mt-4">or</div>
+
+            <label htmlFor="coverImageFile" className="block text-sm font-medium text-gray-700 mt-2 mb-2">
+              Cover Image File (Upload or Drag & Drop)
+            </label>
+            <p className="text-sm text-gray-500 mb-2">
+              Maximum file size: <strong>2MB</strong>
+            </p>
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, 'coverImage')}
+              className={`border-2 border-dashed p-4 rounded-lg text-center cursor-pointer ${
+                dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+              }`}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileChange(e, 'coverImage')}
+                className="hidden"
+                id="coverImageFile"
+              />
+              <label htmlFor="coverImageFile" className="cursor-pointer">
+                {dragActive
+                  ? 'Drop the file here...'
+                  : formData.eventBranding.coverImageFile
+                  ? `Selected File: ${formData.eventBranding.coverImageFile.name}`
+                  : 'Click or drag to upload a cover image file'}
+              </label>
+            </div>
+            {/* Error Message */}
+            {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
+
+            {/* File Preview */}
+            {formData.eventBranding.coverImageUrl && (
+              <div className="mt-4">
+                <img
+                  src={formData.eventBranding.coverImageUrl}
+                  alt="Cover Image Preview"
+                  className="w-2/3 h-64 object-contain mx-auto border border-gray-300 rounded-md"
+                />
+                <button
+                  onClick={() => handleRemoveImage('coverImage')}
+                  className="mt-2 px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 mb-2"
+                >
+                  Remove Image
+                </button>
+              </div>
+            )}
           </div>
-          <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
+
+          
+          <button className="btn-primary mt-6 flex ml-auto !py-2.5" onClick={handleClick}>
             Next
           </button>
         </div>
@@ -788,7 +1040,7 @@ const EventForm = ({
             <button
               type="button"
               onClick={addTrack}
-              className="mt-2 text-blue-500 border border-blue-500 bg-white rounded-md p-2 hover:bg-blue-500 hover:text-white"
+              className="mt-2 btn-secondary !py-2 !px-5"
             >
               Add new Track
             </button>
@@ -853,7 +1105,7 @@ const EventForm = ({
                     <button
                       type="button"
                       onClick={() => removePrize(trackIndex, prizeIndex)}
-                      className="mt-2 text-red-500 border border-red-500 bg-white hover:bg-red-500 hover:text-white rounded-md p-2 w-1/2 sm:w-1/3 md:w-1/6"
+                      className="mt-2 text-red-500 border border-red-500 bg-white hover:bg-red-500 hover:text-white rounded-full p-2 w-1/2 sm:w-1/3 md:w-1/6"
                     >
                       Remove
                     </button>
@@ -862,7 +1114,7 @@ const EventForm = ({
                 <button
                   type="button"
                   onClick={() => addPrizeToTrack(trackIndex)}
-                  className="mt-4 text-blue-500 border border-blue-500 rounded-md p-2 hover:bg-blue-500 hover:text-white"
+                  className="mt-4 btn-secondary !py-2 !px-5"
                 >
                   Add more prizes
                 </button>
@@ -870,7 +1122,7 @@ const EventForm = ({
             </div>
           ))}
           
-          <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
+          <button className="btn-primary mt-6 flex ml-auto !py-2.5" onClick={handleClick}>
             Next
           </button>
         </div>
@@ -878,7 +1130,7 @@ const EventForm = ({
         <div className="space-y-4" style={fieldStyle(5)}>
           <h3 className="text-lg font-medium text-gray-700">Sponsors</h3>
           {formData.sponsors.map((sponsor, index) => (
-            <div key={index} className="space-y-2">
+            <div key={index} className="space-y-2 border rounded p-4">
               <input
                 type="text"
                 value={sponsor.name || ''}
@@ -903,15 +1155,15 @@ const EventForm = ({
                 placeholder="Sponsor Website URL"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
-              <button type="button" onClick={() => removeArrayItem('sponsors', index)} className="text-red-500 hover:text-red-600">
+              <button type="button" onClick={() => removeArrayItem('sponsors', index)} className="block mt-4 text-red-500 border border-red-500 bg-white rounded-full p-2 w-1/3 md:w-1/5 hover:bg-red-500 hover:text-white">
                 Remove Sponsor
               </button>
             </div>
           ))}
-          <button type="button" onClick={() => addArrayItem('sponsors')} className="text-blue-500 hover:text-blue-600">
+          <button type="button" onClick={() => addArrayItem('sponsors')} className="mt-4 btn-secondary !py-2 !px-5">
             Add Sponsor
           </button>
-          <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={handleClick}>
+          <button className="btn-primary mt-6 flex ml-auto !py-2.5" onClick={handleClick}>
             Next
           </button>
         </div>
@@ -926,13 +1178,13 @@ const EventForm = ({
                 onChange={(e) => handleArrayChange(e, 'eventPeople', index)}
                 name="name"
                 placeholder="Name"
-                className="input-field w-1/3 mr-4 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                className="input-field mr-4 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               <select
                 value={person.role || ''}
                 onChange={(e) => handleArrayChange(e, 'eventPeople', index)}
                 name="role"
-                className="input-field mt-2 w-1/3 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                className="input-field mt-2 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               >
                 <option value="JUDGE">Judge</option>
                 <option value="SPEAKER">Speaker</option>
@@ -942,7 +1194,7 @@ const EventForm = ({
                 onChange={(e) => handleArrayChange(e, 'eventPeople', index)}
                 name="bio"
                 placeholder="Bio"
-                className="input-field mt-2 w-2/3 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                className="input-field mt-2 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               <input
                 type="url"
@@ -950,7 +1202,7 @@ const EventForm = ({
                 onChange={(e) => handleArrayChange(e, 'eventPeople', index)}
                 name="imageUrl"
                 placeholder="Image URL"
-                className="input-field mt-2 w-1/3 mr-4 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                className="input-field mt-2 mr-4 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               <input
                 type="url"
@@ -958,32 +1210,34 @@ const EventForm = ({
                 onChange={(e) => handleArrayChange(e, 'eventPeople', index)}
                 name="linkedinUrl"
                 placeholder="LinkedIn URL"
-                className="input-field mt-2 w-1/3 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                className="input-field mt-2 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               <button
                 type="button"
                 onClick={() => removePerson(index)}
-                className="block mt-4 text-red-500 border border-red-500 bg-white rounded-md p-2 hover:bg-red-500 hover:text-white"
+                className="block mt-4 text-red-500 border border-red-500 bg-white rounded-full p-2 w-1/3 md:w-1/5 hover:bg-red-500 hover:text-white"
               >
-                Remove
+                Remove Person
               </button>
             </div>
           ))}
           <button
             type="button"
             onClick={() => addArrayItem('eventPeople')}
-            className="mt-4 text-blue-500 border border-blue-500 rounded-md p-2 hover:bg-blue-500 hover:text-white"
+            className="mt-4 btn-secondary !py-2 !px-5"
           >
             Add new Person
           </button>
         </div>
-        { formData.status === 'DRAFT' &&
-        <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 mr-3" name="action" value="draft"  style={fieldStyle(6)}>
-          Draft
-        </button>}
-        <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" name="action" value="create"  style={fieldStyle(6)}>
-          {mode === 1 ? 'Create Event' : 'Edit Event'}
-        </button>
+        <div className="flex">
+          { formData.status === 'DRAFT' &&
+          <button type="submit" className="bg-blue-500 text-white py-2.5 px-6 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex ml-auto mr-3" name="action" value="draft"  style={fieldStyle(6)}>
+           Draft
+          </button>}
+          <button type="submit" className="bg-blue-500 text-white py-2.5 px-6 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex" name="action" value="create"  style={fieldStyle(6)}>
+            {mode === 1 ? 'Create Event' : 'Edit Event'}
+          </button>
+        </div>
 
         <div style={fieldStyle(7)}>
         <h3 className="text-xl font-semibold text-gray-800">Application Form</h3>
@@ -1135,6 +1389,7 @@ const EventForm = ({
         </div>
         </div>
       </form>
+    </div>
     </div>
   );
 };
