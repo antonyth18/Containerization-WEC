@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/Button';
+import { EditBtn } from '../svg/EditBtn';
 
 const Events = () => {
   const [events, setEvents] = useState([]);
@@ -14,6 +15,7 @@ const Events = () => {
   const canCreateEvent = user?.role === 'ADMIN' || user?.role === 'ORGANIZER';
   const [searchWord, setSearchWord] = useState('');
   const [selected, setSelected] = useState("All");
+  const [drafts, setDrafts] = useState([]);
 
   useEffect(() => {
     fetchEvents();
@@ -23,6 +25,10 @@ const Events = () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`, { withCredentials: true });
       const eventList = response.data;
+      const draftedEvents = eventList.filter(event => event.status === 'DRAFT');
+      setDrafts(draftedEvents);
+      console.log(drafts);
+      
       if(searchWord !== '') {
         const searchedEventList = eventList.filter(event => event.name.toLowerCase().includes(searchWord.toLowerCase()));
         setEvents(searchedEventList);
@@ -36,6 +42,8 @@ const Events = () => {
         } else if(selected === 'Created Events') {
           const createdEvents = eventList.filter(event => event.createdById === user.id);
           setEvents(createdEvents);
+        } else if(selected === 'Drafts') {
+          setEvents(drafts);
         } else {
           setEvents(eventList);
         }
@@ -129,6 +137,18 @@ const Events = () => {
             Created Events
           </button>
         )}
+        {!!drafts.length && (
+          <button
+            onClick={() => setSelected("Drafts")}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+              selected === "Drafts"
+                ? "bg-black text-white"
+                : "bg-gray-200 text-gray-800 hover:bg-blue-100"
+            }`}
+          >
+            Drafts
+          </button>
+        )}
       </div>
     );
   }
@@ -149,33 +169,29 @@ const Events = () => {
       <div className="flex flex-wrap gap-y-12 justify-evenly">
         {events.map(event => (
           <div key={event.id} className="border flex flex-col p-6 w-[40%] shadow-xl border-t-black border-solid border-4 rounded-2xl" >
-            <h3 className="text-2xl font-bold mb-2">{event.name}</h3>
+            <div className='flex justify-between'>
+              <h3 className="text-2xl font-bold mb-2">{event.name}</h3>
+              {user && user.id === event.createdById && (
+                  <EditBtn className="w-6 h-6 cursor-pointer hover:bg-gray-200 rounded-sm" onClick={() => handleEventEditClick(event.id)}/>
+              )}  
+            </div>
+           
             <p className=' max-w-fit bg-gray-300 px-2 py-1 rounded-md text-center text-white text-sm mb-6'>{event.type}</p>
             <p className=' text-sm font-medium'>Tagline</p>
             <p className=' text-gray-500 italic mb-6'>{event.tagline}</p>
-            {event.eventTimeline && (
-              <><div className='flex items-center justify-between'>
-                <p className='rounded-lg text-center px-4 py-2 border-solid border-2 text-sm'>Online</p>
-                <p className='rounded-lg text-center px-4 py-2 border-solid border-2 text-sm'>Starts: {new Date(event.eventTimeline.eventStart).toLocaleDateString()}</p>
-                <Button
-                  onClick={() => handleEventViewClick(event.id)}
-                  className="mt-2"
-                >
-                  Apply now
-                </Button>
-              </div><>
-                  <p>Start Date: {new Date(event.eventTimeline.eventStart).toLocaleDateString()}</p>
-                  <p>End Date: {new Date(event.eventTimeline.eventEnd).toLocaleDateString()}</p>
-                </></>
-            )}
-            {user && user.id === event.createdById && (
-              <button 
-              onClick={() => handleEventEditClick(event.id)} 
-              className="mt-2 ml-3 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-            >
-              Edit
-            </button>
-            )}
+            
+            <div className='flex items-center justify-between'>
+              <p className='rounded-lg text-center px-4 py-2 border-solid border-2 text-sm'>{event.mode}</p>
+              <p className='rounded-lg text-center px-4 py-2 border-solid border-2 text-sm'>Starts: {new Date(event.eventTimeline.eventStart).toLocaleDateString()}</p>
+              <Button
+                onClick={() => handleEventViewClick(event.id)}
+                className="mt-2"
+              >
+                Apply now
+              </Button>
+            </div>
+            
+            
 
           </div>
         ))}

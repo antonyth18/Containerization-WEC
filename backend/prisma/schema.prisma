@@ -53,6 +53,16 @@ enum EventType {
   GENERAL_EVENT
 }
 
+enum EventMode {
+  ONLINE
+  OFFLINE
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+}
+
 enum ApplicationStatus {
   PENDING
   ACCEPTED
@@ -166,7 +176,7 @@ model UserSocialProfile {
 }
 
 model Event {
-  id              Int       @id @default(autoincrement())
+  id              Int         @id @default(autoincrement())
   name            String
   type            EventType
   tagline         String?
@@ -174,8 +184,9 @@ model Event {
   maxParticipants Int?
   minTeamSize     Int?
   maxTeamSize     Int?
-  status          String    @default("draft")
-  createdAt       DateTime  @default(now())
+  status          EventStatus @default(DRAFT)
+  mode            EventMode   @default(ONLINE)
+  createdAt       DateTime    @default(now())
   createdById     Int
 
   createdBy         User                @relation(fields: [createdById], references: [id])
@@ -292,7 +303,7 @@ model Prize {
   description String?
   value       Decimal
   event       Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  track       Track ?  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  track       Track?  @relation(fields: [trackId], references: [id], onDelete: Cascade)
 }
 
 model EventPerson {
