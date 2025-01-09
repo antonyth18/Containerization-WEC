@@ -12,6 +12,8 @@ import Profile from './pages/Profile';
 import EventDetails from './pages/EventDetails';
 import EditEvent from './components/EditEvent';
 
+
+
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, loading } = useAuth();
   console.log('User:', user);

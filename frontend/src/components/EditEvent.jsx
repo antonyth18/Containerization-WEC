@@ -33,7 +33,7 @@ const EditEvent = () => {
   if (error) return <div>{error}</div>;
   if (!localFormData) return <div>Event not found</div>;
 
-  if (user?.role !== 'ORGANIZER' || user?.id !== localFormData.createdById) {
+  if (user?.role === 'PARTICIPANT' || user?.id !== localFormData.createdById) {
     return <div className="text-center mt-8">You don't have permission to edit events.</div>;
   }
 
