@@ -174,7 +174,7 @@ export const createEvent = async (req, res) => {
 };
 
 /**
- * Update event details based on event id
+ * Update event details based on event id - Admin/Organizer only
  */
 export const updateEvent = async (req, res) => {
   const { eventId } = req.params;
@@ -360,6 +360,27 @@ export const updateEvent = async (req, res) => {
   }
 
 };
+
+/**
+ * Delete an event using event id - Admin/Organizer only
+ */
+export const deleteEvent = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleteEvent = await prisma.event.delete({
+      where : {
+        id: parseInt(id),
+      }
+    });
+
+    res.status(201).json(deleteEvent);
+
+  } catch (error) {
+    throw error;
+  }
+
+}
 
 /**
  * Join an event - Participant only

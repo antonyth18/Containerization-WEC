@@ -1,5 +1,5 @@
 import express from 'express';
-import { getEvents, createEvent, joinEvent, getEventById, updateEvent} from '../controllers/events.js';
+import { getEvents, createEvent, joinEvent, getEventById, updateEvent, deleteEvent} from '../controllers/events.js';
 import { authenticateUser, isOrganizer } from '../middleware/auth.js';
 import { validate, eventSchema , eventDraftSchema} from '../middleware/validate.js';
 
@@ -11,5 +11,6 @@ router.post('/', authenticateUser, isOrganizer, validate(eventSchema), createEve
 router.post('/draft', authenticateUser, isOrganizer, validate(eventDraftSchema), createEvent); 
 router.post('/:eventId/join', authenticateUser, joinEvent);
 router.put('/:eventId', updateEvent);
+router.delete('/:id', authenticateUser, isOrganizer, deleteEvent);
 
 export default router; 

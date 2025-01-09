@@ -5,6 +5,9 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/Button';
 import { EditBtn } from '../svg/EditBtn';
+import { DeleteBtn } from '../svg/DeleteBtn';
+import AlertDialog from '../components/AlertDialog';
+
 
 const Events = () => {
   const [events, setEvents] = useState([]);
@@ -16,6 +19,10 @@ const Events = () => {
   const [searchWord, setSearchWord] = useState('');
   const [selected, setSelected] = useState("All");
   const [drafts, setDrafts] = useState([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState(null);
+
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchEvents();
@@ -86,6 +93,17 @@ const Events = () => {
 
   const handleEventEditClick = (id) => {
     navigate(`/edit-event/${id}`);
+  }
+
+  const handleEventDeleteClick = async (id) => {
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${id}`, { withCredentials: true });
+      console.log('Event deleted:', response.data);
+      fetchEvents();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      setError(error.response?.data?.error || 'An error occurred while deleting event. Please try again.');
+    }
   }
 
   function SegmentedControl() {
@@ -171,9 +189,29 @@ const Events = () => {
           <div key={event.id} className="border flex flex-col p-6 w-[40%] shadow-xl border-t-black border-solid border-4 rounded-2xl" >
             <div className='flex justify-between'>
               <h3 className="text-2xl font-bold mb-2">{event.name}</h3>
-              {user && user.id === event.createdById && (
-                  <EditBtn className="w-6 h-6 cursor-pointer hover:bg-gray-200 rounded-sm" onClick={() => handleEventEditClick(event.id)}/>
-              )}  
+              <div className='flex gap-5'>
+                {user && user.id === event.createdById && (
+                    <EditBtn className="w-6 h-6 cursor-pointer hover:bg-gray-200 rounded-sm" onClick={() => handleEventEditClick(event.id)}/>
+                )}  
+                {user && user.id === event.createdById && (
+                    <DeleteBtn className="w-6 h-6 cursor-pointer hover:bg-gray-200 rounded-sm" onClick={() => setIsDialogOpen(true)}/>
+                )}
+                <>
+                  <AlertDialog
+                    isOpen={isDialogOpen}
+                    onClose={() => setIsDialogOpen(false)}
+                    onConfirm={() => {
+                      handleEventDeleteClick(event.id);
+                      console.log('Confirmed');
+                    }}
+                    title="Delete Item"
+                    message="Are you sure you want to delete this item? This action cannot be undone."
+                    confirmText="Delete"
+                    cancelText="Cancel"
+                  />
+                </>
+              </div>
+              
             </div>
            
             <p className=' max-w-fit bg-gray-300 px-2 py-1 rounded-md text-center text-white text-sm mb-6'>{event.type}</p>

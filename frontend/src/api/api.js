@@ -82,8 +82,8 @@ export const eventsAPI = {
    * - optional or partial eventLinks, eventBranding, etc
    * @returns {Promise} Response with draft event
    */
-    saveDraft: (eventData) => 
-      api.post('/api/events/draft', eventData),
+  saveDraft: (eventData) => 
+    api.post('/api/events/draft', eventData),
 
   /**
    * Update existing event
@@ -93,6 +93,14 @@ export const eventsAPI = {
    */
   updateEvent: (id, eventData) => 
     api.put(`/api/events/${id}`, eventData),
+
+  /**
+   * Delete an event
+   * @param {string} id Event ID
+   * @returns {Promise} Response confirming the event deletion
+   */
+  deleteEvent: (id) =>
+    api.delete(`/api/events/${id}`),
 
   /**
    * Join an event as a participant
