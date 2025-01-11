@@ -193,6 +193,7 @@ model Event {
   teams             Team[]
   Prize             Prize[]
   ProjectSubmission ProjectSubmission[]
+  customQuestions    CustomQuestion[]
 }
 
 model Theme {
@@ -218,6 +219,16 @@ model ApplicationForm {
   contactRequired    Boolean @default(false)
   tShirtSizeRequired Boolean @default(false)
   event              Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model CustomQuestion {
+  id                 Int      @id @default(autoincrement())
+  eventId            Int      
+  questionText       String   
+  questionType       String   // ENUM, NUMBER, TEXT, CHECKBOX
+  options            Json?    // JSON field to store options for ENUM or CHECKBOX types
+  isRequired         Boolean  @default(false) // Whether the question is mandatory
+  event              Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Application {

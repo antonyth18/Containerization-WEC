@@ -17,7 +17,8 @@ export const getEvents = async (req, res) => {
         },
         sponsors: true,
         eventPeople: true,
-        applicationForm: true
+        applicationForm: true,
+        customQuestions: true
       }
     });
     res.json(events);
@@ -47,6 +48,7 @@ export const getEventById = async (req, res) => {
         sponsors: true,
         eventPeople: true,
         applicationForm: true,
+        customQuestion: true
       }
     });
 
@@ -82,7 +84,8 @@ export const createEvent = async (req, res) => {
       tracks,
       sponsors,
       eventPeople,
-      applicationForm
+      applicationForm,
+      customQuestion,
     } = req.body;
     
     if(id !== null){
@@ -92,7 +95,7 @@ export const createEvent = async (req, res) => {
         },
       });
     }
-
+    console.log(req);
     const transaction = await prisma.$transaction(async (prisma) => {
       const event = await prisma.event.create({
         data: {
@@ -169,6 +172,16 @@ export const createEvent = async (req, res) => {
         await prisma.eventPerson.createMany({
           data: eventPeople.map(person => ({
             ...person,
+            eventId: event.id
+          }))
+        });
+      }
+
+      // Take the customQuestions as list of JSON object of questionText, questionType, options, isReqiured
+      if (customQuestion && customQuestion.length > 0 ) {
+        await prisma.customQuestion.createMany({
+          data: customQuestion.map(question => ({
+            ...question,
             eventId: event.id
           }))
         });

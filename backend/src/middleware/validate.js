@@ -92,7 +92,15 @@ export const eventSchema = z.object({
     profilesRequired: z.boolean().optional(),
     contactRequired: z.boolean().optional(),
     tShirtSizeRequired: z.boolean().optional()
-  })
+  }),
+  customQuestions: z.array(
+    z.object({
+      questionText: z.string().min(1),
+      questionType: z.enum(["ENUM", "NUMBER", "TEXT", "CHECKBOX"]),
+      options: z.any().optional(),
+      isRequired: z.boolean().default(false),
+    })
+  ).optional()
 });
 
 export const eventDraftSchema = z.object({
