@@ -314,7 +314,15 @@ const EventForm = ({
       experienceRequired: formData.applicationForm.experienceRequired || false,
       profilesRequired: formData.applicationForm.profilesRequired || false,
       tShirtSizeRequired: formData.applicationForm.tShirtSizeRequired || false
-    }
+    },
+    customQuestion: formData.customQuestion
+    .filter(question => question.questionText.trim() !== '') // Include only if questionText exists
+    .map(question => ({
+      questionText: question.questionText.trim(), 
+      questionType: question.questionType.trim(),
+      options: question.options || null,
+      isRequired: question.isRequired || false 
+    }))
 
     };
   
@@ -1329,8 +1337,123 @@ const EventForm = ({
               />
               T-Shirt Size Required
             </label>
-          </div>
+
+            {/*Custom Questions*/}
+            {formData.customQuestion.map((question, index) => (
+              <div key={index} className="border p-4 rounded mt-4">
+                <input
+                  type="text"
+                  value={question.questionText || ''}
+                  onChange={(e) => handleArrayChange(e, 'customQuestion', index)}
+                  name="questionText"
+                  placeholder="Question Text"
+                  className="input-field mr-4 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                />
+                <select
+                  value={question.questionType || ''}
+                  onChange={(e) => handleArrayChange(e, 'customQuestion', index)}
+                  name="questionType"
+                  className="input-field mt-2 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                >
+                  <option value="TEXT">Text</option>
+                  <option value="NUMBER">Number</option>
+                  <option value="ENUM">Enum</option>
+                  <option value="CHECKBOX">Checkbox</option>
+                </select>
+                {['ENUM', 'CHECKBOX'].includes(question.questionType) && (
+                  <div className="mt-2">
+                    <h4 className="text-gray-600">Options</h4>
+                    {question.options?.map((option, optionIndex) => (
+                      <div key={optionIndex} className="flex items-center mt-1">
+                        <input
+                          type="text"
+                          value={option}
+                          onChange={(e) => {
+                            const updatedOptions = [...question.options];
+                            updatedOptions[optionIndex] = e.target.value;
+                            handleArrayChange(
+                              { target: { name: 'options', value: updatedOptions } },
+                              'customQuestion',
+                              index
+                            );
+                          }}
+                          placeholder={`Option ${optionIndex + 1}`}
+                          className="input-field rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updatedOptions = question.options.filter((_, i) => i !== optionIndex);
+                            handleArrayChange(
+                              { target: { name: 'options', value: updatedOptions } },
+                              'customQuestion',
+                              index
+                            );
+                          }}
+                          className="ml-2 text-red-500"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updatedOptions = [...(question.options || []), ''];
+                        handleArrayChange(
+                          { target: { name: 'options', value: updatedOptions } },
+                          'customQuestion',
+                          index
+                        );
+                      }}
+                      className="mt-2 text-blue-500"
+                    >
+                      Add Option
+                    </button>
+                  </div>
+                )}
+                <div className="mt-2 flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={question.isRequired}
+                    onChange={(e) => {
+                      const updatedQuestions = [...formData.customQuestion];
+                      updatedQuestions[index].isRequired = e.target.checked;
+                      setFormData({ ...formData, customQuestion: updatedQuestions });
+                    }}
+                    className="mr-2"
+                  />
+                  <label className="text-gray-600">Is Required?</label>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updatedQuestions = formData.customQuestion.filter((_, i) => i !== index);
+                    setFormData({ ...formData, customQuestion: updatedQuestions });
+                  }}
+                  className="mt-4 text-red-500"
+                >
+                  Remove Question
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                const newQuestion = {
+                  questionText: '',
+                  questionType: '',
+                  options: [],
+                  isRequired: false,
+                };
+                setFormData({ ...formData, customQuestion: [...formData.customQuestion, newQuestion] });
+              }}
+              className="mt-4 text-blue-500"
+            >
+              Add Question
+            </button>
         </div>
+      </div>
 
 
 

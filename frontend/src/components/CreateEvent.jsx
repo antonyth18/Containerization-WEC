@@ -77,7 +77,15 @@ const CreateEvent = () => {
       profilesRequired: false,
       contactRequired: false,
       tShirtSizeRequired: false
-    }
+    },
+    customQuestion: [
+      {
+        questionText: '',
+        questionType: '',
+        options: null,
+        isRequired: false 
+      }
+    ]
   };
 
   const apiCall = async (payload) => {
