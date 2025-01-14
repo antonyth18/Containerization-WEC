@@ -1339,7 +1339,7 @@ const EventForm = ({
             </label>
 
             {/*Custom Questions*/}
-            {formData.customQuestion.map((question, index) => (
+            {formData.customQuestions.map((question, index) => (
               <div key={index} className="border p-4 rounded mt-4">
                 <input
                   type="text"
