@@ -23,6 +23,7 @@ const Events = () => {
   const [eventToDelete, setEventToDelete] = useState(null);
 
   const [error, setError] = useState('');
+  
 
   useEffect(() => {
     fetchEvents();
@@ -97,6 +98,7 @@ const Events = () => {
 
   const handleEventDeleteClick = async (id) => {
     try {
+      console.log(id);
       const response = await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${id}`, { withCredentials: true });
       console.log('Event deleted:', response.data);
       fetchEvents();
@@ -194,14 +196,18 @@ const Events = () => {
                     <EditBtn className="w-6 h-6 cursor-pointer hover:bg-gray-200 rounded-sm" onClick={() => handleEventEditClick(event.id)}/>
                 )}  
                 {user && user.id === event.createdById && (
-                    <DeleteBtn className="w-6 h-6 cursor-pointer hover:bg-gray-200 rounded-sm" onClick={() => setIsDialogOpen(true)}/>
+                    <DeleteBtn className="w-6 h-6 cursor-pointer hover:bg-gray-200 rounded-sm" onClick={() => {
+                      setIsDialogOpen(true)
+                      setEventToDelete(event.id);
+                    }}/>
                 )}
                 <>
                   <AlertDialog
                     isOpen={isDialogOpen}
                     onClose={() => setIsDialogOpen(false)}
                     onConfirm={() => {
-                      handleEventDeleteClick(event.id);
+                      console.log(eventToDelete);
+                      handleEventDeleteClick(eventToDelete);
                       console.log('Confirmed');
                     }}
                     title="Delete Item"
@@ -228,8 +234,6 @@ const Events = () => {
                 Apply now
               </Button>
             </div>
-            
-            
 
           </div>
         ))}

@@ -35,8 +35,11 @@ const CreateEvent = () => {
     eventBranding: {
       brandColor: '#000000',
       logoUrl: '',
+      logoFile: null,
       faviconUrl: '',
-      coverImageUrl: ''
+      faviconFile: null,
+      coverImageUrl: '',
+      coverImageFile: null
     },
     tracks: [
       {
@@ -67,7 +70,14 @@ const CreateEvent = () => {
         imageUrl: '',
         linkedinUrl: ''
       }
-    ]
+    ],
+    applicationForm: {
+      educationRequired: false,
+      experienceRequired: false,
+      profilesRequired: false,
+      contactRequired: false,
+      tShirtSizeRequired: false
+    }
   };
 
   const apiCall = async (payload) => {

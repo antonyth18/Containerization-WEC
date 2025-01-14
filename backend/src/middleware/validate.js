@@ -85,7 +85,14 @@ export const eventSchema = z.object({
       }
       return true;
     },{message : "Event person name must be provided"})
-  ).optional()
+  ).optional(),
+  applicationForm: z.object({
+    educationRequired: z.boolean().optional(),
+    experienceRequired: z.boolean().optional(),
+    profilesRequired: z.boolean().optional(),
+    contactRequired: z.boolean().optional(),
+    tShirtSizeRequired: z.boolean().optional()
+  })
 });
 
 export const eventDraftSchema = z.object({

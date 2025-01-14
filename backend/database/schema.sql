@@ -111,7 +111,8 @@ CREATE TABLE application_forms (
     education_required BOOLEAN DEFAULT false,
     experience_required BOOLEAN DEFAULT false,
     profiles_required BOOLEAN DEFAULT false,
-    contact_required BOOLEAN DEFAULT false
+    contact_required BOOLEAN DEFAULT false,
+    tShirtSize_required BOOLEAN DEFAULT false
 );
 
 CREATE TABLE applications (

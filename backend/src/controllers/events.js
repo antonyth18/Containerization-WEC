@@ -81,9 +81,10 @@ export const createEvent = async (req, res) => {
       status,
       tracks,
       sponsors,
-      eventPeople
+      eventPeople,
+      applicationForm
     } = req.body;
-
+    
     if(id !== null){
       const deleteEvent = await prisma.event.delete({
         where: {
@@ -106,7 +107,16 @@ export const createEvent = async (req, res) => {
           createdById: req.session.userId,
           eventTimeline: { create: eventTimeline },
           eventLinks: { create: eventLinks },
-          eventBranding: { create: eventBranding }
+          eventBranding: { create: eventBranding },
+          applicationForm: {
+            create: {
+              educationRequired: applicationForm.educationRequired,
+              experienceRequired: applicationForm.experienceRequired,
+              profilesRequired: applicationForm.profilesRequired,
+              contactRequired: applicationForm.contactRequired,
+              tShirtSizeRequired: applicationForm.tShirtSizeRequired
+            }
+          }
         }
       });
 
