@@ -48,7 +48,7 @@ export const getEventById = async (req, res) => {
         sponsors: true,
         eventPeople: true,
         applicationForm: true,
-        customQuestion: true
+        customQuestions: true
       }
     });
 
