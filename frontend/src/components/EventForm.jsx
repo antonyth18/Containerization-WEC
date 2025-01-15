@@ -315,7 +315,7 @@ const EventForm = ({
       profilesRequired: formData.applicationForm.profilesRequired || false,
       tShirtSizeRequired: formData.applicationForm.tShirtSizeRequired || false
     },
-    customQuestion: formData.customQuestion
+    customQuestions: formData.customQuestions
     .filter(question => question.questionText.trim() !== '') // Include only if questionText exists
     .map(question => ({
       questionText: question.questionText.trim(), 
@@ -1344,14 +1344,14 @@ const EventForm = ({
                 <input
                   type="text"
                   value={question.questionText || ''}
-                  onChange={(e) => handleArrayChange(e, 'customQuestion', index)}
+                  onChange={(e) => handleArrayChange(e, 'customQuestions', index)}
                   name="questionText"
                   placeholder="Question Text"
                   className="input-field mr-4 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 />
                 <select
                   value={question.questionType || ''}
-                  onChange={(e) => handleArrayChange(e, 'customQuestion', index)}
+                  onChange={(e) => handleArrayChange(e, 'customQuestions', index)}
                   name="questionType"
                   className="input-field mt-2 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 >
@@ -1373,7 +1373,7 @@ const EventForm = ({
                             updatedOptions[optionIndex] = e.target.value;
                             handleArrayChange(
                               { target: { name: 'options', value: updatedOptions } },
-                              'customQuestion',
+                              'customQuestions',
                               index
                             );
                           }}
@@ -1386,7 +1386,7 @@ const EventForm = ({
                             const updatedOptions = question.options.filter((_, i) => i !== optionIndex);
                             handleArrayChange(
                               { target: { name: 'options', value: updatedOptions } },
-                              'customQuestion',
+                              'customQuestions',
                               index
                             );
                           }}
@@ -1402,7 +1402,7 @@ const EventForm = ({
                         const updatedOptions = [...(question.options || []), ''];
                         handleArrayChange(
                           { target: { name: 'options', value: updatedOptions } },
-                          'customQuestion',
+                          'customQuestions',
                           index
                         );
                       }}
@@ -1417,9 +1417,9 @@ const EventForm = ({
                     type="checkbox"
                     checked={question.isRequired}
                     onChange={(e) => {
-                      const updatedQuestions = [...formData.customQuestion];
+                      const updatedQuestions = [...formData.customQuestions];
                       updatedQuestions[index].isRequired = e.target.checked;
-                      setFormData({ ...formData, customQuestion: updatedQuestions });
+                      setFormData({ ...formData, customQuestions: updatedQuestions });
                     }}
                     className="mr-2"
                   />
@@ -1428,8 +1428,8 @@ const EventForm = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const updatedQuestions = formData.customQuestion.filter((_, i) => i !== index);
-                    setFormData({ ...formData, customQuestion: updatedQuestions });
+                    const updatedQuestions = formData.customQuestions.filter((_, i) => i !== index);
+                    setFormData({ ...formData, customQuestions: updatedQuestions });
                   }}
                   className="mt-4 text-red-500"
                 >
@@ -1446,7 +1446,7 @@ const EventForm = ({
                   options: [],
                   isRequired: false,
                 };
-                setFormData({ ...formData, customQuestion: [...formData.customQuestion, newQuestion] });
+                setFormData({ ...formData, customQuestions: [...formData.customQuestions, newQuestion] });
               }}
               className="mt-4 text-blue-500"
             >
