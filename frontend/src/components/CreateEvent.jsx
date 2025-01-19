@@ -78,7 +78,7 @@ const CreateEvent = () => {
       contactRequired: false,
       tShirtSizeRequired: false
     },
-    customQuestion: [
+    customQuestions: [
       {
         questionText: '',
         questionType: '',

@@ -85,7 +85,7 @@ export const createEvent = async (req, res) => {
       sponsors,
       eventPeople,
       applicationForm,
-      customQuestion,
+      customQuestions,
     } = req.body;
     
     if(id !== null){
@@ -178,9 +178,9 @@ export const createEvent = async (req, res) => {
       }
 
       // Take the customQuestions as list of JSON object of questionText, questionType, options, isReqiured
-      if (customQuestion && customQuestion.length > 0 ) {
-        await prisma.customQuestion.createMany({
-          data: customQuestion.map(question => ({
+      if (customQuestions && customQuestions.length > 0 ) {
+        await prisma.customQuestions.createMany({
+          data: customQuestions.map(question => ({
             ...question,
             eventId: event.id
           }))

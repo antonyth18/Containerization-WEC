@@ -12,6 +12,7 @@ const EventForm = ({
   
   // This block of code stores the initalization of all the state variables (fields and entries) in the form
   const [formData, setFormData] = useState(localFormData);
+  console.log(formData);
 
   // This block of code changes the state of the form data when the user types in the input fields
   const handleChange = (e, section = null) => {
@@ -477,64 +478,64 @@ const EventForm = ({
   // This block of code returns the form to be displayed on the page (every element is a part of the form)
   return (
     <div className="bg-gray-100 py-12 pb-8">
-    <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md">
+    <div className="w-[70%] mx-auto mt-14 px-10 py-8 bg-white rounded-xl shadow-md">
       <h2 className="text-3xl font-bold mb-4 mt-2">{mode === 1 ? 'Create Event' : 'Edit Event'}</h2>
       {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">{error}</div>}
       <form onSubmit={handleSubmit} className="space-y-6">
         <ul className="hidden md:flex justify-center items-center space-x-3">
           <li
-            className={`px-6 py-2 cursor-pointer text-base border rounded-full font-medium text-center
+            className={`px-6 py-2 cursor-pointer text-base border-b-2 font-medium text-center
             ${toggle === 1 
-              ? 'text-white font-medium bg-black border-black' 
-              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
+              ? 'text-black border-black font-medium' 
+              : 'text-gray-500 hover:text-gray-600'}`}
             onClick={() => updateToggle(1)}>
               Details
           </li>
           <li
-            className={`px-6 py-2 cursor-pointer text-base border rounded-full font-medium text-center
+            className={`px-6 py-2 cursor-pointer text-base border-b-2 font-medium text-center
             ${toggle === 2 
-              ? 'text-white font-medium bg-black border-black' 
-              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
+              ? 'text-black border-black font-medium' 
+              : 'text-gray-500 hover:text-gray-600'}`}
             onClick={() => updateToggle(2)}>
               Timeline
           </li>
           <li
-            className={`px-6 py-2 cursor-pointer text-base border rounded-full font-medium text-center
+            className={`px-6 py-2 cursor-pointer text-base border-b-2 font-medium text-center
             ${toggle === 3 
-              ? 'text-white font-medium bg-black border-black' 
-              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
+              ? 'text-black border-black font-medium' 
+              : 'text-gray-500 hover:text-gray-600'}`}
             onClick={() => updateToggle(3)}>
               Links &amp; Branding
           </li>
           <li
-            className={`px-6 py-2 cursor-pointer text-base border rounded-full font-medium text-center
+            className={`px-6 py-2 cursor-pointer text-base border-b-2 font-medium text-center
             ${toggle === 4 
-              ? 'text-white font-medium bg-black border-black' 
-              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
+              ? 'text-black border-black font-medium' 
+              : 'text-gray-500 hover:text-gray-600'}`}
             onClick={() => updateToggle(4)}>
               Track Prizes
           </li>
           <li
-            className={`px-6 py-2 cursor-pointer text-base border rounded-full font-medium text-center
+            className={`px-6 py-2 cursor-pointer text-base border-b-2 font-medium text-center
             ${toggle === 5 
-              ? 'text-white font-medium bg-black border-black' 
-              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
+              ? 'text-black border-black font-medium' 
+              : 'text-gray-500 hover:text-gray-600'}`}
             onClick={() => updateToggle(5)}>
               Sponsors
           </li>
           <li
-            className={`px-6 py-2 cursor-pointer text-base border rounded-full font-medium text-center
+            className={`px-6 py-2 cursor-pointer text-base border-b-2 font-medium text-center
             ${toggle === 6 
-              ? 'text-white font-medium bg-black border-black' 
-              : 'text-gray-500 border-gray-200 shadow-sm hover:text-white hover:bg-black hover:border-black'}`}
+              ? 'text-black border-black font-medium' 
+              : 'text-gray-500 hover:text-gray-600'}`}
             onClick={() => updateToggle(6)}>
               People
           </li>
           <li
             className={`px-4 py-2 cursor-pointer text-base border-b-2 font-medium text-center
             ${toggle === 7 
-              ? 'text-blue-500 border-blue-500 font-medium' 
-              : 'text-gray-500 hover:text-gray-600 border-transparent'}`}
+              ? 'text-black border-black font-medium' 
+              : 'text-gray-500 hover:text-gray-600'}`}
             onClick={() => updateToggle(7)}>
               Application
           </li>
@@ -1236,16 +1237,11 @@ const EventForm = ({
           >
             Add new Person
           </button>
-        </div>
-        <div className="flex">
-          { formData.status === 'DRAFT' &&
-          <button type="submit" className="bg-blue-500 text-white py-2.5 px-6 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex ml-auto mr-3" name="action" value="draft"  style={fieldStyle(6)}>
-           Draft
-          </button>}
-          <button type="submit" className="bg-blue-500 text-white py-2.5 px-6 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex" name="action" value="create"  style={fieldStyle(6)}>
-            {mode === 1 ? 'Create Event' : 'Edit Event'}
+          <button className="btn-primary mt-6 flex ml-auto !py-2.5" onClick={handleClick}>
+            Next
           </button>
         </div>
+        
 
         <div style={fieldStyle(7)}>
         <h3 className="text-xl font-semibold text-gray-800">Application Form</h3>
@@ -1339,7 +1335,7 @@ const EventForm = ({
             </label>
 
             {/*Custom Questions*/}
-            {formData.customQuestions.map((question, index) => (
+            {formData.customQuestions?.map((question, index) => (
               <div key={index} className="border p-4 rounded mt-4">
                 <input
                   type="text"
@@ -1428,7 +1424,7 @@ const EventForm = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const updatedQuestions = formData.customQuestions.filter((_, i) => i !== index);
+                    const updatedQuestions = formData.customQuestions?.filter((_, i) => i !== index);
                     setFormData({ ...formData, customQuestions: updatedQuestions });
                   }}
                   className="mt-4 text-red-500"
@@ -1452,7 +1448,17 @@ const EventForm = ({
             >
               Add Question
             </button>
+            
         </div>
+      </div>
+      <div className="flex">
+          { formData.status === 'DRAFT' &&
+          <button type="submit" className="btn-primary ml-auto mr-3" name="action" value="draft"  style={fieldStyle(7)}>
+           Draft
+          </button>}
+          <button type="submit" className="btn-primary" name="action" value="create"  style={fieldStyle(7)}>
+            {mode === 1 ? 'Create Event' : 'Edit Event'}
+          </button>
       </div>
 
 
