@@ -113,10 +113,10 @@ export const eventDraftSchema = z.object({
   maxTeamSize: z.number().positive().optional().nullable(),
   eventTimeline: z.object({
     timezone: z.string(),
-    applicationsStart: z.string().datetime(),
-    applicationsEnd: z.string().datetime(),
-    eventStart: z.string().datetime(),
-    eventEnd: z.string().datetime(),
+    applicationsStart: z.string().datetime().nullable(),
+    applicationsEnd: z.string().datetime().nullable(),
+    eventStart: z.string().datetime().nullable(),
+    eventEnd: z.string().datetime().nullable(),
     rsvpDeadlineDays: z.number().nullable()
   }),
   eventLinks: z.object({

@@ -280,11 +280,11 @@ model EventTimeline {
   id                Int      @id @default(autoincrement())
   eventId           Int      @unique
   timezone          String
-  applicationsStart DateTime
-  applicationsEnd   DateTime
+  applicationsStart DateTime?
+  applicationsEnd   DateTime?
   rsvpDeadlineDays  Int
-  eventStart        DateTime
-  eventEnd          DateTime
+  eventStart        DateTime?
+  eventEnd          DateTime?
   event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 

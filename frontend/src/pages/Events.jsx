@@ -34,26 +34,28 @@ const Events = () => {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`, { withCredentials: true });
       const eventList = response.data;
       const draftedEvents = eventList.filter(event => event.status === 'DRAFT');
+      const completeEvents = eventList.filter(event => event.status === 'PUBLISHED');
       setDrafts(draftedEvents);
       console.log(drafts);
       
       if(searchWord !== '') {
-        const searchedEventList = eventList.filter(event => event.name.toLowerCase().includes(searchWord.toLowerCase()));
+        const searchedEventList = events.filter(event => event.name.toLowerCase().includes(searchWord.toLowerCase()));
         setEvents(searchedEventList);
       } else {
         if(selected === 'Hackathons') {
-          const hackathons = eventList.filter(event => event.type === 'HACKATHON');
+          const hackathons = completeEvents.filter(event => event.type === 'HACKATHON');
           setEvents(hackathons);
         } else if(selected === 'General Events') {
-          const generalEvents = eventList.filter(event => event.type === 'GENERAL_EVENT');
+          const generalEvents = completeEvents.filter(event => event.type === 'GENERAL_EVENT');
           setEvents(generalEvents);
         } else if(selected === 'Created Events') {
-          const createdEvents = eventList.filter(event => event.createdById === user.id);
+          const createdEvents = completeEvents.filter(event => event.createdById === user.id);
           setEvents(createdEvents);
         } else if(selected === 'Drafts') {
-          setEvents(drafts);
+          const myDrafts = drafts.filter(draft => draft.createdById === user.id);
+          setEvents(myDrafts);
         } else {
-          setEvents(eventList);
+          setEvents(completeEvents);
         }
       }
       console.log(user);

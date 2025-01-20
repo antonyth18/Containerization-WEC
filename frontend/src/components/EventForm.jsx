@@ -188,18 +188,18 @@ const EventForm = ({
       if (!formData.name || formData.name.trim().length < 3) {
         validationError.name = 'Event name is required for a draft (minimum 3 characters).';
       }
-      if (!formData.eventTimeline.eventStart || formData.eventTimeline.eventStart.trim() === '') {
-        validationError.eventStart = 'Event start date is required.';
-      }
-      if (!formData.eventTimeline.eventEnd || formData.eventTimeline.eventEnd.trim() === '') {
-        validationError.eventEnd = 'Event end date is required.';
-      }
-      if (!formData.eventTimeline.applicationsStart || formData.eventTimeline.applicationsStart.trim() === '') {
-        validationError.applicationsStart = 'Applications start date is required.';
-      }
-      if (!formData.eventTimeline.applicationsEnd || formData.eventTimeline.applicationsEnd.trim() === '') {
-        validationError.applicationsEnd = 'Applications end date is required.';
-      }
+      // if (!formData.eventTimeline.eventStart || formData.eventTimeline.eventStart.trim() === '') {
+      //   validationError.eventStart = 'Event start date is required.';
+      // }
+      // if (!formData.eventTimeline.eventEnd || formData.eventTimeline.eventEnd.trim() === '') {
+      //   validationError.eventEnd = 'Event end date is required.';
+      // }
+      // if (!formData.eventTimeline.applicationsStart || formData.eventTimeline.applicationsStart.trim() === '') {
+      //   validationError.applicationsStart = 'Applications start date is required.';
+      // }
+      // if (!formData.eventTimeline.applicationsEnd || formData.eventTimeline.applicationsEnd.trim() === '') {
+      //   validationError.applicationsEnd = 'Applications end date is required.';
+      // }
       if (Object.keys(validationError).length > 0) {
         setErrorsInValidation(validationError);
         return false;
@@ -248,10 +248,10 @@ const EventForm = ({
       minTeamSize: parseInt(formData.minTeamSize, 10) || null,
       maxTeamSize: parseInt(formData.maxTeamSize, 10) || null,
       eventTimeline: {         // Event timeline is a mandatory field
-        eventStart: convertToFormattedIST(formData.eventTimeline.eventStart),
-        eventEnd: convertToFormattedIST(formData.eventTimeline.eventEnd),
-        applicationsStart: convertToFormattedIST(formData.eventTimeline.applicationsStart),
-        applicationsEnd: convertToFormattedIST(formData.eventTimeline.applicationsEnd),
+        eventStart: formData.eventTimeline.eventStart ? convertToFormattedIST(formData.eventTimeline.eventStart) : null,
+        eventEnd: formData.eventTimeline.eventEnd ? convertToFormattedIST(formData.eventTimeline.eventEnd) : null,
+        applicationsStart: formData.eventTimeline.applicationsStart ? convertToFormattedIST(formData.eventTimeline.applicationsStart) : null,
+        applicationsEnd: formData.eventTimeline.applicationsEnd ? convertToFormattedIST(formData.eventTimeline.applicationsEnd) : null,
         timezone: formData.eventTimeline.timezone,
         rsvpDeadlineDays: parseInt(formData.eventTimeline.rsvpDeadlineDays, 10) || 0
       },
