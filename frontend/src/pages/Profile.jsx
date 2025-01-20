@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext';
+import { useAuth0 } from "@auth0/auth0-react";
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user } = useAuth0();
   const [profile, setProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -21,8 +22,9 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, { withCredentials: true });
-      setProfile(response.data);
+      // const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, { withCredentials: true });
+      const response = { data: {}}
+      setProfile(user);
       setFormData({
         profile: response.data.profile || {},
         education: response.data.education || [],
