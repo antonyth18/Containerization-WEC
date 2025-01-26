@@ -64,7 +64,30 @@ export const getEventById = async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
 
-    res.json(event);
+    const independentPrizes = await prisma.prize.findMany({
+      where: { trackId: null,
+        eventId: event.id,
+       },
+    });
+
+    if(independentPrizes.length === 0) {
+      res.json(event);
+    } else { 
+        const eventUpdated = {
+        ...event,
+        tracks: [
+          ...event.tracks,
+          ...independentPrizes.map((prize) => ({
+            name: '',
+            description: '',
+            prizes: [prize]
+          }))
+        ]
+        };
+        res.json(eventUpdated);
+    }
+  
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to fetch event' });
@@ -96,7 +119,11 @@ export const createEvent = async (req, res) => {
       customQuestions,
     } = req.body;
 
-    console.log(eventBranding);
+    const tracksUpdated = tracks.map(({ id, prizes, ...rest }) => ({
+      ...rest,
+      prizes: prizes.map(({ trackId, ...prizeRest }) => prizeRest),
+    }));
+  
     
     if(id !== null){
       const deleteEvent = await prisma.event.delete({
@@ -140,9 +167,9 @@ export const createEvent = async (req, res) => {
         }
       });
 
-      if (tracks && tracks.length > 0) {
+      if (tracksUpdated && tracksUpdated.length > 0) {
         await Promise.all(
-          tracks.map(async (track) => {
+          tracksUpdated.map(async (track) => {
             // Adds only prizes in case track name is empty
             if (track.name.trim() === '' && track.prizes && track.prizes.length > 0) {
               await Promise.all(
@@ -235,6 +262,11 @@ export const updateEvent = async (req, res) => {
     eventPeople
   } = req.body;
 
+  const tracksUpdated = tracks.map(({ id, prizes, ...rest }) => ({
+    ...rest,
+    prizes: prizes.map(({ trackId, ...prizeRest }) => prizeRest),
+  }));
+
   try {
     const transaction = await prisma.$transaction( async (prisma) => {
 
@@ -314,6 +346,55 @@ export const updateEvent = async (req, res) => {
         return idsToDelete;
 
       }
+
+      await prisma.track.deleteMany({
+        where: {
+          eventId : parseInt(eventId),
+        },
+      });
+
+      await prisma.prize.deleteMany({
+        where: {
+          eventId : parseInt(eventId),
+        },
+      });
+
+      if (tracksUpdated && tracksUpdated.length > 0) {
+        await Promise.all(
+          tracksUpdated.map(async (track) => {
+            // Adds only prizes in case track name is empty
+            if (track.name.trim() === '' && track.prizes && track.prizes.length > 0) {
+              await Promise.all(
+                track.prizes.map(async (prize) => {
+                  if (prize.title.trim() !== '') {
+                    await prisma.prize.create({
+                      data: {
+                        ...prize,
+                        trackId: null,
+                        eventId: parseInt(eventId)
+                      }
+                    });
+                  }
+                })
+              );
+            } else if (track.name.trim() !== '') {
+              const createdTrack = await prisma.track.create({
+                data: {
+                  ...track,
+                  eventId: parseInt(eventId),
+                  prizes: {
+                    create: track.prizes.map(prize => ({
+                      ...prize,
+                      eventId: parseInt(eventId),
+                    }))
+                  }
+                }
+              });
+            }
+          })
+        );
+      }
+
       
       const sponsorsToDelete = await getIdsToDelete('sponsor', sponsors);
 

@@ -1463,7 +1463,7 @@ const EventForm = ({
            Draft
           </button>}
           <button type="submit" className="btn-primary" name="action" value="create"  style={fieldStyle(7)}>
-            {mode === 1 ? 'Create Event' : 'Edit Event'}
+            { (mode === 1 || formData.status === 'DRAFT') ? 'Create Event' : 'Edit Event'}
           </button>
       </div>
 
