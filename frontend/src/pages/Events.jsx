@@ -7,6 +7,7 @@ import Button from '../components/Button';
 import { EditBtn } from '../svg/EditBtn';
 import { DeleteBtn } from '../svg/DeleteBtn';
 import AlertDialog from '../components/AlertDialog';
+import { deleteImage } from '../helpers/images';
 
 
 const Events = () => {
@@ -98,10 +99,11 @@ const Events = () => {
     navigate(`/edit-event/${id}`);
   }
 
-  const handleEventDeleteClick = async (id) => {
+  const handleEventDeleteClick = async (event) => {
     try {
-      console.log(id);
-      const response = await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${id}`, { withCredentials: true });
+      console.log(event);
+      await deleteImage(event.eventBranding.coverImage);
+      const response = await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${event.id}`, { withCredentials: true });
       console.log('Event deleted:', response.data);
       fetchEvents();
     } catch (error) {
@@ -200,7 +202,7 @@ const Events = () => {
                 {user && user.id === event.createdById && (
                     <DeleteBtn className="w-6 h-6 cursor-pointer hover:bg-gray-200 rounded-sm" onClick={() => {
                       setIsDialogOpen(true)
-                      setEventToDelete(event.id);
+                      setEventToDelete(event);
                     }}/>
                 )}
                 <>

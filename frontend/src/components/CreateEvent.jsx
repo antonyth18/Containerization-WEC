@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import EventForm from './EventForm';
 
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
 const CreateEvent = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
@@ -38,8 +46,11 @@ const CreateEvent = () => {
       logoFile: null,
       faviconUrl: '',
       faviconFile: null,
-      coverImageUrl: '',
-      coverImageFile: null
+      coverImage: {
+        filePath: '',
+        bucket: '',
+        publicUrl: '',
+      }
     },
     tracks: [
       {
@@ -90,7 +101,8 @@ const CreateEvent = () => {
 
   const apiCall = async (payload) => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/events`, payload, { withCredentials: true });
+      console.log('Sending payload:', JSON.stringify(payload, null, 2));
+      const response = await api.post(`${import.meta.env.VITE_API_URL}/api/events`, payload, { withCredentials: true });
       console.log('Event created:', response.data);
       navigate('/events');
     } catch (error) {

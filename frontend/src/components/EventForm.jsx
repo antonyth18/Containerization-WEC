@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { uploadImage } from '../helpers/images';
 
 const EventForm = ({
     mode,
@@ -188,18 +189,6 @@ const EventForm = ({
       if (!formData.name || formData.name.trim().length < 3) {
         validationError.name = 'Event name is required for a draft (minimum 3 characters).';
       }
-      // if (!formData.eventTimeline.eventStart || formData.eventTimeline.eventStart.trim() === '') {
-      //   validationError.eventStart = 'Event start date is required.';
-      // }
-      // if (!formData.eventTimeline.eventEnd || formData.eventTimeline.eventEnd.trim() === '') {
-      //   validationError.eventEnd = 'Event end date is required.';
-      // }
-      // if (!formData.eventTimeline.applicationsStart || formData.eventTimeline.applicationsStart.trim() === '') {
-      //   validationError.applicationsStart = 'Applications start date is required.';
-      // }
-      // if (!formData.eventTimeline.applicationsEnd || formData.eventTimeline.applicationsEnd.trim() === '') {
-      //   validationError.applicationsEnd = 'Applications end date is required.';
-      // }
       if (Object.keys(validationError).length > 0) {
         setErrorsInValidation(validationError);
         return false;
@@ -267,7 +256,11 @@ const EventForm = ({
         brandColor: formData.eventBranding.brandColor,
         logoUrl: formData.eventBranding.logoUrl || null,
         faviconUrl: formData.eventBranding.faviconUrl || null,
-        coverImageUrl: formData.eventBranding.coverImageUrl || null
+        coverImage: {
+          filePath: formData.eventBranding.coverImage.filePath || null,
+          bucket: formData.eventBranding.coverImage.bucket || null,
+          publicUrl: formData.eventBranding.coverImage.publicUrl || null,
+        }
       },
       eventPeople: formData.eventPeople
       .filter(person => person.name || person.bio || person.imageUrl || person.linkedinUrl)       // Event people are optional, but if provided, persons name must be present
@@ -405,7 +398,7 @@ const EventForm = ({
   const FILE_SIZE_LIMIT = 2 * 1024 * 1024; // 2MB
 
   // Generalized handle file change function
-  const handleFileChange = (e, type) => {
+  const handleFileChange = async (e, type) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       if (selectedFile.size > FILE_SIZE_LIMIT) {
@@ -413,13 +406,18 @@ const EventForm = ({
         return;
       }
       setErrorMessage(""); // Clear any previous error messages
-      const fileURL = URL.createObjectURL(selectedFile);
+      console.log(selectedFile);
+      const {filePath, publicUrl, bucket} = await uploadImage(selectedFile);
+      console.log("yo1");
       setFormData((prevState) => ({
         ...prevState,
         eventBranding: {
           ...prevState.eventBranding,
-          [`${type}Url`]: fileURL,
-          [`${type}File`]: selectedFile,
+          coverImage: {
+            filePath: filePath,
+            bucket: bucket,
+            publicUrl: publicUrl,
+          }
         },
       }));
     }
@@ -435,23 +433,28 @@ const EventForm = ({
     setDragActive(false);
   };
 
-  const handleDrop = (e, type) => {
+  const handleDrop = async (e, type) => {
     e.preventDefault();
     setDragActive(false);
     const droppedFile = e.dataTransfer.files[0];
+    console.log(droppedFile);
     if (droppedFile) {
       if (droppedFile.size > FILE_SIZE_LIMIT) {
         setErrorMessage("File size exceeds 2MB. Please upload a smaller file.");
         return;
       }
       setErrorMessage(""); // Clear any previous error messages
-      const fileURL = URL.createObjectURL(droppedFile);
+      const {filePath, publicUrl, bucket} = await uploadImage(droppedFile);
+      console.log("yo2");
       setFormData((prevState) => ({
         ...prevState,
         eventBranding: {
           ...prevState.eventBranding,
-          [`${type}Url`]: fileURL,
-          [`${type}File`]: droppedFile,
+          coverImage: {
+            filePath: filePath,
+            bucket: bucket,
+            publicUrl: publicUrl,
+          }
         },
       }));
     }
@@ -467,8 +470,11 @@ const EventForm = ({
       ...prevState,
       eventBranding: {
         ...prevState.eventBranding,
-        [`${type}Url`]: "",
-        [`${type}File`]: null,
+        coverImage: {
+          filePath: '',
+          bucket: '',
+          publicUrl: '',
+        }
       },
     }));
     setErrorMessage(""); // Clear error message on remove
@@ -974,7 +980,7 @@ const EventForm = ({
           <div className="p-4 border rounded-lg shadow-md bg-white">
             <h2 className="text-lg font-medium mb-4 text-gray-700">Upload Cover Image</h2>
 
-            <div style={fieldStyle(3)}>
+            {/* <div style={fieldStyle(3)}>
               <label htmlFor="coverImageUrl" className="block text-sm font-medium text-gray-700">Cover Image URL</label>
               <input
                 type="url"
@@ -984,8 +990,8 @@ const EventForm = ({
                 onChange={(e) => handleChange(e, 'eventBranding')}
                 className={inputFieldStyle}
               />
-            </div>
-            <div className="text-center mt-4">or</div>
+            </div> */}
+            {/* <div className="text-center mt-4">or</div> */}
 
             <label htmlFor="coverImageFile" className="block text-sm font-medium text-gray-700 mt-2 mb-2">
               Cover Image File (Upload or Drag & Drop)
@@ -1020,10 +1026,10 @@ const EventForm = ({
             {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
 
             {/* File Preview */}
-            {formData.eventBranding.coverImageUrl && (
+            {formData.eventBranding.coverImage.publicUrl && (
               <div className="mt-4">
                 <img
-                  src={formData.eventBranding.coverImageUrl}
+                  src={formData.eventBranding.coverImage.publicUrl}
                   alt="Cover Image Preview"
                   className="w-2/3 h-64 object-contain mx-auto border border-gray-300 rounded-md"
                 />

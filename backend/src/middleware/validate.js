@@ -30,7 +30,11 @@ export const eventSchema = z.object({
     brandColor: z.string().optional().nullable(),
     logoUrl: z.string().url().optional().nullable(),
     faviconUrl: z.string().url().optional().nullable(),
-    coverImageUrl: z.string().url().optional().nullable()
+    coverImage: z.object({
+      filePath: z.string().optional().nullable(),
+      bucket: z.string().optional().nullable(),
+      publicUrl: z.string().url().optional().nullable(),
+    }).optional().nullable()
   }).optional(),
   
   // If track description is given, track name is necessary

@@ -9,7 +9,11 @@ export const getEvents = async (req, res) => {
       include: {
         eventTimeline: true,
         eventLinks: true,
-        eventBranding: true,
+        eventBranding: {
+          include: {
+            coverImage: true
+          }
+        },
         tracks: {
           include: {
             prizes: true
@@ -39,7 +43,11 @@ export const getEventById = async (req, res) => {
       include: {
         eventTimeline: true,
         eventLinks: true,
-        eventBranding: true,
+        eventBranding: {
+          include: {
+            coverImage: true
+          }
+        },
         tracks: {
           include: {
             prizes: true
@@ -87,6 +95,8 @@ export const createEvent = async (req, res) => {
       applicationForm,
       customQuestions,
     } = req.body;
+
+    console.log(eventBranding);
     
     if(id !== null){
       const deleteEvent = await prisma.event.delete({
@@ -95,7 +105,7 @@ export const createEvent = async (req, res) => {
         },
       });
     }
-    console.log(req);
+    
     const transaction = await prisma.$transaction(async (prisma) => {
       const event = await prisma.event.create({
         data: {
@@ -110,7 +120,14 @@ export const createEvent = async (req, res) => {
           createdById: req.session.userId,
           eventTimeline: { create: eventTimeline },
           eventLinks: { create: eventLinks },
-          eventBranding: { create: eventBranding },
+          eventBranding: {
+            create: {
+              ...eventBranding,
+              coverImage: eventBranding.coverImage ? {
+                create: eventBranding.coverImage
+              } : undefined
+            }
+          },
           applicationForm: {
             create: {
               educationRequired: applicationForm.educationRequired,
@@ -261,7 +278,18 @@ export const updateEvent = async (req, res) => {
               where : {
                 eventId: parseInt(eventId)
               },
-              data: eventBranding
+              data: {
+                ...eventBranding,
+                coverImage: eventBranding.coverImage ? {
+                  upsert: {
+                    where: {
+                      eventId: parseInt(eventId)
+                    },
+                    create: eventBranding.coverImage,
+                    update: eventBranding.coverImage
+                  }
+                } : undefined
+              }
             }
            } : undefined
         }
