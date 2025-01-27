@@ -254,13 +254,21 @@ const EventForm = ({
       }),
       eventBranding: {
         brandColor: formData.eventBranding.brandColor,
-        logoUrl: formData.eventBranding.logoUrl || null,
-        faviconUrl: formData.eventBranding.faviconUrl || null,
         coverImage: {
           filePath: formData.eventBranding.coverImage.filePath || null,
           bucket: formData.eventBranding.coverImage.bucket || null,
           publicUrl: formData.eventBranding.coverImage.publicUrl || null,
-        }
+        },
+        faviconImage: {
+          filePath: formData.eventBranding.faviconImage.filePath || null,
+          bucket: formData.eventBranding.faviconImage.bucket || null,
+          publicUrl: formData.eventBranding.faviconImage.publicUrl || null,
+        },
+        logoImage: {
+          filePath: formData.eventBranding.logoImage.filePath || null,
+          bucket: formData.eventBranding.logoImage.bucket || null,
+          publicUrl: formData.eventBranding.logoImage.publicUrl || null,
+        },
       },
       eventPeople: formData.eventPeople
       .filter(person => person.name || person.bio || person.imageUrl || person.linkedinUrl)       // Event people are optional, but if provided, persons name must be present
@@ -399,6 +407,7 @@ const EventForm = ({
 
   // Generalized handle file change function
   const handleFileChange = async (e, type) => {
+    console.log(type);
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       if (selectedFile.size > FILE_SIZE_LIMIT) {
@@ -413,7 +422,7 @@ const EventForm = ({
         ...prevState,
         eventBranding: {
           ...prevState.eventBranding,
-          coverImage: {
+          [`${type}`]: {
             filePath: filePath,
             bucket: bucket,
             publicUrl: publicUrl,
@@ -436,6 +445,7 @@ const EventForm = ({
   const handleDrop = async (e, type) => {
     e.preventDefault();
     setDragActive(false);
+    console.log(type);
     const droppedFile = e.dataTransfer.files[0];
     console.log(droppedFile);
     if (droppedFile) {
@@ -450,7 +460,7 @@ const EventForm = ({
         ...prevState,
         eventBranding: {
           ...prevState.eventBranding,
-          coverImage: {
+          [`${type}`]: {
             filePath: filePath,
             bucket: bucket,
             publicUrl: publicUrl,
@@ -470,7 +480,7 @@ const EventForm = ({
       ...prevState,
       eventBranding: {
         ...prevState.eventBranding,
-        coverImage: {
+        [`${type}`]: {
           filePath: '',
           bucket: '',
           publicUrl: '',
@@ -842,20 +852,6 @@ const EventForm = ({
 
           <div className="p-4 border rounded-lg shadow-md bg-white">
             <h2 className="text-lg font-medium mb-4 text-gray-700">Upload Logo</h2>
-
-            <div style={fieldStyle(3)}>
-              <label htmlFor="logoUrl" className="block text-sm font-medium text-gray-700">Logo URL</label>
-              <input
-                type="url"
-                id="logoUrl"
-                name="logoUrl"
-                value={formData.eventBranding.logoUrl || ''}
-                onChange={(e) => handleChange(e, 'eventBranding')}
-                className={inputFieldStyle}
-              />
-
-            </div>
-                <div className="text-center mt-4">or</div>
             {/* File Upload & Drag-and-Drop */}
             
               <label htmlFor="logoFile" className="block text-sm font-medium text-gray-700 mt-2 mb-2">
@@ -869,7 +865,7 @@ const EventForm = ({
               <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, 'logo')}
+                onDrop={(e) => handleDrop(e, 'logoImage')}
                 className={`border-2 border-dashed p-4 rounded-lg text-center cursor-pointer ${
                 dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
                 }`}
@@ -877,15 +873,15 @@ const EventForm = ({
                 <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => handleFileChange(e, 'logo')}
+                onChange={(e) => handleFileChange(e, 'logoImage')}
                 className="hidden"
                 id="logoFile"
                 />
                 <label htmlFor="logoFile" className="cursor-pointer">
                   {dragActive
                   ? 'Drop the file here...'
-                  : formData.eventBranding.logoFile
-                  ? `Selected File: ${formData.eventBranding.logoFile.name}`
+                  : formData.eventBranding.logoImage
+                  ? `Selected File: ${formData.eventBranding.logoImage}`
                   : 'Click or drag to upload a logo file'}
                 </label>
               </div>
@@ -893,15 +889,15 @@ const EventForm = ({
               {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
 
               {/* File Preview */}
-              {formData.eventBranding.logoUrl && (
+              {formData.eventBranding.logoImage.publicUrl && (
               <div className="mt-4">
               <img
-                src={formData.eventBranding.logoUrl}
+                src={formData.eventBranding.logoImage.publicUrl}
                 alt="Logo Preview"
                 className="w-32 h-32 object-contain mx-auto border border-gray-300 rounded-md"
               />
               <button
-                onClick={() => handleRemoveImage('logo')}
+                onClick={() => handleRemoveImage('logoImage')}
                 className="mt-2 px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 mb-2"
               >
                 Remove Image
@@ -913,19 +909,6 @@ const EventForm = ({
           <div className="p-4 border rounded-lg shadow-md bg-white">
             <h2 className="text-lg font-medium mb-4 text-gray-700">Upload Favicon</h2>
 
-            <div style={fieldStyle(3)}>
-              <label htmlFor="faviconUrl" className="block text-sm font-medium text-gray-700">Favicon URL</label>
-              <input
-                type="url"
-                id="faviconUrl"
-                name="faviconUrl"
-                value={formData.eventBranding.faviconUrl || ''}
-                onChange={(e) => handleChange(e, 'eventBranding')}
-                className={inputFieldStyle}
-              />
-            </div>
-            <div className="text-center mt-4">or</div>
-
             <label htmlFor="faviconFile" className="block text-sm font-medium text-gray-700 mt-2 mb-2">
               Favicon File (Upload or Drag & Drop)
             </label>
@@ -936,7 +919,7 @@ const EventForm = ({
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, 'favicon')}
+              onDrop={(e) => handleDrop(e, 'faviconImage')}
               className={`border-2 border-dashed p-4 rounded-lg text-center cursor-pointer ${
                 dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
               }`}
@@ -944,15 +927,15 @@ const EventForm = ({
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => handleFileChange(e, 'favicon')}
+                onChange={(e) => handleFileChange(e, 'faviconImage')}
                 className="hidden"
                 id="faviconFile"
               />
               <label htmlFor="faviconFile" className="cursor-pointer">
                 {dragActive
                   ? 'Drop the file here...'
-                  : formData.eventBranding.faviconFile
-                  ? `Selected File: ${formData.eventBranding.faviconFile.name}`
+                  : formData.eventBranding.faviconImage
+                  ? `Selected File: ${formData.eventBranding.faviconImage}`
                   : 'Click or drag to upload a favicon file'}
               </label>
             </div>
@@ -960,15 +943,15 @@ const EventForm = ({
             {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
 
             {/* File Preview */}
-            {formData.eventBranding.faviconUrl && (
+            {formData.eventBranding.faviconImage.publicUrl && (
               <div className="mt-4">
                 <img
-                  src={formData.eventBranding.faviconUrl}
+                  src={formData.eventBranding.faviconImage.publicUrl}
                   alt="Favicon Preview"
                   className="w-32 h-32 object-contain mx-auto border border-gray-300 rounded-md"
                 />
                 <button
-                  onClick={() => handleRemoveImage('favicon')}
+                  onClick={() => handleRemoveImage('faviconImage')}
                   className="mt-2 px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 mb-2"
                 >
                   Remove Image
@@ -979,19 +962,6 @@ const EventForm = ({
 
           <div className="p-4 border rounded-lg shadow-md bg-white">
             <h2 className="text-lg font-medium mb-4 text-gray-700">Upload Cover Image</h2>
-
-            {/* <div style={fieldStyle(3)}>
-              <label htmlFor="coverImageUrl" className="block text-sm font-medium text-gray-700">Cover Image URL</label>
-              <input
-                type="url"
-                id="coverImageUrl"
-                name="coverImageUrl"
-                value={formData.eventBranding.coverImageUrl || ''}
-                onChange={(e) => handleChange(e, 'eventBranding')}
-                className={inputFieldStyle}
-              />
-            </div> */}
-            {/* <div className="text-center mt-4">or</div> */}
 
             <label htmlFor="coverImageFile" className="block text-sm font-medium text-gray-700 mt-2 mb-2">
               Cover Image File (Upload or Drag & Drop)
@@ -1017,8 +987,8 @@ const EventForm = ({
               <label htmlFor="coverImageFile" className="cursor-pointer">
                 {dragActive
                   ? 'Drop the file here...'
-                  : formData.eventBranding.coverImageFile
-                  ? `Selected File: ${formData.eventBranding.coverImageFile.name}`
+                  : formData.eventBranding.coverImage
+                  ? `Selected File: ${formData.eventBranding.coverImage}`
                   : 'Click or drag to upload a cover image file'}
               </label>
             </div>
@@ -1044,7 +1014,7 @@ const EventForm = ({
           </div>
 
           
-          <button className="btn-primary mt-6 flex ml-auto !py-2.5" onClick={handleClick}>
+          <button className="btn-primary mt-10 flex ml-auto !py-2.5" onClick={handleClick}>
             Next
           </button>
         </div>

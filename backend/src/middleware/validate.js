@@ -28,9 +28,17 @@ export const eventSchema = z.object({
 
   eventBranding: z.object({
     brandColor: z.string().optional().nullable(),
-    logoUrl: z.string().url().optional().nullable(),
-    faviconUrl: z.string().url().optional().nullable(),
     coverImage: z.object({
+      filePath: z.string().optional().nullable(),
+      bucket: z.string().optional().nullable(),
+      publicUrl: z.string().url().optional().nullable(),
+    }).optional().nullable(),
+    faviconImage: z.object({
+      filePath: z.string().optional().nullable(),
+      bucket: z.string().optional().nullable(),
+      publicUrl: z.string().url().optional().nullable(),
+    }).optional().nullable(),
+    logoImage: z.object({
       filePath: z.string().optional().nullable(),
       bucket: z.string().optional().nullable(),
       publicUrl: z.string().url().optional().nullable(),

@@ -176,11 +176,14 @@ model EventBranding {
   id         Int     @id @default(autoincrement())
   eventId    Int     @unique
   brandColor String?
-  logoUrl    String?
-  faviconUrl String?
   event      Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  coverImage CoverImage?
+  coverImageId Int? @unique
+  faviconImageId Int? @unique
+  logoImageId Int? @unique
+  coverImage   Image?   @relation("coverImage", fields: [coverImageId], references: [id], onDelete: Cascade)
+  faviconImage Image?   @relation("faviconImage", fields: [faviconImageId], references: [id], onDelete: Cascade)
+  logoImage    Image?   @relation("logoImage", fields: [logoImageId], references: [id], onDelete: Cascade)
   
 }
 
@@ -290,15 +293,16 @@ model ProjectSubmission {
   team           Team     @relation(fields: [teamId], references: [id])
 }
 
-model CoverImage {
-  id        Int      @id @default(autoincrement())
-  eventId   Int      @unique
+model Image {
+  id        Int      @id @default(autoincrement()) 
   filePath  String?
   bucket    String?
   publicUrl String?
   createdAt DateTime @default(now())
 
-  eventBrandings EventBranding @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  coverBranding   EventBranding? @relation("coverImage")
+  faviconBranding EventBranding? @relation("faviconImage")
+  logoBranding    EventBranding? @relation("logoImage")
 }
 
 enum UserRole {

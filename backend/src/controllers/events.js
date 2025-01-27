@@ -11,7 +11,9 @@ export const getEvents = async (req, res) => {
         eventLinks: true,
         eventBranding: {
           include: {
-            coverImage: true
+            coverImage: true,
+            faviconImage: true,
+            logoImage: true,
           }
         },
         tracks: {
@@ -45,7 +47,9 @@ export const getEventById = async (req, res) => {
         eventLinks: true,
         eventBranding: {
           include: {
-            coverImage: true
+            coverImage: true,
+            faviconImage: true,
+            logoImage: true,
           }
         },
         tracks: {
@@ -125,6 +129,12 @@ export const createEvent = async (req, res) => {
               ...eventBranding,
               coverImage: eventBranding.coverImage ? {
                 create: eventBranding.coverImage
+              } : undefined,
+              faviconImage: eventBranding.faviconImage ? {
+                create: eventBranding.faviconImage
+              } : undefined,
+              logoImage: eventBranding.logoImage ? {
+                create: eventBranding.logoImage
               } : undefined
             }
           },
@@ -288,7 +298,25 @@ export const updateEvent = async (req, res) => {
                     create: eventBranding.coverImage,
                     update: eventBranding.coverImage
                   }
-                } : undefined
+                } : undefined,
+                faviconImage: eventBranding.faviconImage ? {
+                  upsert: {
+                    where: {
+                      eventId: parseInt(eventId)
+                    },
+                    create: eventBranding.faviconImage,
+                    update: eventBranding.faviconImage
+                  }
+                } : undefined,
+                logoImage: eventBranding.logoImage ? {
+                  upsert: {
+                    where: {
+                      eventId: parseInt(eventId)
+                    },
+                    create: eventBranding.logoImage,
+                    update: eventBranding.logoImage
+                  }
+                } : undefined,
               }
             }
            } : undefined

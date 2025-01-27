@@ -1,13 +1,12 @@
 import { supabase } from "./supabase";
 
 export const uploadImage = async (file) => {
+  console.log(file);
   const bucket = 'images'; 
   const fileName = `${Date.now()}-${file.name}`; 
   const { data, error } = await supabase.storage
     .from(bucket)
     .upload(fileName, file);
-
-  console.log(data);
 
   if (error) {
     console.error('Error uploading file:', error.message);
@@ -21,6 +20,7 @@ export const uploadImage = async (file) => {
 };
 
 export const deleteImage = async (file) => {
+  console.log(file);
   const {bucket, filePath} = file;
 
   const { error } = await supabase.storage.from(bucket).remove([filePath]);

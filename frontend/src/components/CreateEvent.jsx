@@ -42,11 +42,17 @@ const CreateEvent = () => {
     },
     eventBranding: {
       brandColor: '#000000',
-      logoUrl: '',
-      logoFile: null,
-      faviconUrl: '',
-      faviconFile: null,
       coverImage: {
+        filePath: '',
+        bucket: '',
+        publicUrl: '',
+      },
+      faviconImage: {
+        filePath: '',
+        bucket: '',
+        publicUrl: '',
+      },
+      logoImage: {
         filePath: '',
         bucket: '',
         publicUrl: '',

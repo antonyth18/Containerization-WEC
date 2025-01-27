@@ -103,6 +103,8 @@ const Events = () => {
     try {
       console.log(event);
       await deleteImage(event.eventBranding.coverImage);
+      await deleteImage(event.eventBranding.faviconImage);
+      await deleteImage(event.eventBranding.logoImage);
       const response = await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${event.id}`, { withCredentials: true });
       console.log('Event deleted:', response.data);
       fetchEvents();
