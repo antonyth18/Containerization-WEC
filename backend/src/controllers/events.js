@@ -325,7 +325,7 @@ export const updateEvent = async (req, res) => {
                 coverImage: eventBranding.coverImage ? {
                   upsert: {
                     where: {
-                      eventId: parseInt(eventId)
+                      id: eventBranding.coverImage.id
                     },
                     create: eventBranding.coverImage,
                     update: eventBranding.coverImage
@@ -334,7 +334,7 @@ export const updateEvent = async (req, res) => {
                 faviconImage: eventBranding.faviconImage ? {
                   upsert: {
                     where: {
-                      eventId: parseInt(eventId)
+                      id: eventBranding.faviconImage.id
                     },
                     create: eventBranding.faviconImage,
                     update: eventBranding.faviconImage
@@ -343,7 +343,7 @@ export const updateEvent = async (req, res) => {
                 logoImage: eventBranding.logoImage ? {
                   upsert: {
                     where: {
-                      eventId: parseInt(eventId)
+                      id: eventBranding.logoImage.id
                     },
                     create: eventBranding.logoImage,
                     update: eventBranding.logoImage
