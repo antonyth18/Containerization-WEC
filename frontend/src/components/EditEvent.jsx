@@ -48,10 +48,12 @@ const EditEvent = () => {
     }
   }
 
-  localFormData.eventTimeline.eventStart = (localFormData.eventTimeline.eventStart).split('.')[0];
-  localFormData.eventTimeline.eventEnd = (localFormData.eventTimeline.eventEnd).split('.')[0];
-  localFormData.eventTimeline.applicationsStart = (localFormData.eventTimeline.applicationsStart).split('.')[0];
-  localFormData.eventTimeline.applicationsEnd = (localFormData.eventTimeline.applicationsEnd).split('.')[0];
+  localFormData.eventTimeline.eventStart = localFormData.eventTimeline.eventStart ? (localFormData.eventTimeline.eventStart).split('.')[0] : '';
+  localFormData.eventTimeline.eventEnd = localFormData.eventTimeline.eventEnd ? (localFormData.eventTimeline.eventEnd).split('.')[0] : '';
+  localFormData.eventTimeline.applicationsStart = localFormData.eventTimeline.applicationsStart ? (localFormData.eventTimeline.applicationsStart).split('.')[0] : '';
+  localFormData.eventTimeline.applicationsEnd = localFormData.eventTimeline.applicationsEnd ? (localFormData.eventTimeline.applicationsEnd).split('.')[0] : '';
+
+  console.log('localform',localFormData);
 
   if (!localFormData.eventLinks) {
     localFormData.eventLinks = [
