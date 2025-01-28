@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { authAPI } from '../api/api.js';
 import Button from '../components/Button';
 
 const Register = () => {
@@ -10,12 +10,12 @@ const Register = () => {
   const [role, setRole] = useState('PARTICIPANT');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { register } = useAuth();
+  // const { register } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await register(email, username, password, role);
+      await authAPI.register(email, username, password, role);
       navigate('/');
     } catch (error) {
       setError(error.response?.data?.error || 'Failed to register');
@@ -82,18 +82,18 @@ const Register = () => {
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className={labelClasses}>Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className={inputClasses}
-              placeholder="Create a strong password"
-            />
-          </div>
+          {/*<div>*/}
+          {/*  <label htmlFor="password" className={labelClasses}>Password</label>*/}
+          {/*  <input*/}
+          {/*    type="password"*/}
+          {/*    id="password"*/}
+          {/*    value={password}*/}
+          {/*    onChange={(e) => setPassword(e.target.value)}*/}
+          {/*    required*/}
+          {/*    className={inputClasses}*/}
+          {/*    placeholder="Create a strong password"*/}
+          {/*  />*/}
+          {/*</div>*/}
 
           <div>
             <label htmlFor="role" className={labelClasses}>I want to</label>

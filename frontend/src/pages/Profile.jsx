@@ -22,8 +22,8 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
-      // const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, { withCredentials: true });
-      const response = { data: {}}
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, { withCredentials: true });
+      // const response = { data: {}}
       setProfile(user);
       setFormData({
         profile: response.data.profile || {},

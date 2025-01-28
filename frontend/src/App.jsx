@@ -1,6 +1,6 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+// import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -10,6 +10,10 @@ import Events from './pages/Events';
 import CreateEvent from './components/CreateEvent';
 import Profile from './pages/Profile';
 import {useAuth0} from "@auth0/auth0-react";
+import axios from "axios";
+import PostAuthenticate from "./components/PostAuthenticate.jsx";
+
+
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, isAuthenticated, isLoading } = useAuth0();
@@ -38,7 +42,10 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 };
 
 const App = () => {
-  const { user, isLoading } = useAuth0();
+  const { user, isLoading, isAuthenticated, getAccessTokenSilently } = useAuth0();
+
+
+
   if (isLoading) {
     return null;
   }
@@ -52,6 +59,7 @@ const App = () => {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/authenticate" element={<PostAuthenticate />} />
             <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
             <Route path="/create-event" element={
               <ProtectedRoute requiredRole="ADMIN">
