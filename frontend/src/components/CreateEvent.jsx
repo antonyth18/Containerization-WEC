@@ -112,7 +112,7 @@ const CreateEvent = () => {
       console.log('Event created:', response.data);
       navigate('/events');
     } catch (error) {
-      console.error('Error creating event:', error);
+      console.error('Error creating event:', error.response?.data);
       setError(error.response?.data?.error || 'An error occurred while creating the event. Please try again.');
     }
   }

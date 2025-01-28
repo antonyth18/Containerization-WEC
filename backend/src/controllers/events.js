@@ -269,7 +269,8 @@ export const updateEvent = async (req, res) => {
     tracks,
     status,
     sponsors,
-    eventPeople
+    eventPeople,
+    applicationForm,
   } = req.body;
 
   const tracksUpdated = tracks.map(({ id, prizes, ...rest }) => ({
@@ -351,7 +352,28 @@ export const updateEvent = async (req, res) => {
                 } : undefined,
               }
             }
-           } : undefined
+           } : undefined,
+           applicationForm: {
+            upsert: {
+              where: {
+                eventId: parseInt(eventId),
+              },
+              create: {
+                educationRequired: applicationForm.educationRequired,
+                experienceRequired: applicationForm.experienceRequired,
+                profilesRequired: applicationForm.profilesRequired,
+                contactRequired: applicationForm.contactRequired,
+                tShirtSizeRequired: applicationForm.tShirtSizeRequired,
+              },
+              update: {
+                educationRequired: applicationForm.educationRequired,
+                experienceRequired: applicationForm.experienceRequired,
+                profilesRequired: applicationForm.profilesRequired,
+                contactRequired: applicationForm.contactRequired,
+                tShirtSizeRequired: applicationForm.tShirtSizeRequired,
+              },
+            },
+          }
         }
       });
 

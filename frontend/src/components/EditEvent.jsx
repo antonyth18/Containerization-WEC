@@ -43,7 +43,7 @@ const EditEvent = () => {
       console.log('Event updated:', response.data);
       navigate('/events');
     } catch (error) {
-      console.error('Error updating event:', error);
+      console.error('Error updating event:', error.response?.data);
       setError(error.response?.data?.error || 'An error occurred while updating the event. Please try again.');
     }
   }

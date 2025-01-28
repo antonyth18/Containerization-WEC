@@ -340,7 +340,7 @@ const EventForm = ({
         console.log('Event draft made:', response.data);
         navigate('/events');
       } catch (error) {
-        console.error('Error creating event draft:', error);
+        console.error('Error creating event draft:', error.response?.data);
         setError(error.response?.data?.error || 'An error occurred while creating event draft. Please try again.');
       }
     } else {
