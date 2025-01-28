@@ -231,6 +231,7 @@ const EventForm = ({
       id: formData.id ? formData.id : null,
       name: formData.name,     // Event name is a mandatory field
       type: formData.type,
+      mode: formData.mode,
       tagline: formData.tagline || null,
       about: formData.about || null, 
       maxParticipants: parseInt(formData.maxParticipants, 10) || null,
@@ -642,6 +643,20 @@ const EventForm = ({
           >
             <option value="HACKATHON">Hackathon</option>
             <option value="GENERAL_EVENT">General Event</option>
+          </select>
+        </div>
+
+        <div style={fieldStyle(1)}>
+          <label htmlFor="mode" className="block text-sm font-medium text-gray-700">Event Mode</label>
+          <select
+            id="mode"
+            name="mode"
+            value={formData.mode} 
+            onChange={handleChange}
+            className={inputFieldStyle}
+          >
+            <option value="ONLINE">Online</option>
+            <option value="OFFLINE">Offline</option>
           </select>
         </div>
 

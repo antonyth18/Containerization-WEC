@@ -19,6 +19,7 @@ const CreateEvent = () => {
   const localFormData = {
     name: '',
     type: 'HACKATHON',
+    mode: 'ONLINE',
     tagline: '',
     about: '',
     maxParticipants: '',

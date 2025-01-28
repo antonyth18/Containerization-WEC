@@ -17,6 +17,7 @@ const EventDetails = () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}`, { withCredentials: true });
         setEvent(response.data);
+        console.log(event);
       } catch (error) {
         console.error('Error fetching event:', error);
         setError('Failed to load event details');
@@ -88,7 +89,7 @@ const EventDetails = () => {
           
             <div className="h-96 bg-gray-200 rounded-lg overflow-hidden mb-6">
               <img
-                src=""
+                src={event.eventBranding.coverImage.publicUrl ? event.eventBranding.coverImage.publicUrl : null}
                 alt="Event Image"
                 className="w-full h-full object-cover"
               />
@@ -102,7 +103,7 @@ const EventDetails = () => {
               <div className="bg-white p-6 rounded-2xl mt-4 mr-4 w-1/2 shadow-sm">
                 <div className="py-3 flex-col justify-between text-sm font-medium">
                   <dt className="text-gray-500 font-semibold text-base ">Type</dt>
-                  <dd className="text-gray-900 text-lg mt-2">{event.type}</dd>
+                  <dd className="text-gray-900 text-lg mt-2">{event.type + ' (' + event.mode + ')'}</dd>
                 </div>
               </div>  
 
@@ -200,7 +201,10 @@ const EventDetails = () => {
         <div className="sticky top-32 h-max">
           
           <div className="bg-white p-6 rounded-2xl mb-8 shadow-lg">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Timeline</h2>
+            <div className='flex justify-center'>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Timeline</h2>
+            </div>
+            
 
             <div className="relative">
 
@@ -291,7 +295,7 @@ const EventDetails = () => {
                 </div>
               </div>
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-center mt-4">
               <button className="btn-primary">
                 Apply now
               </button>

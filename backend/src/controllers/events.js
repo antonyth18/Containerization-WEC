@@ -107,6 +107,7 @@ export const createEvent = async (req, res) => {
       id,
       name,
       type,
+      mode,
       tagline,
       about,
       maxParticipants,
@@ -141,7 +142,8 @@ export const createEvent = async (req, res) => {
       const event = await prisma.event.create({
         data: {
           name,
-          type: type.toUpperCase(),
+          type,
+          mode,
           tagline,
           about,
           maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
@@ -258,6 +260,7 @@ export const updateEvent = async (req, res) => {
   const {
     name,
     type,
+    mode,
     tagline,
     about,
     maxParticipants,
@@ -288,7 +291,8 @@ export const updateEvent = async (req, res) => {
         },
         data : {
           name,
-          type: type.toUpperCase(),
+          type,
+          mode,
           tagline,
           about,
           maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,

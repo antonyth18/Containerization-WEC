@@ -4,6 +4,7 @@ import { z } from 'zod';
 export const eventSchema = z.object({
   name: z.string().min(3).max(255),
   type: z.enum(['HACKATHON', 'GENERAL_EVENT']),
+  mode: z.enum(['ONLINE', 'OFFLINE']),
   tagline: z.string().optional().nullable(),
   about: z.string().optional().nullable(),
   maxParticipants: z.number().positive().optional().nullable(),
@@ -118,6 +119,7 @@ export const eventSchema = z.object({
 export const eventDraftSchema = z.object({
   name: z.string().min(3).max(255),
   type: z.enum(['HACKATHON', 'GENERAL_EVENT']),
+  mode: z.enum(['ONLINE', 'OFFLINE']),
   tagline: z.string().optional().nullable(),
   about: z.string().optional().nullable(),
   maxParticipants: z.number().positive().optional().nullable(),

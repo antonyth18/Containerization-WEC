@@ -37,7 +37,6 @@ const Events = () => {
       const draftedEvents = eventList.filter(event => event.status === 'DRAFT');
       const completeEvents = eventList.filter(event => event.status === 'PUBLISHED');
       setDrafts(draftedEvents);
-      console.log(drafts);
       
       if(searchWord !== '') {
         const searchedEventList = events.filter(event => event.name.toLowerCase().includes(searchWord.toLowerCase()));
@@ -61,6 +60,7 @@ const Events = () => {
       }
       console.log(user);
       console.log(events);
+      console.log('fetched events!');
     } catch (error) {
       console.error('Error fetching events:', error);
     }
@@ -107,6 +107,7 @@ const Events = () => {
       await deleteImage(event.eventBranding.logoImage);
       const response = await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${event.id}`, { withCredentials: true });
       console.log('Event deleted:', response.data);
+      setSelected("All");
       fetchEvents();
     } catch (error) {
       console.error('Error deleting event:', error);
