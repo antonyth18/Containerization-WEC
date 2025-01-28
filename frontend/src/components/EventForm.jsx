@@ -320,8 +320,9 @@ const EventForm = ({
     customQuestions: formData.customQuestions
     .filter(question => question.questionText.trim() !== '') // Include only if questionText exists
     .map(question => ({
+      id : question.id,
       questionText: question.questionText.trim(), 
-      questionType: question.questionType.trim(),
+      questionType: question.questionType ? question.questionType : 'TEXT',
       options: question.options || null,
       isRequired: question.isRequired || false 
     }))
@@ -340,7 +341,7 @@ const EventForm = ({
         console.log('Event draft made:', response.data);
         navigate('/events');
       } catch (error) {
-        console.error('Error creating event draft:', error.response?.data);
+        console.error('Error creating event draft:', error);
         setError(error.response?.data?.error || 'An error occurred while creating event draft. Please try again.');
       }
     } else {

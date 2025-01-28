@@ -233,7 +233,7 @@ export const createEvent = async (req, res) => {
 
       // Take the customQuestions as list of JSON object of questionText, questionType, options, isReqiured
       if (customQuestions && customQuestions.length > 0 ) {
-        await prisma.customQuestions.createMany({
+        await prisma.customQuestion.createMany({
           data: customQuestions.map(question => ({
             ...question,
             eventId: event.id
@@ -271,6 +271,7 @@ export const updateEvent = async (req, res) => {
     sponsors,
     eventPeople,
     applicationForm,
+    customQuestions
   } = req.body;
 
   const tracksUpdated = tracks.map(({ id, prizes, ...rest }) => ({
@@ -531,7 +532,35 @@ export const updateEvent = async (req, res) => {
           })
         );
       }
+      
+      const customQuestionsToDelete = await getIdsToDelete('customQuestion' , customQuestions);
 
+      if (customQuestionsToDelete.length > 0) {
+        await prisma.customQuestion.deleteMany({
+          where: {
+            id : { in: customQuestionsToDelete},
+          },
+        });
+      }
+
+      if(customQuestions && customQuestions.length > 0) {
+        await Promise.all(
+          customQuestions.map((question) =>
+            prisma.customQuestion.upsert({
+              where: {
+                id: question.id ? question.id : 0,
+              },
+              create: {
+                ...question,
+                eventId : parseInt(eventId),
+              },
+              update: {
+                ...question,
+              },
+            })
+          )
+        );
+      }
 
     });
 

@@ -98,7 +98,7 @@ const CreateEvent = () => {
     customQuestions: [
       {
         questionText: '',
-        questionType: '',
+        questionType: 'TEXT',
         options: null,
         isRequired: false 
       }
