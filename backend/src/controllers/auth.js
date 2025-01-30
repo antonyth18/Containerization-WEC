@@ -16,7 +16,6 @@ export const register = async (req, res) => {
         id: auth.payload.sub,
         email,
         username,
-        passwordHash: "Dummy",
         role: role.toUpperCase(),
         status: 'ACTIVE',
       },
@@ -48,15 +47,12 @@ export const register = async (req, res) => {
  * Login user
  */
 export const login = async (req, res) => {
-  const { email, password } = req.body;
+  const auth = req.auth;
 
   const user = await prisma.user.findUnique({ 
-    where: { email } 
+    where: { id: auth.payload.sub }
   });
 
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
 
   req.session.userId = user.id;
   req.session.userRole = user.role;

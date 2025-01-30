@@ -95,7 +95,7 @@ const Navbar = () => {
             ) : (
               <>
                 <Button variant="text" onClick={ () => loginWithRedirect()}>Login</Button>
-                <Button variant="primary" to="/register">Register</Button>
+                <Button variant="primary" onClick={ () => loginWithRedirect()}>Register</Button>
               </>
             )}
           </div>

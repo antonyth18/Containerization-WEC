@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -20,7 +20,7 @@ import PostAuthenticate from "./components/PostAuthenticate.jsx";
 
 
 const ProtectedRoute = ({ children, requiredRole }) => {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth0();
   console.log('User:', user);
 
   if (loading) {
@@ -45,7 +45,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 };
 
 const App = () => {
-  const { user, isLoading, isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { user, isLoading} = useAuth0();
 
 
 
