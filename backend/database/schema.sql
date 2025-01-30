@@ -111,7 +111,17 @@ CREATE TABLE application_forms (
     education_required BOOLEAN DEFAULT false,
     experience_required BOOLEAN DEFAULT false,
     profiles_required BOOLEAN DEFAULT false,
-    contact_required BOOLEAN DEFAULT false
+    contact_required BOOLEAN DEFAULT false,
+    tShirtSize_required BOOLEAN DEFAULT false
+);
+
+CREATE TABLE custom_questions (
+    id SERIAL PRIMARY KEY,
+    event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    question_text TEXT NOT NULL,
+    question_type TEXT NOT NULL, -- ENUM, NUMBER, TEXT, CHECKBOX
+    options JSONB, -- JSONB to store options for ENUM or CHECKBOX types
+    is_required BOOLEAN DEFAULT false
 );
 
 CREATE TABLE applications (

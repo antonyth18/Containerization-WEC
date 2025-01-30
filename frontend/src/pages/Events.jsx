@@ -1,22 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import Button from '../components/Button';
+import { EditBtn } from '../svg/EditBtn';
+import { DeleteBtn } from '../svg/DeleteBtn';
+import AlertDialog from '../components/AlertDialog';
+import { deleteImage } from '../helpers/images';
+
 
 const Events = () => {
   const [events, setEvents] = useState([]);
   const { user } = useAuth();
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [applicationResponses, setApplicationResponses] = useState({});
+  const navigate = useNavigate();
+  const canCreateEvent = user?.role === 'ADMIN' || user?.role === 'ORGANIZER';
+  const [searchWord, setSearchWord] = useState('');
+  const [selected, setSelected] = useState("All");
+  const [drafts, setDrafts] = useState([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState(null);
+
+  const [error, setError] = useState('');
+  
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [searchWord, selected]);
 
   const fetchEvents = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`, { withCredentials: true });
-      setEvents(response.data);
+      const eventList = response.data;
+      const draftedEvents = eventList.filter(event => event.status === 'DRAFT');
+      const completeEvents = eventList.filter(event => event.status === 'PUBLISHED');
+      setDrafts(draftedEvents);
+      
+      if(searchWord !== '') {
+        const searchedEventList = events.filter(event => event.name.toLowerCase().includes(searchWord.toLowerCase()));
+        setEvents(searchedEventList);
+      } else {
+        if(selected === 'Hackathons') {
+          const hackathons = completeEvents.filter(event => event.type === 'HACKATHON');
+          setEvents(hackathons);
+        } else if(selected === 'General Events') {
+          const generalEvents = completeEvents.filter(event => event.type === 'GENERAL_EVENT');
+          setEvents(generalEvents);
+        } else if(selected === 'Created Events') {
+          const createdEvents = completeEvents.filter(event => event.createdById === user.id);
+          setEvents(createdEvents);
+        } else if(selected === 'Drafts') {
+          const myDrafts = drafts.filter(draft => draft.createdById === user.id);
+          setEvents(myDrafts);
+        } else {
+          setEvents(completeEvents);
+        }
+      }
+      console.log(user);
+      console.log(events);
+      console.log('fetched events!');
     } catch (error) {
       console.error('Error fetching events:', error);
     }
@@ -47,34 +91,157 @@ const Events = () => {
     }));
   };
 
+  const handleEventViewClick = (id) => {
+    navigate(`/events/${id}`);
+  }
+
+  const handleEventEditClick = (id) => {
+    navigate(`/edit-event/${id}`);
+  }
+
+  const handleEventDeleteClick = async (event) => {
+    try {
+      console.log(event);
+      await deleteImage(event.eventBranding.coverImage);
+      await deleteImage(event.eventBranding.faviconImage);
+      await deleteImage(event.eventBranding.logoImage);
+      const response = await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${event.id}`, { withCredentials: true });
+      console.log('Event deleted:', response.data);
+      setSelected("All");
+      fetchEvents();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      setError(error.response?.data?.error || 'An error occurred while deleting event. Please try again.');
+    }
+  }
+
+  function SegmentedControl() {
+    return (
+      <div className="flex items-center justify-center mb-10 gap-2">
+
+        <button
+          onClick={() => setSelected("All")}
+          className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+            selected === "All"
+              ? "bg-black text-white"
+              : "bg-gray-200 text-gray-800 hover:bg-blue-100"
+          }`}
+        >
+          All
+        </button>
+  
+        <button
+          onClick={() => setSelected("Hackathons")}
+          className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+            selected === "Hackathons"
+              ? "bg-black text-white"
+              : "bg-gray-200 text-gray-800 hover:bg-blue-100"
+          }`}
+        >
+          Hackathons
+        </button>
+  
+        <button
+          onClick={() => setSelected("General Events")}
+          className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+            selected === "General Events"
+              ? "bg-black text-white"
+              : "bg-gray-200 text-gray-800 hover:bg-blue-100"
+          }`}
+        >
+          General Events
+        </button>
+
+        {canCreateEvent && (
+          <button
+            onClick={() => setSelected("Created Events")}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+              selected === "Created Events"
+                ? "bg-black text-white"
+                : "bg-gray-200 text-gray-800 hover:bg-blue-100"
+            }`}
+          >
+            Created Events
+          </button>
+        )}
+        {!!drafts.length && (
+          <button
+            onClick={() => setSelected("Drafts")}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+              selected === "Drafts"
+                ? "bg-black text-white"
+                : "bg-gray-200 text-gray-800 hover:bg-blue-100"
+            }`}
+          >
+            Drafts
+          </button>
+        )}
+      </div>
+    );
+  }
+
+
   return (
-    <div className="max-w-4xl mx-auto mt-10">
-      <h2 className="text-2xl font-bold mb-5">Events</h2>
-      {user && user.role === 'ORGANIZER' && (
-        <Link to="/create-event" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4 inline-block">
-          Create Event
-        </Link>
-      )}
-      <div className="grid gap-6">
+    <>
+      <div className="flex flex-col mt-24 mb-16 mx-20">
+      <h2 className="text-4xl font-semibold mb-8 text-center">Events</h2>
+      <input 
+        type="text" 
+        name="search" 
+        onChange={(e) => setSearchWord(e.target.value)}
+        className="mx-auto px-4 rounded-3xl border mb-6 w-[30%] outline-none focus:ring-1 focus:ring-black focus:border-black placeholder-gray-400" 
+        placeholder="🔍 Search for an event..."
+      />
+      <SegmentedControl />
+      <div className="flex flex-wrap gap-y-12 justify-evenly">
         {events.map(event => (
-          <div key={event.id} className="border p-4 rounded">
-            <h3 className="text-xl font-semibold">{event.name}</h3>
-            <p>{event.tagline}</p>
-            <p>Type: {event.type}</p>
-            {event.eventTimeline && (
-              <>
-                <p>Start Date: {new Date(event.eventTimeline.eventStart).toLocaleDateString()}</p>
-                <p>End Date: {new Date(event.eventTimeline.eventEnd).toLocaleDateString()}</p>
-              </>
-            )}
-            {user && user.role === 'PARTICIPANT' && (
-              <button 
-                onClick={() => setSelectedEvent(event)} 
-                className="mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          <div key={event.id} className="border flex flex-col p-6 w-[40%] shadow-xl border-t-black border-solid border-4 rounded-2xl" >
+            <div className='flex justify-between'>
+              <h3 className="text-2xl font-bold mb-2">{event.name}</h3>
+              <div className='flex gap-5'>
+                {user && user.id === event.createdById && (
+                    <EditBtn className="w-6 h-6 cursor-pointer hover:bg-gray-200 rounded-sm" onClick={() => handleEventEditClick(event.id)}/>
+                )}  
+                {user && user.id === event.createdById && (
+                    <DeleteBtn className="w-6 h-6 cursor-pointer hover:bg-gray-200 rounded-sm" onClick={() => {
+                      setIsDialogOpen(true)
+                      setEventToDelete(event);
+                    }}/>
+                )}
+                <>
+                  <AlertDialog
+                    isOpen={isDialogOpen}
+                    onClose={() => setIsDialogOpen(false)}
+                    onConfirm={() => {
+                      console.log(eventToDelete);
+                      handleEventDeleteClick(eventToDelete);
+                      console.log('Confirmed');
+                    }}
+                    title="Delete Item"
+                    message="Are you sure you want to delete this item? This action cannot be undone."
+                    confirmText="Delete"
+                    cancelText="Cancel"
+                  />
+                </>
+              </div>
+              
+            </div>
+           
+            <p className=' max-w-fit bg-gray-300 px-2 py-1 rounded-md text-center text-white text-sm mb-6'>{event.type}</p>
+            <p className=' text-sm font-medium'>Tagline</p>
+            <p className=' text-gray-500 italic mb-6'>{event.tagline}</p>
+            
+            <div className='flex items-center justify-between'>
+              <p className='rounded-lg text-center px-4 py-2 border-solid border-2 text-sm'>{event.mode}</p>
+              <p className='rounded-lg text-center px-4 py-2 border-solid border-2 text-sm'>Starts: {new Date(event.eventTimeline.eventStart).toLocaleDateString()}</p>
+              <Button
+                onClick={() => handleEventViewClick(event.id)}
+                className="mt-2"
               >
-                Join Event
-              </button>
-            )}
+                Apply now
+              </Button>
+            </div>
+
           </div>
         ))}
       </div>
@@ -101,6 +268,8 @@ const Events = () => {
         </div>
       )}
     </div>
+    </>
+    
   );
 };
 
