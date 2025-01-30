@@ -5,7 +5,7 @@ import { authenticateUser, checkJwt } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/register', register);
+router.post('/register', checkJwt, register);
 router.post('/login', login);
 router.post('/logout', logout);
 router.get('/user', checkJwt, getCurrentUser);

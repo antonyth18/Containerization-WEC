@@ -8,7 +8,7 @@ export const register = async (req, res) => {
   try {
     const { email, username, role } = req.body;
     const auth = req.auth;
-    // console.log(auth);
+    console.log(auth);
     // const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({
@@ -102,6 +102,13 @@ export const getCurrentUser = async (req, res) => {
         role: true
       }
     });
+
+    if(!user){
+      return res.status(404).json({
+        error: 'Could not find user'
+      })
+
+    }
     res.status(200).json(user);
   }catch (e) {
     res.status(404).json({
