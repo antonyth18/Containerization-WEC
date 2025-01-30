@@ -7,106 +7,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  ADMIN
-  ORGANIZER
-  PARTICIPANT
-}
-
-enum UserStatus {
-  ACTIVE
-  INACTIVE
-  BANNED
-}
-
-enum Gender {
-  MALE
-  FEMALE
-  OTHER
-  PREFER_NOT_TO_SAY
-}
-
-enum DegreeType {
-  HIGH_SCHOOL
-  ASSOCIATE
-  BACHELOR
-  MASTER
-  PHD
-}
-
-enum ExpertiseLevel {
-  BEGINNER
-  INTERMEDIATE
-  EXPERT
-}
-
-enum SocialPlatform {
-  GITHUB
-  LINKEDIN
-  TWITTER
-  PORTFOLIO
-  OTHER
-}
-
-enum EventType {
-  HACKATHON
-  GENERAL_EVENT
-}
-
-enum ApplicationStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  WAITLISTED
-}
-
-enum RSVPStatus {
-  PENDING
-  CONFIRMED
-  DECLINED
-}
-
-enum SponsorTier {
-  PLATINUM
-  GOLD
-  SILVER
-  BRONZE
-}
-
-enum EventPersonRole {
-  SPEAKER
-  JUDGE
-}
-
-enum ScheduleItemType {
-  EVENT
-  WORKSHOP
-  PRE_EVENT
-}
-
-enum TeamMemberRole {
-  LEADER
-  MEMBER
-}
-
 model User {
-  id           Int        @id @default(autoincrement())
-  email        String     @unique
-  username     String     @unique
-  passwordHash String
-  role         UserRole
-  status       UserStatus
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-
-  profile        UserProfile?
+  id             Int                 @id @default(autoincrement())
+  email          String              @unique
+  username       String              @unique
+  passwordHash   String
+  role           UserRole
+  status         UserStatus
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  applications   Application[]
+  createdEvents  Event[]
+  teamMembers    TeamMember[]
   education      UserEducation[]
   experience     UserExperience[]
+  profile        UserProfile?
   skills         UserSkill[]
   socialProfiles UserSocialProfile[]
-  createdEvents  Event[]
-  applications   Application[]
-  teamMembers    TeamMember[]
 }
 
 model UserProfile {
@@ -166,33 +83,34 @@ model UserSocialProfile {
 }
 
 model Event {
-  id              Int       @id @default(autoincrement())
-  name            String
-  type            EventType
-  tagline         String?
-  about           String?
-  maxParticipants Int?
-  minTeamSize     Int?
-  maxTeamSize     Int?
-  status          String    @default("draft")
-  createdAt       DateTime  @default(now())
-  createdById     Int
-
-  createdBy         User                @relation(fields: [createdById], references: [id])
-  eventThemes       EventTheme[]
-  applicationForm   ApplicationForm?
+  id                Int                 @id @default(autoincrement())
+  name              String
+  type              EventType
+  tagline           String?
+  about             String?
+  maxParticipants   Int?
+  minTeamSize       Int?
+  maxTeamSize       Int?
+  createdAt         DateTime            @default(now())
+  createdById       Int
+  mode              EventMode           @default(ONLINE)
+  status            EventStatus         @default(DRAFT)
   applications      Application[]
-  eventLinks        EventLink?
+  applicationForm   ApplicationForm?
+  customQuestions   CustomQuestion[]
+  createdBy         User                @relation(fields: [createdById], references: [id])
   eventBranding     EventBranding?
-  eventTimeline     EventTimeline?
-  sponsors          Sponsor[]
-  tracks            Track[]
+  eventLinks        EventLink?
   eventPeople       EventPerson[]
-  scheduleItems     ScheduleItem[]
+  eventThemes       EventTheme[]
+  eventTimeline     EventTimeline?
   faqs              FAQ[]
-  teams             Team[]
   Prize             Prize[]
   ProjectSubmission ProjectSubmission[]
+  scheduleItems     ScheduleItem[]
+  sponsors          Sponsor[]
+  teams             Team[]
+  tracks            Track[]
 }
 
 model Theme {
@@ -205,7 +123,7 @@ model EventTheme {
   id      Int   @id @default(autoincrement())
   eventId Int
   themeId Int
-  event   Event @relation(fields: [eventId], references: [id])
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   theme   Theme @relation(fields: [themeId], references: [id])
 }
 
@@ -216,7 +134,18 @@ model ApplicationForm {
   experienceRequired Boolean @default(false)
   profilesRequired   Boolean @default(false)
   contactRequired    Boolean @default(false)
-  event              Event   @relation(fields: [eventId], references: [id])
+  tShirtSizeRequired Boolean @default(false)
+  event              Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model CustomQuestion {
+  id           Int     @id @default(autoincrement())
+  questionText String
+  questionType String
+  options      Json?
+  isRequired   Boolean @default(false)
+  eventId      Int
+  event        Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Application {
@@ -227,9 +156,9 @@ model Application {
   status     ApplicationStatus
   rsvpStatus RSVPStatus
   createdAt  DateTime          @default(now())
-  event      Event             @relation(fields: [eventId], references: [id])
-  user       User              @relation(fields: [userId], references: [id])
+  event      Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
   team       Team?             @relation(fields: [teamId], references: [id])
+  user       User              @relation(fields: [userId], references: [id])
 }
 
 model EventLink {
@@ -240,29 +169,34 @@ model EventLink {
   contactEmail     String?
   codeOfConductUrl String?
   socialLinks      Json?
-  event            Event   @relation(fields: [eventId], references: [id])
+  event            Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model EventBranding {
-  id            Int     @id @default(autoincrement())
-  eventId       Int     @unique
-  brandColor    String?
-  logoUrl       String?
-  faviconUrl    String?
-  coverImageUrl String?
-  event         Event   @relation(fields: [eventId], references: [id])
+  id         Int     @id @default(autoincrement())
+  eventId    Int     @unique
+  brandColor String?
+  event      Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  coverImageId Int? @unique
+  faviconImageId Int? @unique
+  logoImageId Int? @unique
+  coverImage   Image?   @relation("coverImage", fields: [coverImageId], references: [id], onDelete: Cascade)
+  faviconImage Image?   @relation("faviconImage", fields: [faviconImageId], references: [id], onDelete: Cascade)
+  logoImage    Image?   @relation("logoImage", fields: [logoImageId], references: [id], onDelete: Cascade)
+  
 }
 
 model EventTimeline {
-  id                Int      @id @default(autoincrement())
-  eventId           Int      @unique
+  id                Int       @id @default(autoincrement())
+  eventId           Int       @unique
   timezone          String
-  applicationsStart DateTime
-  applicationsEnd   DateTime
+  applicationsStart DateTime?
+  applicationsEnd   DateTime?
   rsvpDeadlineDays  Int
-  eventStart        DateTime
-  eventEnd          DateTime
-  event             Event    @relation(fields: [eventId], references: [id])
+  eventStart        DateTime?
+  eventEnd          DateTime?
+  event             Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Sponsor {
@@ -272,7 +206,7 @@ model Sponsor {
   logoUrl    String?
   tier       SponsorTier
   websiteUrl String?
-  event      Event       @relation(fields: [eventId], references: [id])
+  event      Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Track {
@@ -281,18 +215,18 @@ model Track {
   name        String
   description String?
   prizes      Prize[]
-  event       Event   @relation(fields: [eventId], references: [id])
+  event       Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Prize {
   id          Int     @id @default(autoincrement())
   eventId     Int
-  trackId     Int
+  trackId     Int?
   title       String
   description String?
   value       Decimal
-  event       Event   @relation(fields: [eventId], references: [id])
-  track       Track   @relation(fields: [trackId], references: [id])
+  event       Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  track       Track?  @relation(fields: [trackId], references: [id], onDelete: Cascade)
 }
 
 model EventPerson {
@@ -303,7 +237,7 @@ model EventPerson {
   bio         String?
   imageUrl    String?
   linkedinUrl String?
-  event       Event           @relation(fields: [eventId], references: [id])
+  event       Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model ScheduleItem {
@@ -314,7 +248,7 @@ model ScheduleItem {
   startTime   DateTime
   endTime     DateTime
   type        ScheduleItemType
-  event       Event            @relation(fields: [eventId], references: [id])
+  event       Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model FAQ {
@@ -323,7 +257,7 @@ model FAQ {
   question   String
   answer     String
   orderIndex Int
-  event      Event  @relation(fields: [eventId], references: [id])
+  event      Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Team {
@@ -331,10 +265,10 @@ model Team {
   eventId      Int
   name         String
   createdAt    DateTime            @default(now())
-  event        Event               @relation(fields: [eventId], references: [id])
-  members      TeamMember[]
   applications Application[]
   projects     ProjectSubmission[]
+  event        Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  members      TeamMember[]
 }
 
 model TeamMember {
@@ -355,6 +289,110 @@ model ProjectSubmission {
   githubUrl      String?
   demoUrl        String?
   submissionTime DateTime @default(now())
-  event          Event    @relation(fields: [eventId], references: [id])
+  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   team           Team     @relation(fields: [teamId], references: [id])
+}
+
+model Image {
+  id        Int      @id @default(autoincrement()) 
+  filePath  String?
+  bucket    String?
+  publicUrl String?
+  createdAt DateTime @default(now())
+
+  coverBranding   EventBranding? @relation("coverImage")
+  faviconBranding EventBranding? @relation("faviconImage")
+  logoBranding    EventBranding? @relation("logoImage")
+}
+
+enum UserRole {
+  ADMIN
+  ORGANIZER
+  PARTICIPANT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum DegreeType {
+  HIGH_SCHOOL
+  ASSOCIATE
+  BACHELOR
+  MASTER
+  PHD
+}
+
+enum ExpertiseLevel {
+  BEGINNER
+  INTERMEDIATE
+  EXPERT
+}
+
+enum SocialPlatform {
+  GITHUB
+  LINKEDIN
+  TWITTER
+  PORTFOLIO
+  OTHER
+}
+
+enum EventType {
+  HACKATHON
+  GENERAL_EVENT
+}
+
+enum EventMode {
+  ONLINE
+  OFFLINE
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WAITLISTED
+}
+
+enum RSVPStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+}
+
+enum SponsorTier {
+  PLATINUM
+  GOLD
+  SILVER
+  BRONZE
+}
+
+enum EventPersonRole {
+  SPEAKER
+  JUDGE
+}
+
+enum ScheduleItemType {
+  EVENT
+  WORKSHOP
+  PRE_EVENT
+}
+
+enum TeamMemberRole {
+  LEADER
+  MEMBER
 }

@@ -159,6 +159,7 @@ CREATE TABLE "ApplicationForm" (
     "experienceRequired" BOOLEAN NOT NULL DEFAULT false,
     "profilesRequired" BOOLEAN NOT NULL DEFAULT false,
     "contactRequired" BOOLEAN NOT NULL DEFAULT false,
+    "tShirtSizeRequired" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "ApplicationForm_pkey" PRIMARY KEY ("id")
 );

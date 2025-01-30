@@ -83,10 +83,11 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-6">
             {user ? (
               <>
-                <Button variant="text" to="/profile">Profile</Button>
+                
                 {canCreateEvent && (
                   <Button variant="secondary" to="/create-event">Create Event</Button>
                 )}
+                <Button variant="text" to="/profile">Profile</Button>
                 <Button variant="primary" onClick={logout}>Logout</Button>
               </>
             ) : (
@@ -129,14 +130,6 @@ const Navbar = () => {
               <div className="pt-6 border-t mt-4">
                 {user ? (
                   <div className="space-y-4 p-4">
-                    <Button 
-                      variant="text" 
-                      to="/profile" 
-                      className="w-full bg-white hover:bg-gray-50"
-                      onClick={() => handleMobileMenuClick()}
-                    >
-                      Profile
-                    </Button>
                     {canCreateEvent && (
                       <Button 
                         variant="secondary" 
@@ -147,6 +140,14 @@ const Navbar = () => {
                         Create Event
                       </Button>
                     )}
+                    <Button 
+                      variant="text" 
+                      to="/profile" 
+                      className="w-full bg-white hover:bg-gray-50"
+                      onClick={() => handleMobileMenuClick()}
+                    >
+                      Profile
+                    </Button>
                     <Button 
                       variant="primary" 
                       onClick={() => handleMobileMenuClick(logout)}
