@@ -9,11 +9,12 @@ import { DeleteBtn } from '../svg/DeleteBtn';
 import AlertDialog from '../components/AlertDialog';
 import { deleteImage } from '../helpers/images';
 import {useAuth0} from "@auth0/auth0-react";
+import { toast } from 'react-hot-toast';
 
 
 const Events = () => {
   const [events, setEvents] = useState([]);
-  const { user } = useAuth();
+  const { user, getAccessToken } = useAuth();
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [applicationResponses, setApplicationResponses] = useState({});
   const navigate = useNavigate();
@@ -115,9 +116,18 @@ const Events = () => {
 
   const handleDeleteConfirm = async () => {
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${eventToDelete.id}`, {
-        withCredentials: true
-      });
+      const token = await getAccessToken();
+      await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/events/${eventToDelete.id}`, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          withCredentials: true
+        }
+      );
+
       // Delete associated images if they exist
       if (eventToDelete.branding?.logoUrl) {
         await deleteImage(eventToDelete.branding.logoUrl);
@@ -125,12 +135,16 @@ const Events = () => {
       if (eventToDelete.branding?.coverUrl) {
         await deleteImage(eventToDelete.branding.coverUrl);
       }
-      fetchEvents();
-    } catch (error) {
-      console.error('Error deleting event:', error);
-    } finally {
+      
+      fetchEvents(); // Refresh the events list
       setIsDialogOpen(false);
       setEventToDelete(null);
+      // Add success toast notification
+      toast.success('Event deleted successfully');
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      // Add error toast notification
+      toast.error('Failed to delete event. Please try again.');
     }
   };
 
@@ -270,14 +284,6 @@ const Events = () => {
                     </span>
                     {event.createdById === user?.id && (
                       <>
-                        {event.status === 'DRAFT' && (
-                          <button
-                            onClick={() => handlePublishEvent(event.id)}
-                            className="text-sm px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                          >
-                            Publish
-                          </button>
-                        )}
                         <button
                           onClick={() => handleEventEditClick(event.id)}
                           className="p-2 hover:bg-gray-100 rounded-full"

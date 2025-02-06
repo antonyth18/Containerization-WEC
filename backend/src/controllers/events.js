@@ -246,15 +246,161 @@ export const updateEvent = async (req, res) => {
     }
 
     // Handle full event update
-    // ... rest of your existing update logic ...
+    const updatedEvent = await prisma.event.update({
+      where: { id: parseInt(id) },
+      data: {
+        name: updateData.name,
+        tagline: updateData.tagline || null,
+        about: updateData.about || null,
+        type: updateData.type || 'HACKATHON',
+        maxParticipants: updateData.maxParticipants,
+        minTeamSize: updateData.minTeamSize,
+        maxTeamSize: updateData.maxTeamSize,
+        mode: updateData.mode,
+        status: updateData.status || event.status, // Keep existing status if not specified
+
+        timeline: {
+          update: {
+            eventStart: updateData.eventTimeline.eventStart,
+            eventEnd: updateData.eventTimeline.eventEnd,
+            applicationsStart: updateData.eventTimeline.applicationsStart,
+            applicationsEnd: updateData.eventTimeline.applicationsEnd
+          }
+        },
+
+        branding: {
+          update: {
+            logoUrl: updateData.eventBranding?.logo || null,
+            coverUrl: updateData.eventBranding?.banner || null,
+            brandColor: updateData.eventBranding?.primaryColor || '#000000'
+          }
+        },
+
+        links: {
+          update: {
+            websiteUrl: updateData.eventLinks[0]?.websiteUrl || '',
+            micrositeUrl: updateData.eventLinks[0]?.micrositeUrl || '',
+            contactEmail: updateData.eventLinks[0]?.contactEmail || '',
+            socialLinks: updateData.eventLinks[0]?.socialLinks || null
+          }
+        }
+      },
+      include: {
+        timeline: true,
+        branding: true,
+        links: true,
+        tracks: {
+          include: {
+            prizes: true
+          }
+        },
+        sponsors: true,
+        eventPeople: true,
+        createdBy: {
+          select: {
+            id: true,
+            username: true,
+            profile: true
+          }
+        }
+      }
+    });
+
+    res.json(updatedEvent);
   } catch (error) {
     console.error('Error updating event:', error);
-    res.status(500).json({ error: 'Failed to update event' });
+    res.status(500).json({ error: 'Failed to update event', details: error.message });
   }
 };
 
 export const deleteEvent = async (req, res) => {
-  // ... existing deleteEvent code ...
+  try {
+    const { id } = req.params;
+    const userId = req.auth.payload.sub;
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { auth0Id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Find event with its creator
+    const event = await prisma.event.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        createdBy: true
+      }
+    });
+
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    // Check if user owns the event
+    if (event.createdBy.auth0Id !== userId) {
+      return res.status(403).json({ error: 'Not authorized to delete this event' });
+    }
+
+    // Delete all related records and the event itself
+    await prisma.$transaction([
+      // Delete applications first
+      prisma.application.deleteMany({
+        where: { eventId: parseInt(id) }
+      }),
+
+      // Delete prizes
+      prisma.prize.deleteMany({
+        where: {
+          track: {
+            eventId: parseInt(id)
+          }
+        }
+      }),
+
+      // Delete tracks
+      prisma.track.deleteMany({
+        where: { eventId: parseInt(id) }
+      }),
+
+      // Delete timeline
+      prisma.timeline.deleteMany({
+        where: { eventId: parseInt(id) }
+      }),
+
+      // Delete branding
+      prisma.branding.deleteMany({
+        where: { eventId: parseInt(id) }
+      }),
+
+      // Delete links
+      prisma.link.deleteMany({
+        where: { eventId: parseInt(id) }
+      }),
+
+      // Delete sponsors
+      prisma.sponsor.deleteMany({
+        where: { eventId: parseInt(id) }
+      }),
+
+      // Delete event people
+      prisma.eventPerson.deleteMany({
+        where: { eventId: parseInt(id) }
+      }),
+
+      // Finally delete the event
+      prisma.event.delete({
+        where: { id: parseInt(id) }
+      })
+    ]);
+
+    res.json({ message: 'Event deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting event:', error);
+    res.status(500).json({ error: 'Failed to delete event', details: error.message });
+  }
 };
 
 export const joinEvent = async (req, res) => {
