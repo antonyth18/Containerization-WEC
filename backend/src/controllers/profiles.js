@@ -5,10 +5,8 @@ import prisma from '../config/database.js';
  */
 export const getProfile = async (req, res) => {
   try {
-    // const auth = req.auth;
-    // console.log(auth);
     const profile = await prisma.user.findUnique({
-      where: { id: req.session.userId },
+      where: { auth0Id: req.auth.payload.sub },
       include: {
         profile: true,
         education: true,
@@ -19,7 +17,7 @@ export const getProfile = async (req, res) => {
     });
     res.json(profile);
   } catch (error) {
-    throw error;
+    res.status(500).json({ error: 'Failed to fetch profile' });
   }
 };
 
@@ -31,63 +29,29 @@ export const updateProfile = async (req, res) => {
 
   try {
     const updatedUser = await prisma.user.update({
-      where: { id: req.session.userId },
+      where: { auth0Id: req.auth.payload.sub },
       data: {
         profile: {
           upsert: {
-            create: {
-              firstName: profile.firstName || null,
-              lastName: profile.lastName || null,
-              avatarUrl: profile.avatarUrl || null,
-              bio: profile.bio || null,
-              gender: profile.gender || null,
-              phone: profile.phone || null,
-              country: profile.country || null,
-              city: profile.city || null,
-            },
-            update: {
-              firstName: profile.firstName || null,
-              lastName: profile.lastName || null,
-              avatarUrl: profile.avatarUrl || null,
-              bio: profile.bio || null,
-              gender: profile.gender || null,
-              phone: profile.phone || null,
-              country: profile.country || null,
-              city: profile.city || null
-            }
+            create: profile,
+            update: profile
           }
         },
         education: {
           deleteMany: {},
-          create: education.map((edu) => ({
-            institutionName: edu.institutionName,
-            degree: edu.degree,
-            fieldOfStudy: edu.fieldOfStudy,
-            graduationYear: edu.graduationYear ? parseInt(edu.graduationYear, 10) : null,
-          })),
+          create: education
         },
         experience: {
           deleteMany: {},
-          create: experience.map((exp) => ({
-            company: exp.company,
-            position: exp.position,
-            startDate: exp.startDate ? new Date(exp.startDate) : null,
-            endDate: exp.endDate ? new Date(exp.endDate) : null,
-          })),
+          create: experience
         },
         skills: {
           deleteMany: {},
-          create: skills.map((skill) => ({
-            expertiseLevel: skill.expertiseLevel,
-            skillName: skill.skillName,
-          })),
+          create: skills
         },
         socialProfiles: {
           deleteMany: {},
-          create: socialProfiles.map((social) => ({
-            platform: social.platform,
-            url: social.url,
-          })),
+          create: socialProfiles
         }
       },
       include: {
@@ -101,7 +65,7 @@ export const updateProfile = async (req, res) => {
 
     res.json(updatedUser);
   } catch (error) {
-    throw error;
+    res.status(500).json({ error: 'Failed to update profile' });
   }
 };
 

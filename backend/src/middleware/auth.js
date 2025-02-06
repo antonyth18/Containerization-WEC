@@ -20,7 +20,6 @@ export const authenticateUser = async (req, res, next) => {
 export const checkJwt = auth({
   audience: process.env.AUTH0_AUDIENCE,
   issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
-  tokenSigningAlg: 'RS256'
 });
 
 // Check if user exists and create if not

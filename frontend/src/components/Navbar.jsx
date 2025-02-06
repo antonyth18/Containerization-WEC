@@ -2,11 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Button from './Button';
-import { useAuth0 } from "@auth0/auth0-react";
 
 const Navbar = () => {
-  const { user, loginWithRedirect, logout } = useAuth0();
-  // const { user, logout } = useAuth();
+  const { isAuthenticated, logout, user, login } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const canCreateEvent = user?.role === 'ADMIN' || user?.role === 'ORGANIZER';
@@ -83,19 +81,18 @@ const Navbar = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-6">
-            {user ? (
+            {isAuthenticated ? (
               <>
-
                 {canCreateEvent && (
                   <Button variant="secondary" to="/create-event">Create Event</Button>
                 )}
                 <Button variant="text" to="/profile">Profile</Button>
-                <Button variant="primary" onClick={() => logout({ logoutParams: { returnTo: import.meta.env.VITE_AUTH0_LOGOUT_URI } })}>Logout</Button>
+                <Button variant="primary" onClick={() => logout()}>Logout</Button>
               </>
             ) : (
               <>
-                <Button variant="text" onClick={ () => loginWithRedirect()}>Login</Button>
-                <Button variant="primary" onClick={ () => loginWithRedirect()}>Register</Button>
+                <Button variant="text" onClick={() => login()}>Login</Button>
+                <Button variant="primary" onClick={() => login({ screen_hint: 'signup' })}>Register</Button>
               </>
             )}
           </div>
@@ -130,7 +127,7 @@ const Navbar = () => {
               </a>
               
               <div className="pt-6 border-t mt-4">
-                {user ? (
+                {isAuthenticated && (
                   <div className="space-y-4 p-4">
                     {canCreateEvent && (
                       <Button 
@@ -156,25 +153,6 @@ const Navbar = () => {
                       className="w-full"
                     >
                       Logout
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4 p-4">
-                    <Button 
-                      variant="text" 
-                      to="/login" 
-                      className="w-full bg-white hover:bg-gray-50"
-                      onClick={() => handleMobileMenuClick()}
-                    >
-                      Login
-                    </Button>
-                    <Button 
-                      variant="primary" 
-                      to="/register" 
-                      className="w-full"
-                      onClick={() => handleMobileMenuClick()}
-                    >
-                      Register
                     </Button>
                   </div>
                 )}

@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import sessionConfig from './src/config/session.js';
 import errorHandler from './src/middleware/error.js';
 import prisma from './src/config/database.js';
 import { checkJwt } from './src/middleware/auth.js';
@@ -19,20 +18,17 @@ const PORT = process.env.PORT || 4000;
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3000', // Only allow frontend origin
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(cookieParser());
-app.use(sessionConfig);
 
-// Mount auth routes at /api/auth
+// Mount routes
 app.use('/api/auth', authRoutes);
-
-// Protected routes with JWT verification
-app.use('/api/events', checkJwt, eventRoutes);
+app.use('/api/events', eventRoutes); // Remove checkJwt from public routes
 app.use('/api/teams', checkJwt, teamRoutes);
 app.use('/api/projects', checkJwt, projectRoutes);
 app.use('/api/profiles', checkJwt, profileRoutes);
@@ -40,16 +36,8 @@ app.use('/api/profiles', checkJwt, profileRoutes);
 // Error handling
 app.use(errorHandler);
 
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error('Global error:', err);
-  res.status(500).json({ 
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error' 
-  });
-});
-
 // Start server
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
 

@@ -41,11 +41,10 @@ export const submitProject = async (req, res) => {
   const { eventId, teamId, title, description, githubUrl, demoUrl } = req.body;
 
   try {
-    // Check if user is part of the team
     const teamMember = await prisma.teamMember.findFirst({
       where: {
         teamId,
-        userId: req.session.userId
+        userId: req.auth.payload.sub
       }
     });
 
@@ -61,27 +60,11 @@ export const submitProject = async (req, res) => {
         description,
         githubUrl,
         demoUrl
-      },
-      include: {
-        team: {
-          include: {
-            members: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    username: true
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     });
 
     res.status(201).json(project);
   } catch (error) {
-    throw error;
+    res.status(500).json({ error: 'Failed to submit project' });
   }
 };

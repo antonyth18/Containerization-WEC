@@ -1,104 +1,62 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { authAPI } from '../api/api';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
-
-  const checkAuthStatus = async () => {
-    try {
-      if (!isAuthenticated) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      const token = await getAccessTokenSilently({
-        audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-        scope: "openid profile email"
-      });
-      
-      authAPI.setAuthToken(token);
-      const userData = await authAPI.getCurrentUser();
-      setUser(userData);
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { 
+    isAuthenticated, 
+    user, 
+    isLoading, 
+    loginWithRedirect, 
+    logout,
+    getAccessTokenSilently 
+  } = useAuth0();
 
   useEffect(() => {
-    checkAuthStatus();
-  }, [isAuthenticated]);
+    const initAuth = async () => {
+      if (isAuthenticated && user) {
+        try {
+          // Get token and store it
+          const token = await getAccessTokenSilently();
+          localStorage.setItem('auth0_token', token);
 
-  /**
-   * Login user with email and password
-   * @param {string} email User's email
-   * @param {string} password User's password
-   */
-  const login = async (email, password) => {
-    try {
-      const { data } = await authAPI.login(email, password);
-      setUser(data.user);
-      return data.user;
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
-    }
-  };
+          // Register/update user in backend
+          await authAPI.register(user);
+        } catch (error) {
+          console.error('Error initializing auth:', error);
+        }
+      }
+    };
 
-  /**
-   * Register new user
-   * @param {string} email User's email
-   * @param {string} username User's username
-   * @param {string} password User's password
-   * @param {string} role User's role
-   */
-  const register = async (email, username, password, role) => {
-    try {
-      const { data } = await authAPI.register({ email, username, password, role });
-      setUser(data.user);
-      return data.user;
-    } catch (error) {
-      console.error('Registration failed:', error);
-      throw error;
-    }
-  };
-
-  /**
-   * Logout current user
-   */
-  const logout = async () => {
-    try {
-      await authAPI.logout();
-      setUser(null);
-    } catch (error) {
-      console.error('Logout failed:', error);
-      throw error;
-    }
-  };
+    initAuth();
+  }, [isAuthenticated, user, getAccessTokenSilently]);
 
   const value = {
+    isAuthenticated,
     user,
-    login,
-    register,
-    logout,
-    loading,
-    checkAuthStatus
+    isLoading,
+    login: loginWithRedirect,
+    logout: () => {
+      localStorage.removeItem('auth0_token');
+      logout({ returnTo: window.location.origin });
+    },
+    getAccessToken: getAccessTokenSilently
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 

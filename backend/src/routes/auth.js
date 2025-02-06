@@ -1,23 +1,13 @@
 import express from 'express';
-import { checkJwt, ensureUser } from '../middleware/auth.js';
-import { 
-  getCurrentUser,
-  updateProfile,
-  updateEducation,
-  updateSkills,
-  updateSocialProfiles
-} from '../controllers/auth.js';
+import { register, getCurrentUser } from '../controllers/auth.js';
+import { checkJwt } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// All routes require JWT
-router.use(checkJwt);
-router.use(ensureUser);
+// Public routes
+router.post('/register', register);
 
-router.get('/user', getCurrentUser);
-router.put('/profile', updateProfile);
-router.put('/education', updateEducation);
-router.put('/skills', updateSkills);
-router.put('/social', updateSocialProfiles);
+// Protected routes
+router.get('/user', checkJwt, getCurrentUser);
 
 export default router; 

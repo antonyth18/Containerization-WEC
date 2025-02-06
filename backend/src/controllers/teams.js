@@ -9,7 +9,7 @@ export const getTeams = async (req, res) => {
       where: {
         members: {
           some: {
-            userId: req.session.userId
+            userId: req.auth.payload.sub
           }
         }
       },
@@ -30,7 +30,7 @@ export const getTeams = async (req, res) => {
     });
     res.json(teams);
   } catch (error) {
-    throw error;
+    res.status(500).json({ error: 'Failed to fetch teams' });
   }
 };
 
@@ -47,7 +47,7 @@ export const createTeam = async (req, res) => {
         name,
         members: {
           create: {
-            userId: req.session.userId,
+            userId: req.auth.payload.sub,
             role: 'LEADER'
           }
         }
@@ -68,6 +68,6 @@ export const createTeam = async (req, res) => {
     });
     res.status(201).json(team);
   } catch (error) {
-    throw error;
+    res.status(500).json({ error: 'Failed to create team' });
   }
 }; 

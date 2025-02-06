@@ -18,14 +18,29 @@ api.interceptors.response.use(
   }
 );
 
+// Add Auth0 token interceptor
+api.interceptors.request.use(async (config) => {
+  try {
+    const token = localStorage.getItem('auth0_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch (error) {
+    console.error('Error setting auth token:', error);
+  }
+  return config;
+});
+
 // Auth API endpoints
 export const authAPI = {
-  setAuthToken(token) {
-    if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete api.defaults.headers.common['Authorization'];
-    }
+  async register(auth0User) {
+    const response = await api.post('/api/auth/register', { user: auth0User });
+    return response.data;
+  },
+
+  async getCurrentUser() {
+    const response = await api.get('/api/auth/user');
+    return response.data;
   },
 
   /**
@@ -38,30 +53,11 @@ export const authAPI = {
     api.post('/api/login', { email, password }),
 
   /**
-   * Register new user
-   * @param {Object} userData User registration data (email, username, password, role)
-   * @returns {Promise} Response with created user
-   */
-  async register(data) {
-    const response = await api.post('/api/auth/register', data);
-    return response.data;
-  },
-
-  /**
    * Logout current user
    * @returns {Promise} Response with logout status
    */
   logout: () => 
     api.post('/api/logout'),
-
-  /**
-   * Get current authenticated user
-   * @returns {Promise} Response with user data
-   */
-  async getCurrentUser() {
-    const response = await api.get('/api/auth/user');
-    return response.data;
-  },
 
   async completeOnboarding(formData) {
     const response = await api.post('/api/auth/onboarding', formData);
