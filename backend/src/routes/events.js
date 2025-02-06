@@ -6,7 +6,8 @@ import {
   createEvent, 
   updateEvent, 
   deleteEvent,
-  applyToEvent 
+  applyToEvent,
+  joinEvent
 } from '../controllers/events.js';
 import { validate, eventSchema , eventDraftSchema} from '../middleware/validate.js';
 
@@ -28,5 +29,6 @@ router.delete('/:id', isOrganizer, deleteEvent);
 
 // Participant routes (require complete profile)
 router.post('/:id/apply', requireCompleteProfile, applyToEvent);
+router.post('/:id/join', joinEvent);
 
 export default router; 

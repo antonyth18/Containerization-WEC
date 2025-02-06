@@ -43,6 +43,11 @@ export const authAPI = {
     return response.data;
   },
 
+  async updateUser(userData) {
+    const response = await api.put('/api/auth/user', userData);
+    return response.data;
+  },
+
   /**
    * Login user with email and password
    * @param {string} email User's email
@@ -118,8 +123,10 @@ export const eventsAPI = {
    * - Event People (judges, speakers)
    * @returns {Promise} Response with created event
    */
-  createEvent: (eventData) => 
-    api.post('/api/events', eventData),
+  async createEvent(eventData) {
+    const response = await api.post('/api/events', eventData);
+    return response.data;
+  },
 
   /**
    * Save event as a draft with partial data
@@ -137,16 +144,20 @@ export const eventsAPI = {
    * @param {Object} eventData Updated event data
    * @returns {Promise} Response with updated event
    */
-  updateEvent: (id, eventData) => 
-    api.put(`/api/events/${id}`, eventData),
+  async updateEvent(id, eventData) {
+    const response = await api.put(`/api/events/${id}`, eventData);
+    return response.data;
+  },
 
   /**
    * Delete an event
    * @param {string} id Event ID
    * @returns {Promise} Response confirming the event deletion
    */
-  deleteEvent: (id) =>
-    api.delete(`/api/events/${id}`),
+  async deleteEvent(id) {
+    const response = await api.delete(`/api/events/${id}`);
+    return response.data;
+  },
 
   /**
    * Join an event as a participant

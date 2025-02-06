@@ -1,131 +1,161 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import EventForm from './EventForm';
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
+import { useAuth } from '../contexts/AuthContext';
+import { eventsAPI } from '../api/api';
 
 const CreateEvent = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // This block of code stores the initalization of all the state variables (fields and entries) in the form
-  const localFormData = {
-    name: '',
+  const [eventData, setEventData] = useState({
+    title: '',
+    description: '',
+    startDate: '',
+    endDate: '',
+    location: '',
     type: 'HACKATHON',
-    mode: 'ONLINE',
-    tagline: '',
-    about: '',
-    maxParticipants: '',
-    minTeamSize: '1',
-    maxTeamSize: '4',
-    status: 'DRAFT',
-    eventTimeline: {
-      eventStart: '',
-      eventEnd: '',
-      applicationsStart: '',
-      applicationsEnd: '',
-      timezone: 'IST',
-      rsvpDeadlineDays: 7
-    },
-    eventLinks: {
-      websiteUrl: '',
-      micrositeUrl: '',
-      contactEmail: '',
-      codeOfConductUrl: '',
-      socialLinks: {}
-    },
-    eventBranding: {
-      brandColor: '#000000',
-      coverImage: {
-        filePath: '',
-        bucket: '',
-        publicUrl: '',
-      },
-      faviconImage: {
-        filePath: '',
-        bucket: '',
-        publicUrl: '',
-      },
-      logoImage: {
-        filePath: '',
-        bucket: '',
-        publicUrl: '',
+    status: 'DRAFT'
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      // Validate dates
+      const startDate = new Date(eventData.startDate);
+      const endDate = new Date(eventData.endDate);
+      
+      if (endDate < startDate) {
+        setError('End date must be after start date');
+        return;
       }
-    },
-    tracks: [
-      {
-        name: '',
-        description: '',
-        prizes: [
-          {
-            title: '',
-            description: '',
-            value: 0
-          }
-        ]
+
+      const formattedData = {
+        ...eventData,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      };
+
+      const event = await eventsAPI.createEvent(formattedData);
+      
+      if (event?.id) {
+        navigate(`/events/${event.id}`);
+      } else {
+        setError('Failed to create event. Please try again.');
       }
-    ],
-    sponsors: [
-      {
-        name: '',
-        logoUrl: '',
-        websiteUrl: '',
-        tier: 'GOLD'
-      }
-    ],
-    eventPeople: [
-      {
-        name: '',
-        role: 'JUDGE',
-        bio: '',
-        imageUrl: '',
-        linkedinUrl: ''
-      }
-    ],
-    applicationForm: {
-      educationRequired: false,
-      experienceRequired: false,
-      profilesRequired: false,
-      contactRequired: false,
-      tShirtSizeRequired: false
-    },
-    customQuestions: [
-      {
-        questionText: '',
-        questionType: 'TEXT',
-        options: null,
-        isRequired: false 
-      }
-    ]
+    } catch (err) {
+      console.error('Error creating event:', err);
+      setError(err.response?.data?.error || 'Failed to create event. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const apiCall = async (payload) => {
-    try {
-      console.log('Sending payload:', JSON.stringify(payload, null, 2));
-      const response = await api.post(`${import.meta.env.VITE_API_URL}/api/events`, payload, { withCredentials: true });
-      console.log('Event created:', response.data);
-      navigate('/events');
-    } catch (error) {
-      console.error('Error creating event:', error.response?.data);
-      setError(error.response?.data?.error || 'An error occurred while creating the event. Please try again.');
-    }
-  }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setEventData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
-  
-  // This block of code returns the form to be displayed on the page (every element is a part of the form)
   return (
-    <EventForm
-    mode = {1} //to specify event create mode
-    localFormData = {localFormData}
-    apiCall = {apiCall}
-    />
+    <div className="container-width py-20">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">Create New Event</h1>
+
+        {error && (
+          <div className="bg-red-50 text-red-500 p-4 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Event Title
+            </label>
+            <input
+              type="text"
+              name="title"
+              value={eventData.title}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-black focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description
+            </label>
+            <textarea
+              name="description"
+              value={eventData.description}
+              onChange={handleChange}
+              required
+              rows={4}
+              className="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-black focus:border-transparent"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Start Date
+              </label>
+              <input
+                type="datetime-local"
+                name="startDate"
+                value={eventData.startDate}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-black focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                End Date
+              </label>
+              <input
+                type="datetime-local"
+                name="endDate"
+                value={eventData.endDate}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-black focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Location
+            </label>
+            <input
+              type="text"
+              name="location"
+              value={eventData.location}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-black focus:border-transparent"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full btn-primary"
+          >
+            {loading ? 'Creating...' : 'Create Event'}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 };
 

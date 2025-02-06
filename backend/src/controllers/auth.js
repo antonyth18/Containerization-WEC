@@ -99,4 +99,79 @@ export const getCurrentUser = async (req, res) => {
     console.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to get user' });
   }
+};
+
+export const updateUser = async (req, res) => {
+  try {
+    const userId = req.auth.payload.sub;
+    const userData = req.body;
+
+    // Remove id and timestamps from profile data
+    const profileData = userData.profile ? {
+      firstName: userData.profile.firstName,
+      lastName: userData.profile.lastName,
+      avatarUrl: userData.profile.avatarUrl,
+      bio: userData.profile.bio,
+      gender: userData.profile.gender,
+      phone: userData.profile.phone,
+      country: userData.profile.country,
+      city: userData.profile.city
+    } : {};
+
+    const updatedUser = await prisma.user.update({
+      where: { auth0Id: userId },
+      data: {
+        profile: {
+          upsert: {
+            create: profileData,
+            update: profileData
+          }
+        },
+        education: {
+          deleteMany: {},
+          create: userData.education?.map(edu => ({
+            institutionName: edu.institutionName,
+            degree: edu.degree,
+            fieldOfStudy: edu.fieldOfStudy,
+            graduationYear: edu.graduationYear ? parseInt(edu.graduationYear) : null
+          })) || []
+        },
+        experience: {
+          deleteMany: {},
+          create: userData.experience?.map(exp => ({
+            company: exp.company,
+            position: exp.position,
+            startDate: exp.startDate ? new Date(exp.startDate) : null,
+            endDate: exp.endDate ? new Date(exp.endDate) : null
+          })) || []
+        },
+        skills: {
+          deleteMany: {},
+          create: userData.skills?.map(skill => ({
+            skillName: skill.skillName,
+            expertiseLevel: skill.expertiseLevel
+          })) || []
+        },
+        socialProfiles: {
+          deleteMany: {},
+          create: userData.socialProfiles?.map(social => ({
+            platform: social.platform,
+            url: social.url
+          })) || []
+        }
+      },
+      include: {
+        profile: true,
+        education: true,
+        experience: true,
+        skills: true,
+        socialProfiles: true
+      }
+    });
+
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
 }; 

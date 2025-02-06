@@ -93,10 +93,24 @@ export const getEventById = async (req, res) => {
 export const createEvent = async (req, res) => {
   try {
     const userId = req.auth.payload.sub;
-    const eventData = { ...req.body, createdById: userId };
-    
+    const eventData = req.body;
+
+    // Find user first
+    const user = await prisma.user.findUnique({
+      where: { auth0Id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     const event = await prisma.event.create({
-      data: eventData,
+      data: {
+        ...eventData,
+        createdById: user.id, // Use the actual user ID from our database
+        startDate: new Date(eventData.startDate),
+        endDate: new Date(eventData.endDate)
+      },
       include: {
         timeline: true,
         links: true,
@@ -109,6 +123,7 @@ export const createEvent = async (req, res) => {
 
     res.status(201).json(event);
   } catch (error) {
+    console.error('Create event error:', error);
     res.status(500).json({ error: 'Failed to create event' });
   }
 };
