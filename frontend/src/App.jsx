@@ -24,7 +24,11 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     return <Navigate to="/login" replace />;
   }
   
-  if (requiredRole && user?.role !== requiredRole) {
+  // Debug log
+  console.log('User role:', user?.role, 'Required role:', requiredRole);
+  
+  if (requiredRole && (!user || user.role !== requiredRole)) {
+    console.log('Role mismatch, redirecting to home');
     return <Navigate to="/" replace />;
   }
   
@@ -53,14 +57,31 @@ const App = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/events" element={<Events />} />
-                <Route path="/events/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
-                <Route path="/edit-event/:id" element={<ProtectedRoute><EditEvent /></ProtectedRoute>} />
-                <Route path="/create-event" element={
-                  <ProtectedRoute requiredRole="ORGANIZER">
-                    <CreateEvent />
-                  </ProtectedRoute>
-                } />
-                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route 
+                  path="/create-event" 
+                  element={
+                    <ProtectedRoute requiredRole="ORGANIZER">
+                      <CreateEvent />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/events/:id" element={<EventDetails />} />
+                <Route 
+                  path="/edit-event/:id" 
+                  element={
+                    <ProtectedRoute requiredRole="ORGANIZER">
+                      <EditEvent />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/profile" 
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  } 
+                />
               </Routes>
             </main>
             <Footer />

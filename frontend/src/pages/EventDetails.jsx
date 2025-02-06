@@ -7,31 +7,58 @@ const EventDetails = () => {
   const { id } = useParams();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const { user } = useAuth();
 
   const [activeSection, setActiveSection] = useState('overview'); 
 
   useEffect(() => {
-    const fetchEvent = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}`, { withCredentials: true });
-        setEvent(response.data);
-        console.log(event);
-      } catch (error) {
-        console.error('Error fetching event:', error);
-        setError('Failed to load event details');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchEvent();
   }, [id]);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
-  if (!event) return <div>Event not found</div>;
+  const fetchEvent = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/events/${id}`,
+        { withCredentials: true }
+      );
+      setEvent(response.data);
+    } catch (err) {
+      console.error('Error fetching event:', err);
+      setError('Failed to load event details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center text-gray-600">
+          Event not found
+        </div>
+      </div>
+    );
+  }
 
   const handleSectionChange = (section) => {
     setActiveSection(section);
@@ -88,11 +115,13 @@ const EventDetails = () => {
         
           
             <div className="h-96 bg-gray-200 rounded-lg overflow-hidden mb-6">
-              <img
-                src={event.eventBranding.coverImage.publicUrl ? event.eventBranding.coverImage.publicUrl : null}
-                alt="Event Image"
-                className="w-full h-full object-cover"
-              />
+              {event.branding?.coverUrl && (
+                <img
+                  src={event.branding.coverUrl}
+                  alt={event.name}
+                  className="w-full h-full object-cover"
+                />
+              )}
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm">
@@ -216,13 +245,13 @@ const EventDetails = () => {
                     <div>
                       <dt className="text-gray-500 font-semibold text-base">Event Start</dt>
                       <dd className="text-gray-900 text-lg">
-                        {new Date(event.eventTimeline.eventStart).toLocaleDateString('en-US', {
+                        {new Date(event.timeline.eventStart).toLocaleDateString('en-US', {
                         year: 'numeric',
                           month: 'short',
                           day: 'numeric',
                         })}{' '}
                         at{' '}
-                        {new Date(event.eventTimeline.eventStart).toLocaleTimeString('en-US', {
+                        {new Date(event.timeline.eventStart).toLocaleTimeString('en-US', {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
@@ -236,13 +265,13 @@ const EventDetails = () => {
                     <div>
                       <dt className="text-gray-500 font-semibold text-base">Event End</dt>
                     <dd className="text-gray-900 text-lg">
-                      {new Date(event.eventTimeline.eventEnd).toLocaleDateString('en-US', {
+                      {new Date(event.timeline.eventEnd).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
                         })}{' '}
                         at{' '}
-                      {new Date(event.eventTimeline.eventEnd).toLocaleTimeString('en-US', {
+                      {new Date(event.timeline.eventEnd).toLocaleTimeString('en-US', {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
@@ -261,13 +290,13 @@ const EventDetails = () => {
                     <div>
                       <dt className="text-gray-500 font-semibold text-base">Application Strat</dt>
                       <dd className="text-gray-900 text-lg">
-                        {new Date(event.eventTimeline.applicationsStart).toLocaleDateString('en-US', {
+                        {new Date(event.timeline.applicationsStart).toLocaleDateString('en-US', {
                         year: 'numeric',
                           month: 'short',
                           day: 'numeric',
                         })}{' '}
                         at{' '}
-                        {new Date(event.eventTimeline.applicationsStart).toLocaleTimeString('en-US', {
+                        {new Date(event.timeline.applicationsStart).toLocaleTimeString('en-US', {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
@@ -281,13 +310,13 @@ const EventDetails = () => {
                   <div>
                     <dt className="text-gray-500 font-semibold text-base">Application End</dt>
                   <dd className="text-gray-900 text-lg">
-                    {new Date(event.eventTimeline.applicationsEnd).toLocaleDateString('en-US', {
+                    {new Date(event.timeline.applicationsEnd).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
                       })}{' '}
                       at{' '}
-                    {new Date(event.eventTimeline.applicationsEnd).toLocaleTimeString('en-US', {
+                    {new Date(event.timeline.applicationsEnd).toLocaleTimeString('en-US', {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}

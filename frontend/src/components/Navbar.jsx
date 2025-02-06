@@ -7,7 +7,7 @@ const Navbar = () => {
   const { isAuthenticated, logout, user, login } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const canCreateEvent = user?.role === 'ADMIN' || user?.role === 'ORGANIZER';
+  const canCreateEvent = user?.role === 'ORGANIZER';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -83,9 +83,6 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-6">
             {isAuthenticated ? (
               <>
-                {canCreateEvent && (
-                  <Button variant="secondary" to="/create-event">Create Event</Button>
-                )}
                 <Button variant="text" to="/profile">Profile</Button>
                 <Button variant="primary" onClick={() => logout()}>Logout</Button>
               </>
@@ -129,16 +126,6 @@ const Navbar = () => {
               <div className="pt-6 border-t mt-4">
                 {isAuthenticated && (
                   <div className="space-y-4 p-4">
-                    {canCreateEvent && (
-                      <Button 
-                        variant="secondary" 
-                        to="/create-event" 
-                        className="w-full bg-white"
-                        onClick={() => handleMobileMenuClick()}
-                      >
-                        Create Event
-                      </Button>
-                    )}
                     <Button
                       variant="text"
                       to="/profile"

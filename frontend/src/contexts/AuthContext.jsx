@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { authAPI } from '../api/api';
 
@@ -7,23 +7,35 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const { 
     isAuthenticated, 
-    user, 
-    isLoading, 
+    user: auth0User, 
+    isLoading,
     loginWithRedirect, 
     logout,
     getAccessTokenSilently 
   } = useAuth0();
 
+  const [user, setUser] = useState(null);
+
   useEffect(() => {
     const initAuth = async () => {
-      if (isAuthenticated && user) {
+      if (isAuthenticated && auth0User) {
         try {
-          // Get token and store it
           const token = await getAccessTokenSilently();
           localStorage.setItem('auth0_token', token);
 
-          // Register/update user in backend
-          await authAPI.register(user);
+          const userData = await authAPI.register(auth0User);
+          
+          // Set default role as ORGANIZER for testing
+          const userWithRole = {
+            ...userData,
+            role: userData.role || 'ORGANIZER', // Default to ORGANIZER if no role
+            isProfileComplete: !!(userData?.profile?.firstName && 
+              userData?.profile?.lastName && 
+              userData?.profile?.bio && 
+              userData?.profile?.phone)
+          };
+          
+          setUser(userWithRole);
         } catch (error) {
           console.error('Error initializing auth:', error);
         }
@@ -31,7 +43,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-  }, [isAuthenticated, user, getAccessTokenSilently]);
+  }, [isAuthenticated, auth0User, getAccessTokenSilently]);
 
   const value = {
     isAuthenticated,
@@ -60,3 +72,4 @@ export const useAuth = () => {
   return context;
 };
 
+export default AuthProvider;

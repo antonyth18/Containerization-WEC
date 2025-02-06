@@ -7,7 +7,8 @@ import {
   updateEvent, 
   deleteEvent,
   applyToEvent,
-  joinEvent
+  joinEvent,
+  publishEvent
 } from '../controllers/events.js';
 import { validate, eventSchema , eventDraftSchema} from '../middleware/validate.js';
 
