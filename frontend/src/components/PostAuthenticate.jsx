@@ -1,84 +1,56 @@
 import { useAuth0 } from "@auth0/auth0-react";
-import { authAPI, api } from "../api/api.js";
-import {Navigate, useNavigate} from "react-router-dom";
-import {useEffect, useState} from "react";
-import axios from "axios";
+import { authAPI } from "../api/api.js";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useAuth } from '../contexts/AuthContext';
 
 const PostAuthenticate = () => {
-  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
-  const [userRow, setUserRow] = useState(null);
+  const { user: auth0User, isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { checkAuthStatus } = useAuth();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try{
-        const token = await getAccessTokenSilently();
-        console.log(token);
-        axios.defaults.headers.common["authorization"] = `Bearer ${token}`;
-        api.defaults.headers.common["authorization"] = `Bearer ${token}`;
-        console.log("Axios initialized with token.");
+    const handleAuthentication = async () => {
+      try {
+        if (!isAuthenticated || !auth0User) {
+          setLoading(false);
+          return;
+        }
 
-        console.log("Axios Headers:", axios.defaults.headers.common);
+        console.log('Auth0 user data:', auth0User);
 
-        const userData = await authAPI.getCurrentUser();
-        console.log("User data: ", userData);
-        setUserRow(userData);
-      }catch (e) {
-        setError(e.response.data);
-        console.error("Error initializing Axios or fetching user data:", e.response);
-      }finally {
-        setLoading(false)
+        // Get the token and set it in the API
+        const token = await getAccessTokenSilently({
+          audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+          scope: "openid profile email"
+        });
+        
+        // Set the token for all subsequent API calls
+        authAPI.setAuthToken(token);
+
+        // Check auth status to create/get user in our database
+        await checkAuthStatus();
+
+        // Redirect to about page
+        navigate('/about');
+      } catch (error) {
+        console.error('Authentication error:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (isAuthenticated) {
-      fetchUser();
-    }
-  }, [isAuthenticated, getAccessTokenSilently])
+    handleAuthentication();
+  }, [isAuthenticated, auth0User, getAccessTokenSilently, navigate, checkAuthStatus]);
 
-  if(loading) return;
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!auth0User) return <Navigate to="/" replace />;
 
-  //if not logged in
-  if(!user){
-    return <Navigate to="/" replace/>;
-  }
-  // const id = user.sub;
-
-  const registerUser = async () => {
-    try {
-      await authAPI.register({
-        email: user.email,
-        username: user.username,
-        role: "ORGANIZER",
-      });
-      navigate('/');
-    } catch (error) {
-      setError(error.response?.data?.error || 'Failed to register');
-    }
-  }
-
-  const loginUser = async () => {
-    try {
-      const { data } = await authAPI.login();
-      console.log(data);
-      navigate('/');
-    } catch (error) {
-      setError(error.response?.data?.error || 'Failed to login');
-    }
-  }
-
-
-  //If user already exists
-  if(!error){
-    loginUser();
-  }else{  //new registration
-    registerUser();
-    // return <Navigate to="/register" replace/>;
-  }
-
-
-}
+  return <div>Authenticating...</div>;
+};
 
 export default PostAuthenticate;

@@ -2,15 +2,32 @@ import axios from 'axios';
 
 // Create axios instance with default config
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4000',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
+// Add response interceptor to handle errors
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('API Error:', error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
+
 // Auth API endpoints
 export const authAPI = {
+  setAuthToken(token) {
+    if (token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete api.defaults.headers.common['Authorization'];
+    }
+  },
+
   /**
    * Login user with email and password
    * @param {string} email User's email
@@ -25,8 +42,10 @@ export const authAPI = {
    * @param {Object} userData User registration data (email, username, password, role)
    * @returns {Promise} Response with created user
    */
-  register: (userData) => 
-    api.post('/api/register', userData),
+  async register(data) {
+    const response = await api.post('/api/auth/register', data);
+    return response.data;
+  },
 
   /**
    * Logout current user
@@ -39,8 +58,35 @@ export const authAPI = {
    * Get current authenticated user
    * @returns {Promise} Response with user data
    */
-  getCurrentUser: () =>
-    api.get('/api/user')
+  async getCurrentUser() {
+    const response = await api.get('/api/auth/user');
+    return response.data;
+  },
+
+  async completeOnboarding(formData) {
+    const response = await api.post('/api/auth/onboarding', formData);
+    return response.data;
+  },
+
+  async updateProfile(profileData) {
+    const response = await api.put('/api/auth/profile', profileData);
+    return response.data;
+  },
+
+  async updateEducation(educationData) {
+    const response = await api.put('/api/auth/education', { education: educationData });
+    return response.data;
+  },
+
+  async updateSkills(skillsData) {
+    const response = await api.put('/api/auth/skills', { skills: skillsData });
+    return response.data;
+  },
+
+  async updateSocialProfiles(socialData) {
+    const response = await api.put('/api/auth/social', { socialProfiles: socialData });
+    return response.data;
+  }
 };
 
 // Events API endpoints
@@ -49,16 +95,20 @@ export const eventsAPI = {
    * Get all events with related data (timeline, links, branding, tracks, sponsors, etc)
    * @returns {Promise} Response with events array
    */
-  getEvents: () => 
-    api.get('/api/events'),
+  async getEvents() {
+    const response = await api.get('/api/events');
+    return response.data;
+  },
 
   /**
    * Get single event by ID with all related data
    * @param {string} id Event ID
    * @returns {Promise} Response with event data
    */
-  getEvent: (id) => 
-    api.get(`/api/events/${id}`),
+  async getEvent(id) {
+    const response = await api.get(`/api/events/${id}`);
+    return response.data;
+  },
 
   /**
    * Create new event with all related data
@@ -108,8 +158,10 @@ export const eventsAPI = {
    * @param {Object} applicationData Application details
    * @returns {Promise} Response with application status
    */
-  joinEvent: (eventId, applicationData) => 
-    api.post(`/api/events/${eventId}/join`, applicationData)
+  async joinEvent(eventId, applicationData) {
+    const response = await api.post(`/api/events/${eventId}/apply`, applicationData);
+    return response.data;
+  }
 };
 
 // Teams API endpoints
@@ -196,28 +248,5 @@ export const profileAPI = {
   updateProfile: (profileData) => 
     api.put('/api/profile', profileData)
 };
-
-// Error interceptor
-api.interceptors.response.use(
-  response => response,
-  error => {
-    // Handle common errors
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
-      window.location.href = '/login';
-    }
-    // Handle other status codes
-    else if (error.response?.status === 403) {
-      console.error('Forbidden access');
-    }
-    else if (error.response?.status === 404) {
-      console.error('Resource not found');
-    }
-    else if (error.response?.status === 500) {
-      console.error('Server error');
-    }
-    return Promise.reject(error);
-  }
-);
 
 export default api;

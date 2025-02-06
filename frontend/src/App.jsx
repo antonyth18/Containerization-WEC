@@ -11,13 +11,11 @@ import CreateEvent from './components/CreateEvent';
 import Profile from './pages/Profile';
 import EventDetails from './pages/EventDetails';
 import EditEvent from './components/EditEvent';
-
+import PostAuthenticate from './components/PostAuthenticate';
+import Onboarding from './components/Onboarding';
 
 import {useAuth0} from "@auth0/auth0-react";
 import axios from "axios";
-import PostAuthenticate from "./components/PostAuthenticate.jsx";
-
-
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, loading } = useAuth0();
@@ -47,8 +45,6 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 const App = () => {
   const { user, isLoading} = useAuth0();
 
-
-
   if (isLoading) {
     return null;
   }
@@ -63,6 +59,8 @@ const App = () => {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/authenticate" element={<PostAuthenticate />} />
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
               <Route path="/events/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
               <Route path="/edit-event/:id" element={<ProtectedRoute><EditEvent /></ProtectedRoute>} />
@@ -77,25 +75,6 @@ const App = () => {
           <Footer />
         </div>
       </AuthProvider>
-      <div className="App min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/authenticate" element={<PostAuthenticate />} />
-            <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
-            <Route path="/create-event" element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <CreateEvent />
-              </ProtectedRoute>
-            } />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
     </Router>
   );
 };

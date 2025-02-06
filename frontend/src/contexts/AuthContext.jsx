@@ -1,28 +1,30 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
 import { authAPI } from '../api/api';
-import { useLocation } from 'react-router-dom';
 
 const AuthContext = createContext();
 
-export const useAuth = () => useContext(AuthContext);
-
-/**
- * Authentication context provider component
- * Manages global authentication state and methods
- */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const location = useLocation();
+  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
 
-  /**
-   * Check current authentication status
-   */
   const checkAuthStatus = async () => {
     try {
-      const { data } = await authAPI.getCurrentUser();
-      console.log('User data:', data);
-      setUser(data);
+      if (!isAuthenticated) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      const token = await getAccessTokenSilently({
+        audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+        scope: "openid profile email"
+      });
+      
+      authAPI.setAuthToken(token);
+      const userData = await authAPI.getCurrentUser();
+      setUser(userData);
     } catch (error) {
       console.error('Auth check failed:', error);
       setUser(null);
@@ -32,15 +34,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Only check auth status for protected routes
-    const publicPaths = ['/', '/login', '/register'];
-    if (!publicPaths.includes(location.pathname)) {
-      checkAuthStatus();
-    } else {
-      // For public routes, just set loading to false
-      setLoading(false);
-    }
-  }, [location.pathname]);
+    checkAuthStatus();
+  }, [isAuthenticated]);
 
   /**
    * Login user with email and password
@@ -94,7 +89,8 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    loading
+    loading,
+    checkAuthStatus
   };
 
   return (
@@ -103,4 +99,6 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+export const useAuth = () => useContext(AuthContext);
 

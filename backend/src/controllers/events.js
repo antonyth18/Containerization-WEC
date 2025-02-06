@@ -7,29 +7,18 @@ export const getEvents = async (req, res) => {
   try {
     const events = await prisma.event.findMany({
       include: {
-        eventTimeline: true,
-        eventLinks: true,
-        eventBranding: {
-          include: {
-            coverImage: true,
-            faviconImage: true,
-            logoImage: true,
-          }
-        },
-        tracks: {
-          include: {
-            prizes: true
-          }
-        },
+        timeline: true,
+        links: true,
+        branding: true,
+        tracks: true,
         sponsors: true,
-        eventPeople: true,
-        applicationForm: true,
-        customQuestions: true
+        eventPeople: true
       }
     });
     res.json(events);
   } catch (error) {
-    throw error;
+    console.error('Get events error:', error);
+    res.status(500).json({ error: 'Failed to fetch events' });
   }
 };
 
@@ -619,5 +608,25 @@ export const joinEvent = async (req, res) => {
     res.status(201).json(application);
   } catch (error) {
     throw error;
+  }
+};
+
+export const applyToEvent = async (req, res) => {
+  try {
+    const { id: eventId } = req.params;
+    const userId = req.user.id;
+
+    const application = await prisma.application.create({
+      data: {
+        eventId: parseInt(eventId),
+        userId,
+        status: 'PENDING'
+      }
+    });
+
+    res.json(application);
+  } catch (error) {
+    console.error('Apply to event error:', error);
+    res.status(500).json({ error: 'Failed to apply to event' });
   }
 }; 
