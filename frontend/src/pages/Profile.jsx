@@ -158,17 +158,29 @@ const Profile = () => {
                 <h2 className="text-xl font-semibold mb-4">Profile Details</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-600">First Name</label>
-                    <p className="mt-1">{profile.profile.firstName}</p>
+                    <label className="block text-sm font-medium text-gray-600">Name</label>
+                    <p className="mt-1">{renderName(profile.profile.firstName, profile.profile.lastName)}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-600">Last Name</label>
-                    <p className="mt-1">{profile.profile.lastName}</p>
+                    <label className="block text-sm font-medium text-gray-600">Gender</label>
+                    <p className="mt-1">{profile.profile.gender || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600">Phone</label>
+                    <p className="mt-1">{profile.profile.phone || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600">Location</label>
+                    <p className="mt-1">
+                      {profile.profile.city && profile.profile.country 
+                        ? `${profile.profile.city}, ${profile.profile.country}`
+                        : '-'}
+                    </p>
                   </div>
                   {profile.profile.bio && (
                     <div className="col-span-2">
                       <label className="block text-sm font-medium text-gray-600">Bio</label>
-                      <p className="mt-1">{profile.profile.bio}</p>
+                      <p className="mt-1 whitespace-pre-wrap">{profile.profile.bio}</p>
                     </div>
                   )}
                 </div>
@@ -180,14 +192,44 @@ const Profile = () => {
               <div className="bg-white rounded-lg shadow p-6 mb-6">
                 <h2 className="text-xl font-semibold mb-4">Education</h2>
                 {profile.education.map((edu, index) => (
-                  <div key={index} className="mb-4 last:mb-0">
+                  <div key={index} className="mb-4 last:mb-0 border-b last:border-0 pb-4 last:pb-0">
                     <h3 className="font-medium">{edu.institutionName}</h3>
                     <p className="text-sm text-gray-600">
                       {edu.degree} in {edu.fieldOfStudy}
                     </p>
                     <p className="text-sm text-gray-500">
-                      Graduation Year: {edu.graduationYear}
+                      {edu.startDate && `${new Date(edu.startDate).getFullYear()} - `}
+                      {edu.endDate ? new Date(edu.endDate).getFullYear() : 'Present'}
                     </p>
+                    {edu.grade && (
+                      <p className="text-sm text-gray-500">Grade: {edu.grade}</p>
+                    )}
+                    {edu.activities && (
+                      <p className="text-sm text-gray-500 mt-1">{edu.activities}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Experience */}
+            {profile?.experience?.length > 0 && (
+              <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-xl font-semibold mb-4">Experience</h2>
+                {profile.experience.map((exp, index) => (
+                  <div key={index} className="mb-4 last:mb-0 border-b last:border-0 pb-4 last:pb-0">
+                    <h3 className="font-medium">{exp.position}</h3>
+                    <p className="text-sm text-gray-600">{exp.company}</p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(exp.startDate).toLocaleDateString()} - 
+                      {exp.endDate ? new Date(exp.endDate).toLocaleDateString() : 'Present'}
+                    </p>
+                    {exp.location && (
+                      <p className="text-sm text-gray-500">{exp.location}</p>
+                    )}
+                    {exp.description && (
+                      <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{exp.description}</p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -195,33 +237,52 @@ const Profile = () => {
 
             {/* Skills */}
             {profile?.skills?.length > 0 && (
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-white rounded-lg shadow p-6 mb-6">
                 <h2 className="text-xl font-semibold mb-4">Skills</h2>
                 <div className="flex flex-wrap gap-2">
                   {profile.skills.map((skill, index) => (
                     <span 
                       key={index}
-                      className="px-3 py-1 bg-gray-100 rounded-full text-sm"
+                      className={`px-3 py-1 rounded-full text-sm ${
+                        skill.expertiseLevel === 'EXPERT' 
+                          ? 'bg-green-100 text-green-800'
+                          : skill.expertiseLevel === 'INTERMEDIATE'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
                     >
-                      {skill.skillName} - {skill.expertiseLevel}
+                      {skill.skillName}
+                      <span className="ml-1 text-xs">
+                        ({skill.expertiseLevel.toLowerCase()})
+                        {skill.yearsOfExp && ` • ${skill.yearsOfExp}y`}
+                      </span>
                     </span>
                   ))}
                 </div>
               </div>
             )}
 
-            <h3 className="text-xl font-semibold mt-6 mb-3">Experience</h3>
-            {profile.experience?.map((exp, index) => (
-              <div key={index} className="mb-2">
-                <p>{renderField(exp.company)} - {renderField(exp.position)}</p>
-                <p>{renderField(new Date(exp.startDate).toLocaleDateString())} - {exp.endDate ? renderField(new Date(exp.endDate).toLocaleDateString()) : 'Present'}</p>
+            {/* Social Profiles */}
+            {profile?.socialProfiles?.length > 0 && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-xl font-semibold mb-4">Social Profiles</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {profile.socialProfiles.map((social, index) => (
+                    <a
+                      key={index}
+                      href={social.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+                    >
+                      {/* You can add icons based on platform */}
+                      <span>{social.platform}</span>
+                      <span className="text-sm truncate">{social.url}</span>
+                    </a>
+                  ))}
+                </div>
               </div>
-            ))}
-
-            <h3 className="text-xl font-semibold mt-6 mb-3">Social Profiles</h3>
-            {profile.socialProfiles?.map((social, index) => (
-              <p key={index}>{renderField(social.platform)}: <a className="text-blue-500 italic" href={renderField(social.url)} target="_blank" rel="noopener noreferrer">{renderField(social.url)}</a></p>
-            ))}
+            )}
           </div>
         ) : (
           <div>
@@ -306,48 +367,86 @@ const Profile = () => {
               <div>
                 <h3 className="text-xl font-semibold mb-3">Education</h3>
                 {formData.education.map((edu, index) => (
-                  <div key={index} className="mb-4">
-                    <input
-                      type="text"
-                      name="institutionName"
-                      value={edu.institutionName || ''}
-                      onChange={(e) => handleChange(e, 'education', index)}
-                      placeholder="Institution Name"
-                      className="w-full px-3 py-2 border rounded mb-2"
-                    />
-                    <select
-                      name="degree"
-                      value={edu.degree || ''}
-                      onChange={(e) => handleChange(e, 'education', index)}
-                      className="w-full px-3 py-2 border rounded mb-2"
+                  <div key={index} className="mb-6 p-4 border rounded-lg bg-gray-50">
+                    <div className="grid grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        name="institutionName"
+                        value={edu.institutionName || ''}
+                        onChange={(e) => handleChange(e, 'education', index)}
+                        placeholder="Institution Name"
+                        className="w-full px-3 py-2 border rounded"
+                      />
+                      <input
+                        type="text"
+                        name="fieldOfStudy"
+                        value={edu.fieldOfStudy || ''}
+                        onChange={(e) => handleChange(e, 'education', index)}
+                        placeholder="Field of Study"
+                        className="w-full px-3 py-2 border rounded"
+                      />
+                      <select
+                        name="degree"
+                        value={edu.degree || ''}
+                        onChange={(e) => handleChange(e, 'education', index)}
+                        className="w-full px-3 py-2 border rounded"
+                      >
+                        <option value="">Select Degree</option>
+                        <option value="HIGH_SCHOOL">High School</option>
+                        <option value="ASSOCIATE">Associate</option>
+                        <option value="BACHELOR">Bachelor</option>
+                        <option value="MASTER">Master</option>
+                        <option value="PHD">PhD</option>
+                      </select>
+                      <input
+                        type="text"
+                        name="grade"
+                        value={edu.grade || ''}
+                        onChange={(e) => handleChange(e, 'education', index)}
+                        placeholder="Grade/GPA"
+                        className="w-full px-3 py-2 border rounded"
+                      />
+                      <input
+                        type="date"
+                        name="startDate"
+                        value={edu.startDate || ''}
+                        onChange={(e) => handleChange(e, 'education', index)}
+                        className="w-full px-3 py-2 border rounded"
+                      />
+                      <input
+                        type="date"
+                        name="endDate"
+                        value={edu.endDate || ''}
+                        onChange={(e) => handleChange(e, 'education', index)}
+                        className="w-full px-3 py-2 border rounded"
+                      />
+                      <div className="col-span-2">
+                        <textarea
+                          name="activities"
+                          value={edu.activities || ''}
+                          onChange={(e) => handleChange(e, 'education', index)}
+                          placeholder="Activities and Societies"
+                          className="w-full px-3 py-2 border rounded"
+                          rows="2"
+                        />
+                      </div>
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={() => removeItem('education', index)}
+                      className="mt-2 text-red-500 hover:text-red-700"
                     >
-                      <option value="">Select Expertise Level</option>
-                      <option value="HIGH_SCHOOL">High School</option>
-                      <option value="ASSOCIATE">Associate</option>
-                      <option value="BACHELOR">Bachelor</option>
-                      <option value="MASTER">Master</option>
-                      <option value="PHD">PHD</option>
-                    </select>
-                    <input
-                      type="text"
-                      name="fieldOfStudy"
-                      value={edu.fieldOfStudy || ''}
-                      onChange={(e) => handleChange(e, 'education', index)}
-                      placeholder="Field of Study"
-                      className="w-full px-3 py-2 border rounded mb-2"
-                    />
-                    <input
-                      type="number"
-                      name="graduationYear"
-                      value={edu.graduationYear || ''}
-                      onChange={(e) => handleChange(e, 'education', index)}
-                      placeholder="Graduation Year"
-                      className="w-full px-3 py-2 border rounded mb-2"
-                    />
-                    <button type="button" onClick={() => removeItem('education', index)} className="text-red-500">Remove</button>
+                      Remove Education
+                    </button>
                   </div>
                 ))}
-                <button type="button" onClick={() => addItem('education')} className="text-blue-500">Add Education</button>
+                <button 
+                  type="button" 
+                  onClick={() => addItem('education')}
+                  className="text-blue-500 hover:text-blue-700"
+                >
+                  + Add Education
+                </button>
               </div>
 
               {/* Experience */}
