@@ -110,10 +110,10 @@ const Profile = () => {
     profile?.profile?.phone;
 
   return (
-    <div className="container-width py-20">
+    <div className="container-width pt-24 pb-12">
       <div className="max-w-4xl mx-auto">
         {!isEditing ? (
-          <div>
+          <div className="mt-8">
             {!isProfileComplete && (
               <div className="mb-8 p-4 bg-yellow-50 rounded-lg">
                 <p className="text-yellow-800 mb-2">
@@ -222,15 +222,6 @@ const Profile = () => {
             {profile.socialProfiles?.map((social, index) => (
               <p key={index}>{renderField(social.platform)}: <a className="text-blue-500 italic" href={renderField(social.url)} target="_blank" rel="noopener noreferrer">{renderField(social.url)}</a></p>
             ))}
-
-            <h3 className="text-xl font-semibold mt-6 mb-3">Projects</h3>
-            {profile.projects?.map((project, index) => (
-              <div key={index} className="mb-2">
-                <p><strong>{renderField(project.name)}</strong></p>
-                <p>{renderField(project.description)}</p>
-                <p><a href={renderField(project.projectUrl)} target="_blank" rel="noopener noreferrer">{renderField(project.projectUrl)}</a></p>
-              </div>
-            ))}
           </div>
         ) : (
           <div>
@@ -243,32 +234,71 @@ const Profile = () => {
               </Button>
             </div>
             
-            <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-4xl bg-white shadow-xl border-t-black border-solid border-4 rounded-2xl p-12 mt-20 mb-20">
+            <form onSubmit={handleSubmit} className="space-y-6 bg-white shadow-xl rounded-2xl p-8">
               {/* Basic Information */}
               <div>
                 <h3 className="text-xl font-semibold mb-3">Basic Information</h3>
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.profile.firstName || ''}
-                  onChange={(e) => handleChange(e, 'profile')}
-                  placeholder="First Name"
-                  className="w-full px-3 py-2 border rounded mb-2"
-                />
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.profile.lastName || ''}
-                  onChange={(e) => handleChange(e, 'profile')}
-                  placeholder="Last Name"
-                  className="w-full px-3 py-2 border rounded mb-2"
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.profile.firstName || ''}
+                    onChange={(e) => handleChange(e, 'profile')}
+                    placeholder="First Name"
+                    className="w-full px-3 py-2 border rounded"
+                  />
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.profile.lastName || ''}
+                    onChange={(e) => handleChange(e, 'profile')}
+                    placeholder="Last Name"
+                    className="w-full px-3 py-2 border rounded"
+                  />
+                  <input
+                    type="text"
+                    name="phone"
+                    value={formData.profile.phone || ''}
+                    onChange={(e) => handleChange(e, 'profile')}
+                    placeholder="Phone"
+                    className="w-full px-3 py-2 border rounded"
+                  />
+                  <select
+                    name="gender"
+                    value={formData.profile.gender || ''}
+                    onChange={(e) => handleChange(e, 'profile')}
+                    className="w-full px-3 py-2 border rounded"
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="MALE">Male</option>
+                    <option value="FEMALE">Female</option>
+                    <option value="OTHER">Other</option>
+                    <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
+                  </select>
+                  <input
+                    type="text"
+                    name="country"
+                    value={formData.profile.country || ''}
+                    onChange={(e) => handleChange(e, 'profile')}
+                    placeholder="Country"
+                    className="w-full px-3 py-2 border rounded"
+                  />
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.profile.city || ''}
+                    onChange={(e) => handleChange(e, 'profile')}
+                    placeholder="City"
+                    className="w-full px-3 py-2 border rounded"
+                  />
+                </div>
                 <textarea
                   name="bio"
                   value={formData.profile.bio || ''}
                   onChange={(e) => handleChange(e, 'profile')}
                   placeholder="Bio"
-                  className="w-full px-3 py-2 border rounded mb-2"
+                  className="w-full px-3 py-2 border rounded mt-4"
+                  rows="4"
                 />
               </div>
               
@@ -423,43 +453,11 @@ const Profile = () => {
                 <button type="button" onClick={() => addItem('socialProfiles')} className="text-blue-500">Add Social Profile</button>
               </div>
 
-              {/* Projects */}
-              <div>
-                <h3 className="text-xl font-semibold mb-3">Projects</h3>
-                {formData.projects.map((project, index) => (
-                  <div key={index} className="mb-4">
-                    <input
-                      type="text"
-                      name="name"
-                      value={project.name || ''}
-                      onChange={(e) => handleChange(e, 'projects', index)}
-                      placeholder="Project Name"
-                      className="w-full px-3 py-2 border rounded mb-2"
-                    />
-                    <textarea
-                      name="description"
-                      value={project.description || ''}
-                      onChange={(e) => handleChange(e, 'projects', index)}
-                      placeholder="Project Description"
-                      className="w-full px-3 py-2 border rounded mb-2"
-                    />
-                    <input
-                      type="url"
-                      name="projectUrl"
-                      value={project.projectUrl || ''}
-                      onChange={(e) => handleChange(e, 'projects', index)}
-                      placeholder="Project URL"
-                      className="w-full px-3 py-2 border rounded mb-2"
-                    />
-                    <button type="button" onClick={() => removeItem('projects', index)} className="text-red-500">Remove</button>
-                  </div>
-                ))}
-                <button type="button" onClick={() => addItem('projects')} className="text-blue-500">Add Project</button>
+              <div className="flex justify-end mt-6">
+                <Button type="submit">
+                  Save Changes
+                </Button>
               </div>
-
-              <Button type="submit">
-                Save Changes
-              </Button>
             </form>
           </div>
         )}

@@ -124,7 +124,10 @@ export const eventsAPI = {
    * @returns {Promise} Response with created event
    */
   async createEvent(eventData) {
-    const response = await api.post('/api/events', eventData);
+    const response = await api.post('/api/events', {
+      ...eventData,
+      status: eventData.status || 'DRAFT'
+    });
     return response.data;
   },
 
@@ -145,7 +148,10 @@ export const eventsAPI = {
    * @returns {Promise} Response with updated event
    */
   async updateEvent(id, eventData) {
-    const response = await api.put(`/api/events/${id}`, eventData);
+    const response = await api.put(`/api/events/${id}`, {
+      ...eventData,
+      status: eventData.status || 'DRAFT'
+    });
     return response.data;
   },
 
