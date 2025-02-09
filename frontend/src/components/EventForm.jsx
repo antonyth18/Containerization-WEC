@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { uploadImage } from '../helpers/images';
+import { useNavigationAway  } from '../contexts/NavigationContext';
 
 const EventForm = ({
     mode,
@@ -10,7 +11,9 @@ const EventForm = ({
     }) => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
-  
+  const { setOnNavigateAway } = useNavigationAway();
+  const autoSaveFlag = useRef(true); 
+ 
   // This block of code stores the initalization of all the state variables (fields and entries) in the form
   const [formData, setFormData] = useState({
     ...localFormData,
@@ -21,7 +24,48 @@ const EventForm = ({
       banner: null // Initialize as null
     }
   });
-  console.log(formData);
+
+  const formDataRef = useRef(formData);
+  const [isReady, setIsReady] = useState(false);
+  
+  // Ensure formDataRef always has the latest value
+  useEffect(() => {
+    formDataRef.current = formData;
+    setIsReady(true);
+  }, [formData]);
+
+  const handleAutosave = async () => {
+    if (localFormData.id && autoSaveFlag.current === false) 
+      return;
+
+    try {
+      const eventPayload = {
+        ...formDataRef.current,
+        status: 'AUTOSAVE',
+        eventTimeline: {
+          eventStart: new Date().toISOString(),
+          eventEnd: new Date().toISOString(),
+          applicationsStart: new Date().toISOString(),
+          applicationsEnd: new Date().toISOString()
+        }
+      };
+
+      console.log("Autosaving with Payload:", eventPayload);
+      await apiCall(eventPayload);
+      console.log("Autosave Successful");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!isReady) return;
+    setOnNavigateAway(() => handleAutosave); 
+
+    return () => {
+      setOnNavigateAway(null);
+    };
+  }, [isReady]);
 
   // This block of code changes the state of the form data when the user types in the input fields
   const handleChange = (e, section = null) => {
@@ -207,6 +251,9 @@ const EventForm = ({
 
   // This block of code sends the form data to the backend to create a new event
   const handleSubmit = async (e) => {
+
+    autoSaveFlag.current = false;
+    
     e.preventDefault();
     setError('');
 
@@ -223,6 +270,7 @@ const EventForm = ({
       };
 
       await apiCall(eventPayload);
+
     } catch (error) {
       console.error('Error submitting form:', error);
       setError(error.message || 'Failed to create event');
@@ -230,6 +278,8 @@ const EventForm = ({
   };
 
   const handleSaveAsDraft = async (e) => {
+
+    autoSaveFlag.current = false;
     e.preventDefault();
     setError('');
 

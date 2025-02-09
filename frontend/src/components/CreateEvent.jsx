@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import EventForm from './EventForm';
@@ -17,7 +17,7 @@ const CreateEvent = () => {
     minTeamSize: 1,
     maxTeamSize: 4,
     mode: 'ONLINE',
-    status: 'PUBLISHED',
+    status: '',
     eventTimeline: {
       eventStart: '',
       eventEnd: '',
@@ -43,6 +43,57 @@ const CreateEvent = () => {
     eventPeople: []
   };
 
+
+  const [event, setEvent] = useState(localFormData);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        const token = await getAccessToken();
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/events/autosave`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            withCredentials: true
+          }
+        );
+        
+        const eventData = response.data;
+
+        if (eventData.timeline) {
+          eventData.eventTimeline = {
+            eventStart: eventData.timeline.eventStart.split('.')[0] || '',
+            eventEnd: eventData.timeline.eventEnd.split('.')[0] || '',
+            applicationsStart: eventData.timeline.applicationsStart.split('.')[0] || '',
+            applicationsEnd: eventData.timeline.applicationsEnd.split('.')[0] || '',
+          };
+        }
+
+        if (!eventData.eventLinks) {
+          eventData.eventLinks = [{
+            websiteUrl: '',
+            micrositeUrl: '',
+            contactEmail: '',
+            codeOfConductUrl: '',
+            socialLinks: null,
+          }];
+        }
+
+        setEvent(eventData);
+
+      } catch (err) {
+        console.log('Error fetching event', err.status);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvent();
+  }, []);   
+
   const apiCall = async (payload) => {
     try {
       // Get fresh token
@@ -61,6 +112,7 @@ const CreateEvent = () => {
       );
 
       if (response.data) {
+        if(payload.status !== 'AUTOSAVE')
         navigate(`/events/${response.data.id}`);
       } else {
         throw new Error('Failed to create event');
@@ -70,11 +122,13 @@ const CreateEvent = () => {
       throw new Error(error.response?.data?.error || 'Internal server error');
     }
   };
+  
+  if (loading) return <div>Loading...</div>;
 
   return (
     <EventForm
       mode={1} // create mode
-      localFormData={localFormData}
+      localFormData= {event} 
       apiCall={apiCall}
     />
   );

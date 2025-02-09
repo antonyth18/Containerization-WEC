@@ -266,6 +266,7 @@ enum EventMode {
 enum EventStatus {
   DRAFT
   PUBLISHED
+  AUTOSAVE
 }
 
 enum ApplicationStatus {

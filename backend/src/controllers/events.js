@@ -19,6 +19,13 @@ export const createEvent = async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized. Only organizers can create events.' });
     }
 
+    // delete previous autosave
+    if(req.body.id){
+      const eventDelete = await prisma.event.delete({
+        where : { id : req.body.id}
+      });
+    }
+
     const event = await prisma.event.create({
       data: {
         name: eventData.name,
@@ -180,6 +187,50 @@ export const getEventById = async (req, res) => {
     res.json(event);
   } catch (error) {
     console.error('Error fetching event:', error);
+    res.status(500).json({ error: 'Failed to fetch event' });
+  }
+};
+
+export const getAutoSave = async (req, res) => {
+  try {
+
+    const userId = req.user.id;
+    
+    const event = await prisma.event.findFirst({
+      where: {
+        AND: [
+          { status: 'AUTOSAVE' },
+          { createdById: userId }
+        ]
+      },
+      include: {
+        timeline: true,
+        branding: true,
+        links: true,
+        tracks: {
+          include: {
+            prizes: true
+          }
+        },
+        sponsors: true,
+        eventPeople: true,
+        createdBy: {
+          select: {
+            id: true,
+            username: true,
+            profile: true
+          }
+        }
+      }
+    });
+
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    res.json(event);
+  } catch (error) {
+    console.error('Error fetchingas event:', error);
     res.status(500).json({ error: 'Failed to fetch event' });
   }
 };

@@ -12,6 +12,7 @@ import CreateEvent from './components/CreateEvent';
 import Profile from './pages/Profile';
 import EventDetails from './pages/EventDetails';
 import EditEvent from './components/EditEvent';
+import { NavigationProvider } from './contexts/NavigationContext';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -38,6 +39,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 const App = () => {
   return (
     <Router>
+      <NavigationProvider>
       <Auth0Provider
         domain={import.meta.env.VITE_AUTH0_DOMAIN}
         clientId={import.meta.env.VITE_AUTH0_CLIENT_ID}
@@ -88,6 +90,7 @@ const App = () => {
           </div>
         </AuthProvider>
       </Auth0Provider>
+      </NavigationProvider>
     </Router>
   );
 };
