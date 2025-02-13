@@ -268,7 +268,7 @@ const EventForm = ({
           applicationsEnd: new Date(formData.eventTimeline.applicationsEnd).toISOString()
         }
       };
-
+      
       await apiCall(eventPayload);
 
     } catch (error) {

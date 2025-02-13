@@ -96,6 +96,25 @@ export const createEvent = async (req, res) => {
             avatar: person.avatar || null,
             socialLinks: person.socialLinks || null
           }))
+        },
+
+        applicationForm: {
+          create: {
+            educationRequired: eventData.applicationForm?.educationRequired || false,
+            experienceRequired: eventData.applicationForm?.experienceRequired || false,
+            profilesRequired: eventData.applicationForm?.profilesRequired || false,
+            contactRequired: eventData.applicationForm?.contactRequired || false,
+            tShirtSizeRequired: eventData.applicationForm?.tShirtSizeRequired || false,
+          }
+        },
+
+        customQuestions: {
+          create: eventData.customQuestions.map(question => ({
+            questionText: question.questionText,
+            questionType: question.questionType,
+            options: question.options,
+            isRequired: question.isRequired
+          }))
         }
       },
       include: {
@@ -133,6 +152,8 @@ export const getEvents = async (req, res) => {
         },
         sponsors: true,
         eventPeople: true,
+        applicationForm: true,
+        customQuestions: true,
         createdBy: {
           select: {
             id: true,
@@ -170,6 +191,8 @@ export const getEventById = async (req, res) => {
         },
         sponsors: true,
         eventPeople: true,
+        customQuestions: true,
+        applicationForm: true,
         createdBy: {
           select: {
             id: true,
@@ -214,6 +237,8 @@ export const getAutoSave = async (req, res) => {
         },
         sponsors: true,
         eventPeople: true,
+        customQuestions: true,
+        applicationForm: true,
         createdBy: {
           select: {
             id: true,
@@ -283,6 +308,8 @@ export const updateEvent = async (req, res) => {
           },
           sponsors: true,
           eventPeople: true,
+          customQuestions: true,
+          applicationForm: true,
           createdBy: {
             select: {
               id: true,

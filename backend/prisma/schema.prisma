@@ -104,8 +104,31 @@ model Event {
   sponsors          Sponsor[]
   eventPeople       EventPerson[]
   applications      Application[]
+  applicationForm   ApplicationForm?
+  customQuestions   CustomQuestion[]
   teams             Team[]
   projects          ProjectSubmission[]
+}
+
+model ApplicationForm {
+  id                 Int     @id @default(autoincrement())
+  eventId            Int     @unique
+  educationRequired  Boolean @default(false)
+  experienceRequired Boolean @default(false)
+  profilesRequired   Boolean @default(false)
+  contactRequired    Boolean @default(false)
+  tShirtSizeRequired Boolean @default(false)
+  event              Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model CustomQuestion {
+  id           Int     @id @default(autoincrement())
+  questionText String
+  questionType String
+  options      Json?
+  isRequired   Boolean @default(false)
+  eventId      Int
+  event        Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model EventTimeline {
