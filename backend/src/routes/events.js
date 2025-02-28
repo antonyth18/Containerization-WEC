@@ -3,6 +3,7 @@ import { checkJwt, ensureUser, isOrganizer, requireCompleteProfile } from '../mi
 import { 
   getEvents, 
   getEventById, 
+  getCustomQuestions,
   createEvent, 
   updateEvent, 
   deleteEvent,
@@ -21,6 +22,7 @@ router.get('/autosave', checkJwt, ensureUser, isOrganizer, getAutoSave);
 // Public routes
 router.get('/', getEvents);
 router.get('/:id', getEventById);
+router.get('/:eventId/custom-questions', getCustomQuestions);
 
 // Protected routes
 router.use(checkJwt);
@@ -34,7 +36,7 @@ router.delete('/:id', isOrganizer, deleteEvent);
 
 
 // Participant routes (require complete profile)
-router.post('/:id/apply', requireCompleteProfile, applyToEvent);
+router.post('/:id/apply', checkJwt, ensureUser, requireCompleteProfile, applyToEvent);
 router.post('/:id/join', joinEvent);
 
 export default router; 

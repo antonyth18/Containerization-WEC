@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -9,7 +10,7 @@ const EventDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuth();
-
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('overview'); 
 
   useEffect(() => {
@@ -325,9 +326,12 @@ const EventDetails = () => {
               </div>
             </div>
             <div className="flex justify-center mt-4">
-              <button className="btn-primary">
-                Apply now
-              </button>
+            <button   
+              className="btn-primary"
+              onClick={() => navigate(`/events/${event.id}/apply`)}
+            >
+              Apply now
+            </button>
             </div>
             
           </div>

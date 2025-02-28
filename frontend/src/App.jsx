@@ -12,6 +12,7 @@ import CreateEvent from './components/CreateEvent';
 import Profile from './pages/Profile';
 import EventDetails from './pages/EventDetails';
 import EditEvent from './components/EditEvent';
+import ApplyForm from "./pages/ApplyForEvent";  // Import the component
 import { NavigationProvider } from './contexts/NavigationContext';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
@@ -84,6 +85,7 @@ const App = () => {
                     </ProtectedRoute>
                   } 
                 />
+                <Route path="/events/:id/apply" element={<ApplyForm />} />  {/* NEW ROUTE */}
               </Routes>
             </main>
             <Footer />

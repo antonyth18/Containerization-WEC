@@ -8,9 +8,9 @@ const [formData, setFormData] = useState({
   type: '',
   tagline: '',
   about: '',
-  maxParticipants: '',
-  minTeamSize: '',
-  maxTeamSize: '',
+  maxParticipants: 100,
+  minTeamSize: 1,
+  maxTeamSize: 4,
   mode: 'ONLINE',
   status: 'DRAFT',
   customQuestions: [], // Initialize as empty array

@@ -643,7 +643,7 @@ const EventForm = ({
               type="number"
               id="maxParticipants"
               name="maxParticipants"
-              value={formData.maxParticipants || ''}
+              value={formData.maxParticipants || 100}
               onChange={handleChange}
               min="0"
               className={inputFieldStyle}
@@ -669,7 +669,7 @@ const EventForm = ({
               name="maxTeamSize"
               value={formData.maxTeamSize || 4}
               onChange={handleChange}
-              min="1"
+              max="100"
               className={inputFieldStyle}
             />
           </div>
@@ -1102,9 +1102,9 @@ const EventForm = ({
               />
               <input
                 type="url"
-                value={sponsor.website || ''}
+                value={sponsor.websiteUrl || ''}
                 onChange={(e) => handleArrayChange(e, 'sponsors', index)}
-                name="website"
+                name="websiteUrl"
                 placeholder="Sponsor Website URL"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />

@@ -228,6 +228,8 @@ model Application {
   event      Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user       User             @relation(fields: [userId], references: [id])
   team       Team?            @relation(fields: [teamId], references: [id])
+  userData   Json
+  responses  Json
 }
 
 model ProjectSubmission {

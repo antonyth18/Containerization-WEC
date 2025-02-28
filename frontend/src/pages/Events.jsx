@@ -260,13 +260,13 @@ const Events = () => {
             <div
               key={event.id}
               className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer"
+              onClick={() => handleEventViewClick(event.id)}
             >
               {event.branding?.coverUrl && (
                 <img
                   src={event.branding.coverUrl}
                   alt={event.name}
                   className="w-full h-48 object-cover"
-                  onClick={() => handleEventViewClick(event.id)}
                 />
               )}
               <div className="p-4">
@@ -285,13 +285,19 @@ const Events = () => {
                     {event.createdById === user?.id && (
                       <>
                         <button
-                          onClick={() => handleEventEditClick(event.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEventEditClick(event.id);
+                          }}
                           className="p-2 hover:bg-gray-100 rounded-full"
                         >
                           <EditBtn />
                         </button>
                         <button
-                          onClick={() => handleDeleteClick(event)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(event);
+                          }}
                           className="p-2 hover:bg-gray-100 rounded-full"
                         >
                           <DeleteBtn />

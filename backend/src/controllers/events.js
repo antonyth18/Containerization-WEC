@@ -32,9 +32,10 @@ export const createEvent = async (req, res) => {
         tagline: eventData.tagline || null,
         about: eventData.about || null,
         type: eventData.type || 'HACKATHON',
-        maxParticipants: eventData.maxParticipants,
-        minTeamSize: eventData.minTeamSize,
-        maxTeamSize: eventData.maxTeamSize,
+        maxTeamSize: eventData.maxTeamSize || null,
+        maxParticipants: eventData.maxParticipants || null,
+        minTeamSize: eventData.minTeamSize || null,
+        maxTeamSize: eventData.maxTeamSize || null,
         mode: eventData.mode,
         status: eventData.status || 'PUBLISHED',
         createdById: user.id,
@@ -211,6 +212,27 @@ export const getEventById = async (req, res) => {
   } catch (error) {
     console.error('Error fetching event:', error);
     res.status(500).json({ error: 'Failed to fetch event' });
+  }
+};
+
+export const getCustomQuestions = async (req, res) => {
+  try {
+    const { eventId } = req.params; // Extract eventId from URL
+
+    const questions = await prisma.customQuestion.findMany({
+      where: { eventId: parseInt(eventId) }, // Filter by eventId
+      select: { 
+        questionText: true,
+        questionType: true,
+        options: true,
+        isRequired: true
+      }
+    });
+
+    res.json(questions); // Return questions as JSON
+  } catch (error) {
+    console.error("Error fetching questions:", error);
+    res.status(500).json({ error: "Failed to fetch questions" });
   }
 };
 
@@ -444,17 +466,17 @@ export const deleteEvent = async (req, res) => {
       }),
 
       // Delete timeline
-      prisma.timeline.deleteMany({
+      prisma.eventTimeline.deleteMany({
         where: { eventId: parseInt(id) }
       }),
 
       // Delete branding
-      prisma.branding.deleteMany({
+      prisma.eventBranding.deleteMany({
         where: { eventId: parseInt(id) }
       }),
 
       // Delete links
-      prisma.link.deleteMany({
+      prisma.eventLink.deleteMany({
         where: { eventId: parseInt(id) }
       }),
 
@@ -489,29 +511,65 @@ export const joinEvent = async (req, res) => {
 export const applyToEvent = async (req, res) => {
   try {
     const { id: eventId } = req.params;
-    const userId = req.auth.payload.sub;
+    // Get Auth0 ID from token
+    const auth0Id = req.auth.payload.sub;
+    const { userData, responses } = req.body;
 
-    // Find user first
+    // ADDED: First find the user by their Auth0 ID
     const user = await prisma.user.findUnique({
-      where: { auth0Id: userId }
+      where: { auth0Id: auth0Id }
     });
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    // Validate if event exists
+    const event = await prisma.event.findUnique({
+      where: { id: parseInt(eventId) },
+      include: { applicationForm: true }
+    });
+
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    // CHANGED: Use user.id instead of auth0Id
     const application = await prisma.application.create({
       data: {
         eventId: parseInt(eventId),
-        userId: user.id,
-        status: 'PENDING'
+        userId: user.id, // Changed from auth0Id to internal user.id
+        status: 'PENDING',
+        userData: {
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          gender: userData.gender,
+          city: userData.city,
+          country: userData.country,
+          tShirtSize: event.applicationForm?.tShirtSizeRequired ? userData.tShirtSize : null,
+          education: event.applicationForm?.educationRequired ? {
+            degree: userData.degree,
+            branch: userData.branch,
+            graduationYear: userData.graduationYear
+          } : null,
+          experience: event.applicationForm?.experienceRequired ? {
+            company: userData.company,
+            position: userData.position
+          } : null,
+          profiles: event.applicationForm?.profilesRequired ? userData.profiles : null,
+          contact: event.applicationForm?.contactRequired ? {
+            email: userData.email,
+            phone: userData.contactNumber
+          } : null
+        },
+        responses: responses || {}
       }
     });
 
-    res.json(application);
+    res.status(201).json(application);
   } catch (error) {
-    console.error('Apply to event error:', error);
-    res.status(500).json({ error: 'Failed to apply to event' });
+    console.error('Error in applyToEvent:', error);
+    res.status(500).json({ error: 'Failed to submit application' });
   }
 };
 
