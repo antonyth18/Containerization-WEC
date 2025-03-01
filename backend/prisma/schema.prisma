@@ -138,6 +138,7 @@ model EventTimeline {
   eventEnd          DateTime
   applicationsStart DateTime?
   applicationsEnd   DateTime?
+  rsvpDaysBeforeDeadline      Int?
   event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
@@ -193,9 +194,10 @@ model EventPerson {
   eventId     Int
   name        String
   role        EventPersonRole
-  imageUrl    String?
-  description String?
-  event       Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  imageUrl    String?        
+  description String?        
+  socialLinks Json?          
+  event       Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Team {

@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const ApplyForEvent = () => {
   const { getAccessToken } = useAuth();
   const { id } = useParams(); // Get eventId from the URL
   const [event, setEvent] = useState(null); // Store event details
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true); // Loading state
   const [userData, setUserData] = useState({
     firstName: "",
@@ -24,11 +26,11 @@ const ApplyForEvent = () => {
     contactNumber: "",
     email: ""
   });
-  const [error, setError] = useState(null); // Error state
+  const [error, setError] = useState(null); 
   const [activeTab, setActiveTab] = useState(1);
-  const [questions, setQuestions] = useState([]); // Store custom questions
-  const [responses, setResponses] = useState({}); // Stores user input for each question
-  //const [formResponses, setFormResponses] = useState({});
+  const [questions, setQuestions] = useState([]); 
+  const [responses, setResponses] = useState({}); 
+  
 
 
 
@@ -85,12 +87,6 @@ const ApplyForEvent = () => {
     }));
   };
 
-  // const handleFormChange = (field, value) => {
-  //   setFormResponses((prev) => ({
-  //     ...prev,
-  //     [field]: value,
-  //   }));
-  // };
 
   const handleCheckboxChange = (index, option) => {
     setResponses((prevResponses) => {
@@ -106,13 +102,13 @@ const ApplyForEvent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
-    // ADDED: Validate required fields
+    // Validate required fields
     if (!userData.firstName || !userData.lastName || !userData.city || !userData.country || !userData.gender) {
       alert("Please fill in all required fields.");
       return;
     }
   
-    // CHANGED: Restructure form data
+    // Restructure form data
     const formData = {
       userData: {
         ...userData,
@@ -143,7 +139,7 @@ const ApplyForEvent = () => {
           withCredentials: true
         }
       );
-      
+      navigate('/events');
       console.log("Response from backend:", response.data);
       alert("Application submitted successfully!");
     } catch (error) {

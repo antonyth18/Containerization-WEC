@@ -26,16 +26,20 @@ export const createEvent = async (req, res) => {
       });
     }
 
+    console.log('Full eventData:', JSON.stringify(eventData, null, 2));
+    console.log('Event Branding Data:', JSON.stringify(eventData.eventBranding, null, 2));
+    console.log('Logo Image Public URL:', eventData.eventBranding?.logoImage?.publicUrl);
+    console.log('Cover Image Public URL:', eventData.eventBranding?.coverImage?.publicUrl);
+
     const event = await prisma.event.create({
       data: {
         name: eventData.name,
         tagline: eventData.tagline || null,
         about: eventData.about || null,
         type: eventData.type || 'HACKATHON',
-        maxTeamSize: eventData.maxTeamSize || null,
-        maxParticipants: eventData.maxParticipants || null,
-        minTeamSize: eventData.minTeamSize || null,
-        maxTeamSize: eventData.maxTeamSize || null,
+        maxTeamSize: eventData.maxTeamSize ? parseInt(eventData.maxTeamSize) : null,
+        maxParticipants: eventData.maxParticipants ? parseInt(eventData.maxParticipants) : null,
+        minTeamSize: eventData.minTeamSize ? parseInt(eventData.minTeamSize) : null,
         mode: eventData.mode,
         status: eventData.status || 'PUBLISHED',
         createdById: user.id,
@@ -45,24 +49,25 @@ export const createEvent = async (req, res) => {
             eventStart: eventData.eventTimeline.eventStart,
             eventEnd: eventData.eventTimeline.eventEnd,
             applicationsStart: eventData.eventTimeline.applicationsStart,
-            applicationsEnd: eventData.eventTimeline.applicationsEnd
+            applicationsEnd: eventData.eventTimeline.applicationsEnd,
+            rsvpDaysBeforeDeadline: parseInt(eventData.eventTimeline.rsvpDaysBeforeDeadline)
           }
         },
         
         branding: {
           create: {
-            logoUrl: eventData.eventBranding.logo || null,
-            coverUrl: eventData.eventBranding.banner || null,
-            brandColor: eventData.eventBranding.primaryColor || '#000000'
+            logoUrl: eventData.eventBranding.logoImage || null, 
+            coverUrl: eventData.eventBranding.coverImage || null,
+            brandColor: eventData.eventBranding.brandColor || '#000000'
           }
         },
         
         links: {
           create: {
-            websiteUrl: eventData.eventLinks[0]?.websiteUrl || '',
-            micrositeUrl: eventData.eventLinks[0]?.micrositeUrl || '',
-            contactEmail: eventData.eventLinks[0]?.contactEmail || '',
-            socialLinks: eventData.eventLinks[0]?.socialLinks || null
+            websiteUrl: eventData.eventLinks[0].websiteUrl || null,
+            micrositeUrl: eventData.eventLinks[0].micrositeUrl || null,
+            contactEmail: eventData.eventLinks[0].contactEmail || null,
+            socialLinks: eventData.eventLinks[0].socialLinks || {}
           }
         },
         
@@ -83,8 +88,8 @@ export const createEvent = async (req, res) => {
         sponsors: {
           create: eventData.sponsors.map(sponsor => ({
             name: sponsor.name,
-            website: sponsor.website || '',
-            logo: sponsor.logo || null,
+            websiteUrl: sponsor.websiteUrl || '',
+            logoUrl: sponsor.logoUrl || null,
             tier: sponsor.tier || 'GOLD'  // Assuming GOLD is a valid tier in your schema
           }))
         },
@@ -92,9 +97,9 @@ export const createEvent = async (req, res) => {
         eventPeople: {
           create: eventData.eventPeople.map(person => ({
             name: person.name,
-            role: person.role || 'JUDGE',  // Assuming JUDGE is a valid role in your schema
-            bio: person.bio || '',
-            avatar: person.avatar || null,
+            role: person.role || 'JUDGE',
+            imageUrl: person.avatar || null,     
+            description: person.bio || null,     
             socialLinks: person.socialLinks || null
           }))
         },
@@ -370,7 +375,7 @@ export const updateEvent = async (req, res) => {
 
         branding: {
           update: {
-            logoUrl: updateData.eventBranding?.logo || null,
+            logoUrl: updateData.eventBranding?.logoUrl || null,
             coverUrl: updateData.eventBranding?.banner || null,
             brandColor: updateData.eventBranding?.primaryColor || '#000000'
           }

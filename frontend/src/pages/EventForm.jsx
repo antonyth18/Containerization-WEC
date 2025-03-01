@@ -8,7 +8,7 @@ const [formData, setFormData] = useState({
   type: '',
   tagline: '',
   about: '',
-  maxParticipants: 100,
+  maxParticipants: 5,
   minTeamSize: 1,
   maxTeamSize: 4,
   mode: 'ONLINE',

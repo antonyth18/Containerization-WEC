@@ -20,8 +20,8 @@ const EventForm = ({
     customQuestions: localFormData.customQuestions || [],
     eventBranding: {
       ...localFormData.eventBranding,
-      logo: null,  // Initialize as null
-      banner: null // Initialize as null
+      logoUrl: null,  
+      banner: null 
     }
   });
 
@@ -103,7 +103,16 @@ const EventForm = ({
     });
   };
   
-  
+  const handleLinksChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      eventLinks: [{
+        ...prev.eventLinks[0],
+        [name]: value
+      }]
+    }));
+  };
 
   // This block of code changes the state of the form data when the user types in the input fields of an array
   const handleArrayChange = (e, section, index, subSection = null, subIndex = null) => {
@@ -251,31 +260,52 @@ const EventForm = ({
 
   // This block of code sends the form data to the backend to create a new event
   const handleSubmit = async (e) => {
-
-    autoSaveFlag.current = false;
-    
     e.preventDefault();
+    
+    autoSaveFlag.current = false;
     setError('');
-
+  
     try {
-      const eventPayload = {
-        ...formData,
-        status: 'PUBLISHED',
-        eventTimeline: {
-          eventStart: new Date(formData.eventTimeline.eventStart).toISOString(),
-          eventEnd: new Date(formData.eventTimeline.eventEnd).toISOString(),
-          applicationsStart: new Date(formData.eventTimeline.applicationsStart).toISOString(),
-          applicationsEnd: new Date(formData.eventTimeline.applicationsEnd).toISOString()
-        }
+      // Create a deep copy of formData to avoid mutation
+      const submissionData = JSON.parse(JSON.stringify(formData));
+  
+      // Format event timeline dates into ISO format
+      submissionData.eventTimeline = {
+        eventStart: new Date(formData.eventTimeline.eventStart).toISOString(),
+        eventEnd: new Date(formData.eventTimeline.eventEnd).toISOString(),
+        applicationsStart: new Date(formData.eventTimeline.applicationsStart).toISOString(),
+        applicationsEnd: new Date(formData.eventTimeline.applicationsEnd).toISOString(),
+        rsvpDaysBeforeDeadline: parseInt(formData.eventTimeline.rsvpDaysBeforeDeadline) || 7
       };
-      
-      await apiCall(eventPayload);
-
+  
+      // Format branding data
+      submissionData.eventBranding = {
+        brandColor: formData.eventBranding.brandColor,
+        logoImage: formData.eventBranding.logoImage?.publicUrl || null,
+        coverImage: formData.eventBranding.coverImage?.publicUrl || null,
+        faviconImage: formData.eventBranding.faviconImage?.publicUrl || null
+      };
+  
+      // Format links data
+      submissionData.eventLinks = [{
+        websiteUrl: formData.eventLinks[0]?.websiteUrl || null,
+        micrositeUrl: formData.eventLinks[0]?.micrositeUrl || null,
+        contactEmail: formData.eventLinks[0]?.contactEmail || null,
+        socialLinks: formData.eventLinks[0]?.socialLinks || {}
+      }];
+  
+      // Set event status to PUBLISHED
+      submissionData.status = 'PUBLISHED';
+  
+      // Make the API call
+      await apiCall(submissionData);
+  
     } catch (error) {
       console.error('Error submitting form:', error);
       setError(error.message || 'Failed to create event');
     }
   };
+  
 
   const handleSaveAsDraft = async (e) => {
 
@@ -643,7 +673,7 @@ const EventForm = ({
               type="number"
               id="maxParticipants"
               name="maxParticipants"
-              value={formData.maxParticipants || 100}
+              value={formData.maxParticipants}
               onChange={handleChange}
               min="0"
               className={inputFieldStyle}
@@ -655,7 +685,7 @@ const EventForm = ({
               type="number"
               id="minTeamSize"
               name="minTeamSize"
-              value={formData.minTeamSize || 1}
+              value={formData.minTeamSize}
               onChange={handleChange}
               min="1"
               className={inputFieldStyle}
@@ -667,7 +697,7 @@ const EventForm = ({
               type="number"
               id="maxTeamSize"
               name="maxTeamSize"
-              value={formData.maxTeamSize || 4}
+              value={formData.maxTeamSize}
               onChange={handleChange}
               max="100"
               className={inputFieldStyle}
@@ -726,25 +756,14 @@ const EventForm = ({
               />
             </div>
           </div>
-          <div style={fieldStyle(2)}>
-            <label htmlFor="timezone" className="block text-sm font-medium text-gray-700">Timezone</label>
-            <input
-              type="text"
-              id="timezone"
-              name="timezone"
-              value={formData.eventTimeline.timezone}
-              onChange={(e) => handleChange(e, 'eventTimeline')}
-              className={inputFieldStyle}
-              disabled
-            />
-          </div>
+          
           <div style={fieldStyle(2)}>
             <label htmlFor="rsvpDeadlineDays" className="block text-sm font-medium text-gray-700">RSVP Deadline (days before event)</label>
             <input
               type="number"
-              id="rsvpDeadlineDays"
-              name="rsvpDeadlineDays"
-              value={formData.eventTimeline.rsvpDeadlineDays || 7}
+              id="rsvpDaysBeforeDeadline"
+              name="rsvpDaysBeforeDeadline"
+              value={formData.eventTimeline.rsvpDeadlineDays}
               onChange={(e) => handleChange(e, 'eventTimeline')}
               min="0"
               className={inputFieldStyle}
@@ -764,8 +783,8 @@ const EventForm = ({
               type="url"
               id="websiteUrl"
               name="websiteUrl"
-              value={formData.eventLinks.websiteUrl || ''}
-              onChange={(e) => handleChange(e, 'eventLinks')}
+              value={formData.eventLinks[0]?.websiteUrl || ''}
+              onChange={(e) => handleLinksChange(e)}
               className={inputFieldStyle}
             />
           </div>
@@ -775,8 +794,8 @@ const EventForm = ({
               type="url"
               id="micrositeUrl"
               name="micrositeUrl"
-              value={formData.eventLinks.micrositeUrl || ''}
-              onChange={(e) => handleChange(e, 'eventLinks')}
+              value={formData.eventLinks[0]?.micrositeUrl || ''}
+              onChange={(e) => handleLinksChange(e)}
               className={inputFieldStyle}
             />
           </div>
@@ -786,8 +805,8 @@ const EventForm = ({
               type="email"
               id="contactEmail"
               name="contactEmail"
-              value={formData.eventLinks.contactEmail || ''}
-              onChange={(e) => handleChange(e, 'eventLinks')}
+              value={formData.eventLinks[0]?.contactEmail || ''}
+              onChange={(e) => handleLinksChange(e)}
               className={inputFieldStyle}
             />
           </div>
@@ -812,7 +831,7 @@ const EventForm = ({
               type="color"
               id="brandColor"
               name="brandColor"
-              value={formData.eventBranding.brandColor}
+              value={formData.eventBranding.brandColor || '#000000'}
               onChange={(e) => handleChange(e, 'eventBranding')}
               className={inputFieldStyle}
             />
@@ -872,60 +891,6 @@ const EventForm = ({
               </button>
             </div>
               )}
-          </div>
-
-          <div className="p-4 border rounded-lg shadow-md bg-white">
-            <h2 className="text-lg font-medium mb-4 text-gray-700">Upload Favicon</h2>
-
-            <label htmlFor="faviconFile" className="block text-sm font-medium text-gray-700 mt-2 mb-2">
-              Favicon File (Upload or Drag & Drop)
-            </label>
-
-            <p className="text-sm text-gray-500 mb-2">
-              Maximum file size: <strong>2MB</strong>
-            </p>
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, 'faviconImage')}
-              className={`border-2 border-dashed p-4 rounded-lg text-center cursor-pointer ${
-                dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-              }`}
-            >
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleFileChange(e, 'faviconImage')}
-                className="hidden"
-                id="faviconFile"
-              />
-              <label htmlFor="faviconFile" className="cursor-pointer">
-                {dragActive
-                  ? 'Drop the file here...'
-                  : getImageUrl(formData.eventBranding.faviconImage)
-                  ? `Selected File: ${getImageUrl(formData.eventBranding.faviconImage)}`
-                  : 'Click or drag to upload a favicon file'}
-              </label>
-            </div>
-            {/* Error Message */}
-            {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
-
-            {/* File Preview */}
-            {getImageUrl(formData.eventBranding.faviconImage) && (
-              <div className="mt-4">
-                <img
-                  src={getImageUrl(formData.eventBranding.faviconImage)}
-                  alt="Favicon Preview"
-                  className="w-32 h-32 object-contain mx-auto border border-gray-300 rounded-md"
-                />
-                <button
-                  onClick={() => handleRemoveImage('faviconImage')}
-                  className="mt-2 px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 mb-2"
-                >
-                  Remove Image
-                </button>
-              </div>
-            )}
           </div>
 
           <div className="p-4 border rounded-lg shadow-md bg-white">
@@ -1049,7 +1014,7 @@ const EventForm = ({
                     />
                     <input
                       type="number"
-                      value={prize.value || 0}
+                      value={prize.value}
                       onChange={(e) => handleArrayChange(e, 'tracks', trackIndex, 'prizes', prizeIndex)}
                       name="value"
                       placeholder="Prize Value"

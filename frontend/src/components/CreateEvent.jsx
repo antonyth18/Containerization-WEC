@@ -13,7 +13,7 @@ const CreateEvent = () => {
     tagline: '',
     about: '',
     type: 'HACKATHON',
-    maxParticipants: 100,
+    maxParticipants: 5,
     minTeamSize: 1,
     maxTeamSize: 4,
     mode: 'ONLINE',
@@ -22,21 +22,21 @@ const CreateEvent = () => {
       eventStart: '',
       eventEnd: '',
       applicationsStart: '',
-      applicationsEnd: ''
+      applicationsEnd: '',
+      rsvpDaysBeforeDeadline: 7
     },
     eventLinks: [{
       websiteUrl: '',
       micrositeUrl: '',
       contactEmail: '',
       codeOfConductUrl: '',
-      socialLinks: null,
+      socialLinks: {},
     }],
     eventBranding: {
-      primaryColor: '#000000',
-      accentColor: '#ffffff',
-      logo: null,
-      banner: null,
-      favicon: null
+      brandColor: '#000000', 
+      logoImage: null,      
+      coverImage: null,    
+      faviconImage: null 
     },
     tracks: [],
     sponsors: [],
