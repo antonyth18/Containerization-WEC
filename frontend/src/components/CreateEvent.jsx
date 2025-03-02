@@ -69,6 +69,7 @@ const CreateEvent = () => {
             eventEnd: eventData.timeline.eventEnd.split('.')[0] || '',
             applicationsStart: eventData.timeline.applicationsStart.split('.')[0] || '',
             applicationsEnd: eventData.timeline.applicationsEnd.split('.')[0] || '',
+            rsvpDaysBeforeDeadline: eventData.timeline.rsvpDaysBeforeDeadline
           };
         }
 

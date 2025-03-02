@@ -39,6 +39,7 @@ const EventForm = ({
       return;
 
     try {
+      const { rsvpDaysBeforeDeadline = 0 } = formDataRef.current.eventTimeline || {};
       const eventPayload = {
         ...formDataRef.current,
         status: 'AUTOSAVE',
@@ -46,7 +47,8 @@ const EventForm = ({
           eventStart: new Date().toISOString(),
           eventEnd: new Date().toISOString(),
           applicationsStart: new Date().toISOString(),
-          applicationsEnd: new Date().toISOString()
+          applicationsEnd: new Date().toISOString(),
+          rsvpDaysBeforeDeadline
         }
       };
 
@@ -314,6 +316,7 @@ const EventForm = ({
     setError('');
 
     try {
+      const { rsvpDaysBeforeDeadline = 0 } = formData.eventTimeline || {};
       const eventPayload = {
         ...formData,
         status: 'DRAFT',
@@ -321,7 +324,8 @@ const EventForm = ({
           eventStart: new Date(formData.eventTimeline.eventStart).toISOString(),
           eventEnd: new Date(formData.eventTimeline.eventEnd).toISOString(),
           applicationsStart: new Date(formData.eventTimeline.applicationsStart).toISOString(),
-          applicationsEnd: new Date(formData.eventTimeline.applicationsEnd).toISOString()
+          applicationsEnd: new Date(formData.eventTimeline.applicationsEnd).toISOString(),
+          rsvpDaysBeforeDeadline
         }
       };
 
@@ -403,7 +407,7 @@ const EventForm = ({
             filePath: filePath,
             bucket: bucket,
             publicUrl: publicUrl,
-          }
+          },
         },
       }));
     }
@@ -763,7 +767,7 @@ const EventForm = ({
               type="number"
               id="rsvpDaysBeforeDeadline"
               name="rsvpDaysBeforeDeadline"
-              value={formData.eventTimeline.rsvpDeadlineDays}
+              value={formData.eventTimeline.rsvpDaysBeforeDeadline}
               onChange={(e) => handleChange(e, 'eventTimeline')}
               min="0"
               className={inputFieldStyle}

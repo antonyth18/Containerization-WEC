@@ -31,19 +31,26 @@ const EditEvent = () => {
           eventStart: eventData.timeline.eventStart.split('.')[0],
           eventEnd: eventData.timeline.eventEnd.split('.')[0],
           applicationsStart: eventData.timeline.applicationsStart.split('.')[0],
-          applicationsEnd: eventData.timeline.applicationsEnd.split('.')[0]
+          applicationsEnd: eventData.timeline.applicationsEnd.split('.')[0],
+          rsvpDaysBeforeDeadline: eventData.timeline.rsvpDaysBeforeDeadline
         };
       }
 
       if (!eventData.eventLinks) {
         eventData.eventLinks = [{
-          websiteUrl: '',
-          micrositeUrl: '',
-          contactEmail: '',
+          websiteUrl: eventData.links.websiteUrl,
+          micrositeUrl: eventData.links.micrositeUrl,
+          contactEmail: eventData.links.contactEmail,
           codeOfConductUrl: '',
           socialLinks: null,
         }];
       }
+
+      eventData.eventBranding = {
+        logoUrl: eventData.branding.logoUrl,
+        coverUrl: eventData.branding.coverUrl,
+        brandColor: eventData.branding.brandColor
+      };
 
       setEvent(eventData);
     } catch (err) {

@@ -369,15 +369,16 @@ export const updateEvent = async (req, res) => {
             eventStart: updateData.eventTimeline.eventStart,
             eventEnd: updateData.eventTimeline.eventEnd,
             applicationsStart: updateData.eventTimeline.applicationsStart,
-            applicationsEnd: updateData.eventTimeline.applicationsEnd
+            applicationsEnd: updateData.eventTimeline.applicationsEnd,
+            rsvpDaysBeforeDeadline: updateData.eventTimeline.rsvpDaysBeforeDeadline
           }
         },
 
         branding: {
           update: {
-            logoUrl: updateData.eventBranding?.logoUrl || null,
-            coverUrl: updateData.eventBranding?.banner || null,
-            brandColor: updateData.eventBranding?.primaryColor || '#000000'
+            logoUrl: updateData.eventBranding?.logoImage?.publicUrl || null,
+            coverUrl: updateData.eventBranding?.coverImage?.publicUrl || null,
+            brandColor: updateData.eventBranding?.brandColor || '#000000'
           }
         },
 

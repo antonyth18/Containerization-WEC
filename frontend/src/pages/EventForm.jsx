@@ -18,7 +18,8 @@ const [formData, setFormData] = useState({
     eventStart: '',
     eventEnd: '',
     applicationsStart: '',
-    applicationsEnd: ''
+    applicationsEnd: '',
+    rsvpDaysBeforeDeadline: 7
   },
   links: {
     websiteUrl: '',

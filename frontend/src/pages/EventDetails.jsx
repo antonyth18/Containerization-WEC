@@ -324,7 +324,18 @@ const EventDetails = () => {
                   </dd>
                 </div>
               </div>
+
+              <div className="py-3 flex items-start text-sm font-medium relative">
+                <div className="w-3 h-3 bg-gray-500 rounded-full mt-1 mr-4"></div>
+                <div>
+                  <dt className="text-gray-500 font-semibold text-base">RSVP Deadline</dt>
+                  <dd className="text-gray-900 text-lg">
+                    {event.timeline.rsvpDaysBeforeDeadline} days before event end
+                  </dd>
+                </div>
+              </div>
             </div>
+            
             <div className="flex justify-center mt-4">
             <button   
               className="btn-primary"
