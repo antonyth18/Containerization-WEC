@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import AlertDialog from "../components/AlertDialog";
 
 const ApplyForEvent = () => {
   const { getAccessToken } = useAuth();
@@ -41,6 +42,9 @@ const ApplyForEvent = () => {
     hash: '',
     isShowing: false
   });
+  const [mode, setMode] = useState('create');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   
   // Fetch event details when component mounts
   useEffect(() => {
@@ -131,28 +135,9 @@ const ApplyForEvent = () => {
     }
   };
 
-  const handleJoinTeam = async (e) => {
-    e.preventDefault();
-    try {
-      const token = await getAccessToken();
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/teams/join`,
-        {
-          eventId: id,
-          hashCode: joinHash
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      alert('Successfully joined team!');
-    } catch (error) {
-      console.error('Error joining team:', error);
-      alert('Failed to join team. Invalid code.');
-    }
+
+  const handleClose = () => {
+    setIsDialogOpen(false);
   };
 
   const handleSubmit = async (e) => {
@@ -160,7 +145,14 @@ const ApplyForEvent = () => {
   
     // Validate required fields
     if (!userData.firstName || !userData.lastName || !userData.city || !userData.country || !userData.gender) {
-      alert("Please fill in all required fields.");
+      setErrorMessage('Please fill in all required fields.');
+      setIsDialogOpen(true);
+      return;
+    }
+
+    if(mode === 'join' && teamDetails.hash === ''){
+      setErrorMessage('Enter the team hash to join an existing team');
+      setIsDialogOpen(true);
       return;
     }
   
@@ -179,7 +171,8 @@ const ApplyForEvent = () => {
           contactNumber: userData.contactNumber || null
         },
         responses: responses,
-        team: teamCreated ? teamDetails : null
+        team: teamCreated ? teamDetails : null,
+        mode
       };
 
       try {
@@ -199,8 +192,9 @@ const ApplyForEvent = () => {
         console.log("Response from backend:", response.data);
         alert("Application submitted successfully!");
       } catch (error) {
-        console.error("Error submitting application:", error);
-        alert("Failed to submit application. Please try again.");
+        console.error('Error:', error.response?.data.error);
+        setErrorMessage(error.response?.data?.error || 'An unexpected error occurred.');
+        setIsDialogOpen(true);
       }
     };
 
@@ -214,6 +208,16 @@ const ApplyForEvent = () => {
       <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
         Apply for Event: {event?.name}
       </h1>
+
+      <AlertDialog
+        isOpen={isDialogOpen}
+        onClose={handleClose}
+        onConfirm={handleClose} // Dismiss the dialog
+        title="Alert"
+        message={errorMessage}
+        confirmText="OK"
+        cancelText="Close"
+      />
 
       {/* Tab Navigation */}
       <div className="flex border-b mb-4">
@@ -434,14 +438,14 @@ const ApplyForEvent = () => {
             <div className="flex space-x-4">
               <button
                 type="button"
-                onClick={() => setShowCreateTeam(true)}     
+                onClick={() => {setShowCreateTeam(true); setShowJoinTeam(false); setMode('create');}}     
                 className="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
               >
                 Create Team
               </button>
               <button
                 type="button"
-                onClick={() => setShowJoinTeam(true)}     
+                onClick={() => {setShowJoinTeam(true); setShowCreateTeam(false); setMode('join');}}     
                 className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
               >
                 Join Team
@@ -471,6 +475,8 @@ const ApplyForEvent = () => {
                         isShowing: true
                       });
                       setTeamCreated(true);
+                      setErrorMessage(`Share the following team code with your teammates : ${hash}`);
+                      setIsDialogOpen(true);
                     }}
                     className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
                   >
@@ -501,7 +507,7 @@ const ApplyForEvent = () => {
             {showJoinTeam && (
               <div className="mt-4 p-4 border rounded-lg">
                 <h2 className="text-lg font-semibold mb-4">Join Existing Team</h2>
-                <form onSubmit={handleJoinTeam} className="space-y-4">
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Team Code</label>
                     <input
@@ -512,10 +518,16 @@ const ApplyForEvent = () => {
                       required
                     />
                   </div>
-                  <button type="submit" className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+                  <button type="button"
+                    onClick={() => {
+                    setTeamDetails({ name: '', hash: joinHash, isShowing: false });
+                    setTeamName('');
+                    setTeamCreated(true); 
+                    }} 
+                    className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
                     Save Team Code
                   </button>
-                </form>
+                </div>
               </div>
             )}
           </div>

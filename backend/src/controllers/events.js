@@ -520,7 +520,7 @@ export const applyToEvent = async (req, res) => {
 
     const { id: eventId } = req.params;
     const auth0Id = req.auth.payload.sub;
-    const { userData, responses, team } = req.body;
+    const { userData, responses, team, mode } = req.body;
 
     // Find user
     const user = await prisma.user.findUnique({
@@ -531,39 +531,99 @@ export const applyToEvent = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    let existingTeam;
+
     // Check if the team already exists using the hashCode
-    let existingTeam = await prisma.team.findUnique({
-      where: { hashCode: team.hash }
-    });
+    if(mode === 'create'){
+        existingTeam = await prisma.team.findUnique({
+        where: { 
+          hashCode: team.hash
+        }
+       });
 
-    if (!existingTeam) {
-      // If the team doesn't exist, create it
-      existingTeam = await prisma.team.create({
-        data: {
-          eventId: parseInt(eventId),
-          name: team.name,
+        if (!existingTeam) {
+          // If the team doesn't exist, create it
+          existingTeam = await prisma.team.create({
+            data: {
+              eventId: parseInt(eventId),
+              name: team.name,
+              hashCode: team.hash,
+            }
+          });
+        } else {
+          return res.status(500).json({ error: 'Generate a new hash.' }); //Incase hash is already in use
+        }
+
+
+        // Add the user as a member of the team if not already a member
+        const existingTeamMember = await prisma.teamMember.findFirst({
+          where: {
+            teamId: existingTeam.id,
+            userId: user.id
+          }
+        });
+
+        if (!existingTeamMember) {
+          await prisma.teamMember.create({
+            data: {
+              teamId: existingTeam.id,
+              userId: user.id,
+              role: 'LEADER' // Set default role, change as needed
+            }
+          });
+        } else {
+          return res.status(500).json({ error: 'Already in the team' });
+        }
+    } else if (mode === 'join'){
+        existingTeam = await prisma.team.findUnique({
+        where: { 
           hashCode: team.hash,
+          eventId: parseInt(eventId) 
         }
-      });
+        });
+
+        if (!existingTeam) {
+          // If the team user is trying to join does not exist, send error
+          return res.status(500).json({ error: 'Team does not exist' });
+        }
+
+        let presentInTeam = await prisma.teamMember.count({
+          where : {
+            teamId: existingTeam.id,
+            userId: user.id
+          }
+        });
+
+        //If user is already part of the team
+        if(presentInTeam > 0){
+          return res.status(500).json({ error: 'Registrant is already a part of the team.' });
+        }
+
+        let maxTeamSize = await prisma.event.findUnique({
+          where : {id : parseInt(eventId)},
+          select: { maxTeamSize: true } 
+        });
+
+        let currentTeamSize = await prisma.teamMember.count({
+          where : { teamId: existingTeam.id}
+        });
+
+        //to check for maximum allowed participants in a team
+        if(currentTeamSize === maxTeamSize.maxTeamSize){
+          return res.status(500).json({ error: 'Team is at maximum capacity' });
+        }
+
+        await prisma.teamMember.create({
+          data: {
+            teamId: existingTeam.id,
+            userId: user.id,
+            role: 'MEMBER' // Set default role, change as needed
+          }
+        });
+
     }
 
-    // Add the user as a member of the team if not already a member
-    const existingTeamMember = await prisma.teamMember.findFirst({
-      where: {
-        teamId: existingTeam.id,
-        userId: user.id
-      }
-    });
 
-    if (!existingTeamMember) {
-      await prisma.teamMember.create({
-        data: {
-          teamId: existingTeam.id,
-          userId: user.id,
-          role: 'MEMBER' // Set default role, change as needed
-        }
-      });
-    }
 
     // Create application with team reference
     const application = await prisma.application.create({
