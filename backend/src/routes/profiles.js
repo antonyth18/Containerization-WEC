@@ -7,6 +7,6 @@ const router = express.Router();
 
 
 router.get('/profile', checkJwt, getProfile);
-router.put('/profile', updateProfile);
+router.put('/edit-profile', updateProfile);
 
 export default router; 

@@ -30,11 +30,18 @@ const ApplyForEvent = () => {
   const [activeTab, setActiveTab] = useState(1);
   const [questions, setQuestions] = useState([]); 
   const [responses, setResponses] = useState({}); 
+  const [showCreateTeam, setShowCreateTeam] = useState(false);
+  const [showJoinTeam, setShowJoinTeam] = useState(false);
+  const [teamName, setTeamName] = useState('');
+  const [teamHash, setTeamHash] = useState('');
+  const [joinHash, setJoinHash] = useState('');
+  const [teamCreated, setTeamCreated] = useState(false);
+  const [teamDetails, setTeamDetails] = useState({
+    name: '',
+    hash: '',
+    isShowing: false
+  });
   
-
-
-
-
   // Fetch event details when component mounts
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -99,6 +106,55 @@ const ApplyForEvent = () => {
     });
   };
 
+  const handleCreateTeam = async (e) => {
+    e.preventDefault();
+    try {
+      const token = await getAccessToken();
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/teams`,
+        {
+          eventId: id,
+          name: teamName
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      setTeamHash(response.data.hashCode);
+      alert(`Team created! Share this code with team members: ${response.data.hashCode}`);
+    } catch (error) {
+      console.error('Error creating team:', error);
+      alert('Failed to create team');
+    }
+  };
+
+  const handleJoinTeam = async (e) => {
+    e.preventDefault();
+    try {
+      const token = await getAccessToken();
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/teams/join`,
+        {
+          eventId: id,
+          hashCode: joinHash
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      alert('Successfully joined team!');
+    } catch (error) {
+      console.error('Error joining team:', error);
+      alert('Failed to join team. Invalid code.');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
   
@@ -108,45 +164,45 @@ const ApplyForEvent = () => {
       return;
     }
   
-    // Restructure form data
-    const formData = {
-      userData: {
-        ...userData,
-        // Ensure optional fields are properly handled
-        tShirtSize: userData.tShirtSize || null,
-        degree: userData.degree || null,
-        branch: userData.branch || null,
-        graduationYear: userData.graduationYear || null,
-        company: userData.company || null,
-        position: userData.position || null,
-        profiles: userData.profiles || null,
-        email: userData.email || null,
-        contactNumber: userData.contactNumber || null
-      },
-      responses: responses // Custom question responses
+      // Now submit the application with team details
+      const formData = {
+        userData: {
+          ...userData,
+          tShirtSize: userData.tShirtSize || null,
+          degree: userData.degree || null,
+          branch: userData.branch || null,
+          graduationYear: userData.graduationYear || null,
+          company: userData.company || null,
+          position: userData.position || null,
+          profiles: userData.profiles || null,
+          email: userData.email || null,
+          contactNumber: userData.contactNumber || null
+        },
+        responses: responses,
+        team: teamCreated ? teamDetails : null
+      };
+
+      try {
+        const token = await getAccessToken();
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/events/${id}/apply`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            withCredentials: true
+          }
+        );
+        navigate('/events');
+        console.log("Response from backend:", response.data);
+        alert("Application submitted successfully!");
+      } catch (error) {
+        console.error("Error submitting application:", error);
+        alert("Failed to submit application. Please try again.");
+      }
     };
-  
-    try {
-      const token = await getAccessToken();
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/events/${id}/apply`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          withCredentials: true
-        }
-      );
-      navigate('/events');
-      console.log("Response from backend:", response.data);
-      alert("Application submitted successfully!");
-    } catch (error) {
-      console.error("Error submitting application:", error);
-      alert("Failed to submit application. Please try again.");
-    }
-  };
 
   // Loading state
   if (loading) return <p>Loading event details...</p>;
@@ -372,17 +428,99 @@ const ApplyForEvent = () => {
             )}
           </>
         )}
+
         {activeTab === 2 && (
-          <>
-            {/* Team Info */}
-            <div>
-              <h1>CREATE TEAM</h1>
+          <div className="space-y-6">
+            <div className="flex space-x-4">
+              <button
+                type="button"
+                onClick={() => setShowCreateTeam(true)}     
+                className="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
+              >
+                Create Team
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowJoinTeam(true)}     
+                className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+              >
+                Join Team
+              </button>
             </div>
-            <div>
-              <h1>JOIN TEAM</h1>
-            </div>
-          </>
+
+            {showCreateTeam && (
+              <div className="mt-4 p-4 border rounded-lg">
+                <h2 className="text-lg font-semibold mb-4">Create New Team</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Team Name</label>
+                    <input
+                      type="text"
+                      value={teamName}
+                      onChange={(e) => setTeamName(e.target.value)}
+                      className="mt-1 w-full p-2 border rounded-md"
+                    />
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      const hash = Math.random().toString(36).substring(2, 5).toUpperCase() + Date.now().toString(36).substring(-3).toUpperCase();
+                      setTeamDetails({
+                        name: teamName,
+                        hash: hash,
+                        isShowing: true
+                      });
+                      setTeamCreated(true);
+                    }}
+                    className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
+                  >
+                    Generate Team Code
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {teamDetails.isShowing && (
+              <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <h3 className="font-semibold text-green-800">Team Details:</h3>
+                <p className="mt-2">Team Name: <span className="font-medium">{teamDetails.name}</span></p>
+                <p className="mt-1">Team Code: <span className="font-mono font-bold">{teamDetails.hash}</span></p>
+                <button 
+                  onClick={() => {
+                    setTeamDetails({ name: '', hash: '', isShowing: false });
+                    setTeamName('');
+                    setTeamCreated(false); 
+                  }}
+                  className="mt-4 px-4 py-2 text-sm text-red-600 hover:text-red-700"
+                >
+                  Clear Team Details
+                </button>
+              </div>
+            )}
+
+            {showJoinTeam && (
+              <div className="mt-4 p-4 border rounded-lg">
+                <h2 className="text-lg font-semibold mb-4">Join Existing Team</h2>
+                <form onSubmit={handleJoinTeam} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Team Code</label>
+                    <input
+                      type="text"
+                      value={joinHash}
+                      onChange={(e) => setJoinHash(e.target.value)}
+                      className="mt-1 w-full p-2 border rounded-md"
+                      required
+                    />
+                  </div>
+                  <button type="submit" className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+                    Save Team Code
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
         )}
+            
         {activeTab === 3 && (
           <>
             {questions.map((q, index) => (

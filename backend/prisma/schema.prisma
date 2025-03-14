@@ -204,6 +204,7 @@ model Team {
   id           Int                @id @default(autoincrement())
   eventId      Int
   name         String
+  hashCode     String            @unique
   createdAt    DateTime          @default(now())
   event        Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
   members      TeamMember[]

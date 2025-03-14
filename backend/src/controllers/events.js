@@ -516,12 +516,13 @@ export const joinEvent = async (req, res) => {
 // Add the missing applyToEvent function
 export const applyToEvent = async (req, res) => {
   try {
-    const { id: eventId } = req.params;
-    // Get Auth0 ID from token
-    const auth0Id = req.auth.payload.sub;
-    const { userData, responses } = req.body;
+    console.log("Received request body:", req.body);
 
-    // ADDED: First find the user by their Auth0 ID
+    const { id: eventId } = req.params;
+    const auth0Id = req.auth.payload.sub;
+    const { userData, responses, team } = req.body;
+
+    // Find user
     const user = await prisma.user.findUnique({
       where: { auth0Id: auth0Id }
     });
@@ -530,45 +531,52 @@ export const applyToEvent = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Validate if event exists
-    const event = await prisma.event.findUnique({
-      where: { id: parseInt(eventId) },
-      include: { applicationForm: true }
+    // Check if the team already exists using the hashCode
+    let existingTeam = await prisma.team.findUnique({
+      where: { hashCode: team.hash }
     });
 
-    if (!event) {
-      return res.status(404).json({ error: 'Event not found' });
+    if (!existingTeam) {
+      // If the team doesn't exist, create it
+      existingTeam = await prisma.team.create({
+        data: {
+          eventId: parseInt(eventId),
+          name: team.name,
+          hashCode: team.hash,
+        }
+      });
     }
 
-    // CHANGED: Use user.id instead of auth0Id
+    // Add the user as a member of the team if not already a member
+    const existingTeamMember = await prisma.teamMember.findFirst({
+      where: {
+        teamId: existingTeam.id,
+        userId: user.id
+      }
+    });
+
+    if (!existingTeamMember) {
+      await prisma.teamMember.create({
+        data: {
+          teamId: existingTeam.id,
+          userId: user.id,
+          role: 'MEMBER' // Set default role, change as needed
+        }
+      });
+    }
+
+    // Create application with team reference
     const application = await prisma.application.create({
       data: {
         eventId: parseInt(eventId),
-        userId: user.id, // Changed from auth0Id to internal user.id
+        userId: user.id,
+        teamId: existingTeam.id, // Link application to team
         status: 'PENDING',
-        userData: {
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          gender: userData.gender,
-          city: userData.city,
-          country: userData.country,
-          tShirtSize: event.applicationForm?.tShirtSizeRequired ? userData.tShirtSize : null,
-          education: event.applicationForm?.educationRequired ? {
-            degree: userData.degree,
-            branch: userData.branch,
-            graduationYear: userData.graduationYear
-          } : null,
-          experience: event.applicationForm?.experienceRequired ? {
-            company: userData.company,
-            position: userData.position
-          } : null,
-          profiles: event.applicationForm?.profilesRequired ? userData.profiles : null,
-          contact: event.applicationForm?.contactRequired ? {
-            email: userData.email,
-            phone: userData.contactNumber
-          } : null
-        },
+        userData: userData,
         responses: responses || {}
+      },
+      include: {
+        team: true // Include team details in response
       }
     });
 
@@ -578,6 +586,7 @@ export const applyToEvent = async (req, res) => {
     res.status(500).json({ error: 'Failed to submit application' });
   }
 };
+
 
 export const publishEvent = async (req, res) => {
   try {
