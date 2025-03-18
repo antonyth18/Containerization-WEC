@@ -8,27 +8,27 @@ datasource db {
 }
 
 model User {
-  id             Int                 @id @default(autoincrement())
-  email          String              @unique
-  username       String              @unique
-  passwordHash   String
-  role           UserRole
-  status         UserStatus
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  id             String           @id @default(cuid())
+  auth0Id        String           @unique
+  email          String           @unique
+  username       String           @unique
+  role           UserRole         @default(ORGANIZER)
+  status         UserStatus       @default(ACTIVE)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  profile        UserProfile?
+  education      UserEducation[]
+  experience     UserExperience[]
+  skills         UserSkill[]
+  socialProfiles UserSocialProfile[]
   applications   Application[]
   createdEvents  Event[]
   teamMembers    TeamMember[]
-  education      UserEducation[]
-  experience     UserExperience[]
-  profile        UserProfile?
-  skills         UserSkill[]
-  socialProfiles UserSocialProfile[]
 }
 
 model UserProfile {
-  id        Int      @id @default(autoincrement())
-  userId    Int      @unique
+  id        Int       @id @default(autoincrement())
+  userId    String    @unique
   firstName String?
   lastName  String?
   avatarUrl String?
@@ -37,25 +37,25 @@ model UserProfile {
   phone     String?
   country   String?
   city      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserEducation {
-  id              Int        @id @default(autoincrement())
-  userId          Int
+  id              Int       @id @default(autoincrement())
+  userId          String
   institutionName String
-  degree          DegreeType
+  degree          String
   fieldOfStudy    String
-  graduationYear  Int
-  createdAt       DateTime   @default(now())
-  user            User       @relation(fields: [userId], references: [id])
+  graduationYear  Int?
+  createdAt       DateTime  @default(now())
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserExperience {
   id          Int       @id @default(autoincrement())
-  userId      Int
+  userId      String
   company     String
   position    String
   startDate   DateTime
@@ -63,23 +63,23 @@ model UserExperience {
   current     Boolean   @default(false)
   description String?
   createdAt   DateTime  @default(now())
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserSkill {
   id             Int            @id @default(autoincrement())
-  userId         Int
+  userId         String
   skillName      String
   expertiseLevel ExpertiseLevel
-  user           User           @relation(fields: [userId], references: [id])
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserSocialProfile {
   id       Int            @id @default(autoincrement())
-  userId   Int
+  userId   String
   platform SocialPlatform
   url      String
-  user     User           @relation(fields: [userId], references: [id])
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Event {
@@ -91,40 +91,23 @@ model Event {
   maxParticipants   Int?
   minTeamSize       Int?
   maxTeamSize       Int?
-  createdAt         DateTime            @default(now())
-  createdById       Int
-  mode              EventMode           @default(ONLINE)
-  status            EventStatus         @default(DRAFT)
+  mode              EventMode          @default(ONLINE)
+  status            EventStatus        @default(DRAFT)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  createdById       String
+  createdBy         User               @relation(fields: [createdById], references: [id])
+  timeline          EventTimeline?
+  links             EventLink?
+  branding          EventBranding?
+  tracks            Track[]
+  sponsors          Sponsor[]
+  eventPeople       EventPerson[]
   applications      Application[]
   applicationForm   ApplicationForm?
   customQuestions   CustomQuestion[]
-  createdBy         User                @relation(fields: [createdById], references: [id])
-  eventBranding     EventBranding?
-  eventLinks        EventLink?
-  eventPeople       EventPerson[]
-  eventThemes       EventTheme[]
-  eventTimeline     EventTimeline?
-  faqs              FAQ[]
-  Prize             Prize[]
-  ProjectSubmission ProjectSubmission[]
-  scheduleItems     ScheduleItem[]
-  sponsors          Sponsor[]
   teams             Team[]
-  tracks            Track[]
-}
-
-model Theme {
-  id          Int          @id @default(autoincrement())
-  name        String
-  eventThemes EventTheme[]
-}
-
-model EventTheme {
-  id      Int   @id @default(autoincrement())
-  eventId Int
-  themeId Int
-  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  theme   Theme @relation(fields: [themeId], references: [id])
+  projects          ProjectSubmission[]
 }
 
 model ApplicationForm {
@@ -148,65 +131,34 @@ model CustomQuestion {
   event        Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
-model Application {
-  id         Int               @id @default(autoincrement())
-  eventId    Int
-  userId     Int
-  teamId     Int?
-  status     ApplicationStatus
-  rsvpStatus RSVPStatus
-  createdAt  DateTime          @default(now())
-  event      Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  team       Team?             @relation(fields: [teamId], references: [id])
-  user       User              @relation(fields: [userId], references: [id])
+model EventTimeline {
+  id                Int      @id @default(autoincrement())
+  eventId           Int      @unique
+  eventStart        DateTime
+  eventEnd          DateTime
+  applicationsStart DateTime?
+  applicationsEnd   DateTime?
+  rsvpDaysBeforeDeadline      Int?
+  event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model EventLink {
-  id               Int     @id @default(autoincrement())
-  eventId          Int     @unique
-  websiteUrl       String?
-  micrositeUrl     String?
-  contactEmail     String?
-  codeOfConductUrl String?
-  socialLinks      Json?
-  event            Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id           Int     @id @default(autoincrement())
+  eventId      Int     @unique
+  websiteUrl   String?
+  micrositeUrl String?
+  contactEmail String?
+  socialLinks  Json?   // For storing multiple social media links
+  event        Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model EventBranding {
-  id         Int     @id @default(autoincrement())
-  eventId    Int     @unique
+  id        Int     @id @default(autoincrement())
+  eventId   Int     @unique
+  logoUrl   String?
+  coverUrl  String?
   brandColor String?
-  event      Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-
-  coverImageId Int? @unique
-  faviconImageId Int? @unique
-  logoImageId Int? @unique
-  coverImage   Image?   @relation("coverImage", fields: [coverImageId], references: [id], onDelete: Cascade)
-  faviconImage Image?   @relation("faviconImage", fields: [faviconImageId], references: [id], onDelete: Cascade)
-  logoImage    Image?   @relation("logoImage", fields: [logoImageId], references: [id], onDelete: Cascade)
-  
-}
-
-model EventTimeline {
-  id                Int       @id @default(autoincrement())
-  eventId           Int       @unique
-  timezone          String
-  applicationsStart DateTime?
-  applicationsEnd   DateTime?
-  rsvpDeadlineDays  Int
-  eventStart        DateTime?
-  eventEnd          DateTime?
-  event             Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-}
-
-model Sponsor {
-  id         Int         @id @default(autoincrement())
-  eventId    Int
-  name       String
-  logoUrl    String?
-  tier       SponsorTier
-  websiteUrl String?
-  event      Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Track {
@@ -220,13 +172,21 @@ model Track {
 
 model Prize {
   id          Int     @id @default(autoincrement())
-  eventId     Int
-  trackId     Int?
+  trackId     Int
   title       String
   description String?
-  value       Decimal
-  event       Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  track       Track?  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  value       Float?
+  track       Track   @relation(fields: [trackId], references: [id], onDelete: Cascade)
+}
+
+model Sponsor {
+  id          Int         @id @default(autoincrement())
+  eventId     Int
+  name        String
+  logoUrl     String?
+  websiteUrl  String?
+  tier        SponsorTier
+  event       Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model EventPerson {
@@ -234,81 +194,64 @@ model EventPerson {
   eventId     Int
   name        String
   role        EventPersonRole
-  bio         String?
-  imageUrl    String?
-  linkedinUrl String?
-  event       Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
-}
-
-model ScheduleItem {
-  id          Int              @id @default(autoincrement())
-  eventId     Int
-  title       String
-  description String?
-  startTime   DateTime
-  endTime     DateTime
-  type        ScheduleItemType
-  event       Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
-}
-
-model FAQ {
-  id         Int    @id @default(autoincrement())
-  eventId    Int
-  question   String
-  answer     String
-  orderIndex Int
-  event      Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  imageUrl    String?        
+  description String?        
+  socialLinks Json?          
+  event       Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model Team {
-  id           Int                 @id @default(autoincrement())
+  id           Int                @id @default(autoincrement())
   eventId      Int
   name         String
-  createdAt    DateTime            @default(now())
+  hashCode     String            @unique
+  createdAt    DateTime          @default(now())
+  event        Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  members      TeamMember[]
   applications Application[]
   projects     ProjectSubmission[]
-  event        Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  members      TeamMember[]
 }
 
 model TeamMember {
   id     Int            @id @default(autoincrement())
   teamId Int
-  userId Int
+  userId String
   role   TeamMemberRole
-  team   Team           @relation(fields: [teamId], references: [id])
+  team   Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
   user   User           @relation(fields: [userId], references: [id])
 }
 
-model ProjectSubmission {
-  id             Int      @id @default(autoincrement())
-  eventId        Int
-  teamId         Int
-  title          String
-  description    String
-  githubUrl      String?
-  demoUrl        String?
-  submissionTime DateTime @default(now())
-  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  team           Team     @relation(fields: [teamId], references: [id])
+model Application {
+  id         Int              @id @default(autoincrement())
+  eventId    Int
+  userId     String
+  teamId     Int?
+  status     ApplicationStatus
+  createdAt  DateTime         @default(now())
+  event      Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user       User             @relation(fields: [userId], references: [id])
+  team       Team?            @relation(fields: [teamId], references: [id])
+  userData   Json
+  responses  Json
 }
 
-model Image {
-  id        Int      @id @default(autoincrement()) 
-  filePath  String?
-  bucket    String?
-  publicUrl String?
-  createdAt DateTime @default(now())
-
-  coverBranding   EventBranding? @relation("coverImage")
-  faviconBranding EventBranding? @relation("faviconImage")
-  logoBranding    EventBranding? @relation("logoImage")
+model ProjectSubmission {
+  id          Int      @id @default(autoincrement())
+  eventId     Int
+  teamId      Int
+  title       String
+  description String
+  githubUrl   String?
+  demoUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  team        Team     @relation(fields: [teamId], references: [id])
 }
 
 enum UserRole {
   ADMIN
   ORGANIZER
-  PARTICIPANT
 }
 
 enum UserStatus {
@@ -322,14 +265,6 @@ enum Gender {
   FEMALE
   OTHER
   PREFER_NOT_TO_SAY
-}
-
-enum DegreeType {
-  HIGH_SCHOOL
-  ASSOCIATE
-  BACHELOR
-  MASTER
-  PHD
 }
 
 enum ExpertiseLevel {
@@ -359,6 +294,7 @@ enum EventMode {
 enum EventStatus {
   DRAFT
   PUBLISHED
+  AUTOSAVE
 }
 
 enum ApplicationStatus {
@@ -366,12 +302,6 @@ enum ApplicationStatus {
   ACCEPTED
   REJECTED
   WAITLISTED
-}
-
-enum RSVPStatus {
-  PENDING
-  CONFIRMED
-  DECLINED
 }
 
 enum SponsorTier {
@@ -384,12 +314,6 @@ enum SponsorTier {
 enum EventPersonRole {
   SPEAKER
   JUDGE
-}
-
-enum ScheduleItemType {
-  EVENT
-  WORKSHOP
-  PRE_EVENT
 }
 
 enum TeamMemberRole {

@@ -1,100 +1,177 @@
-import bcrypt from 'bcrypt';
 import prisma from '../config/database.js';
 
-/**
- * Register a new user
- */
 export const register = async (req, res) => {
   try {
-    const { email, username, password, role } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const { user: auth0User } = req.body;
+    
+    if (!auth0User?.sub || !auth0User?.email) {
+      return res.status(400).json({ error: 'Invalid user data' });
+    }
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        username,
-        passwordHash: hashedPassword,
-        role: role.toUpperCase(),
-        status: 'ACTIVE'
-      },
+    // Try to find existing user first
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { auth0Id: auth0User.sub },
+          { email: auth0User.email }
+        ]
+      }
     });
 
-    req.session.userId = user.id;
-    req.session.userRole = user.role;
-
-    res.status(201).json({ 
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        username: user.username, 
-        role: user.role 
-      } 
-    });
-  } catch (error) {
-    if (error.code === 'P2002') {
-      res.status(400).json({ 
-        error: 'Email or username already exists' 
+    if (user) {
+      // Update existing user
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          auth0Id: auth0User.sub,
+          email: auth0User.email,
+          username: auth0User.nickname || auth0User.email.split('@')[0],
+          role: 'ORGANIZER',  // Default role
+          status: 'ACTIVE',
+          profile: {
+            upsert: {
+              create: {
+                firstName: auth0User.given_name || '',
+                lastName: auth0User.family_name || '',
+                avatarUrl: auth0User.picture || null
+              },
+              update: {
+                firstName: auth0User.given_name || '',
+                lastName: auth0User.family_name || '',
+                avatarUrl: auth0User.picture || null
+              }
+            }
+          }
+        },
+        include: {
+          profile: true
+        }
       });
     } else {
-      throw error;
-    }
-  }
-};
-
-/**
- * Login user
- */
-export const login = async (req, res) => {
-  const { email, password } = req.body;
-
-  const user = await prisma.user.findUnique({ 
-    where: { email } 
-  });
-
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  req.session.userId = user.id;
-  req.session.userRole = user.role;
-
-  res.json({ 
-    user: { 
-      id: user.id, 
-      email: user.email, 
-      username: user.username, 
-      role: user.role 
-    } 
-  });
-};
-
-/**
- * Logout user
- */
-export const logout = (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ 
-        error: 'Could not log out, please try again' 
+      // Create new user
+      user = await prisma.user.create({
+        data: {
+          auth0Id: auth0User.sub,
+          email: auth0User.email,
+          username: auth0User.nickname || auth0User.email.split('@')[0],
+          role: 'ORGANIZER',  // Default role
+          status: 'ACTIVE',
+          profile: {
+            create: {
+              firstName: auth0User.given_name || '',
+              lastName: auth0User.family_name || '',
+              avatarUrl: auth0User.picture || null
+            }
+          }
+        },
+        include: {
+          profile: true
+        }
       });
     }
-    res.clearCookie('connect.sid');
-    res.json({ message: 'Logout successful' });
-  });
+
+    res.status(201).json(user);
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Failed to register user' });
+  }
 };
 
-/**
- * Get current user
- */
 export const getCurrentUser = async (req, res) => {
-  const user = await prisma.user.findUnique({
-    where: { id: req.session.userId },
-    select: { 
-      id: true, 
-      email: true, 
-      username: true, 
-      role: true 
+  try {
+    const user = await prisma.user.findUnique({
+      where: { auth0Id: req.auth.payload.sub },
+      include: {
+        profile: true,
+        education: true,
+        experience: true,
+        skills: true,
+        socialProfiles: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
-  });
-  res.json(user);
+
+    res.json(user);
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ error: 'Failed to get user' });
+  }
+};
+
+export const updateUser = async (req, res) => {
+  try {
+    const userId = req.auth.payload.sub;
+    const userData = req.body;
+
+    // Remove id and timestamps from profile data
+    const profileData = userData.profile ? {
+      firstName: userData.profile.firstName,
+      lastName: userData.profile.lastName,
+      avatarUrl: userData.profile.avatarUrl,
+      bio: userData.profile.bio,
+      gender: userData.profile.gender,
+      phone: userData.profile.phone,
+      country: userData.profile.country,
+      city: userData.profile.city
+    } : {};
+
+    const updatedUser = await prisma.user.update({
+      where: { auth0Id: userId },
+      data: {
+        profile: {
+          upsert: {
+            create: profileData,
+            update: profileData
+          }
+        },
+        education: {
+          deleteMany: {},
+          create: userData.education?.map(edu => ({
+            institutionName: edu.institutionName,
+            degree: edu.degree,
+            fieldOfStudy: edu.fieldOfStudy,
+            graduationYear: edu.graduationYear ? parseInt(edu.graduationYear) : null
+          })) || []
+        },
+        experience: {
+          deleteMany: {},
+          create: userData.experience?.map(exp => ({
+            company: exp.company,
+            position: exp.position,
+            startDate: exp.startDate ? new Date(exp.startDate) : null,
+            endDate: exp.endDate ? new Date(exp.endDate) : null
+          })) || []
+        },
+        skills: {
+          deleteMany: {},
+          create: userData.skills?.map(skill => ({
+            skillName: skill.skillName,
+            expertiseLevel: skill.expertiseLevel
+          })) || []
+        },
+        socialProfiles: {
+          deleteMany: {},
+          create: userData.socialProfiles?.map(social => ({
+            platform: social.platform,
+            url: social.url
+          })) || []
+        }
+      },
+      include: {
+        profile: true,
+        education: true,
+        experience: true,
+        skills: true,
+        socialProfiles: true
+      }
+    });
+
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
 }; 

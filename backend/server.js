@@ -2,9 +2,9 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import sessionConfig from './src/config/session.js';
 import errorHandler from './src/middleware/error.js';
 import prisma from './src/config/database.js';
+import { checkJwt } from './src/middleware/auth.js';
 
 // Import routes
 import authRoutes from './src/routes/auth.js';
@@ -18,25 +18,26 @@ const PORT = process.env.PORT || 4000;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'],
-  credentials: true
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(cookieParser());
-app.use(sessionConfig);
 
-// Routes
-app.use('/api', authRoutes);
-app.use('/api/events', eventRoutes);
-app.use('/api/teams', teamRoutes);
-app.use('/api', projectRoutes);
-app.use('/api', profileRoutes);
+// Mount routes
+app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes); // Remove checkJwt from public routes
+app.use('/api/teams', checkJwt, teamRoutes);
+app.use('/api/projects', checkJwt, projectRoutes);
+app.use('/api', checkJwt, profileRoutes); // Changed from '/api/profiles' to '/api' to match frontend calls
 
 // Error handling
 app.use(errorHandler);
 
 // Start server
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
 

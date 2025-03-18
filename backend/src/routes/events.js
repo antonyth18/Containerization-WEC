@@ -1,16 +1,42 @@
 import express from 'express';
-import { getEvents, createEvent, joinEvent, getEventById, updateEvent, deleteEvent} from '../controllers/events.js';
-import { authenticateUser, isOrganizer } from '../middleware/auth.js';
+import { checkJwt, ensureUser, isOrganizer, requireCompleteProfile } from '../middleware/auth.js';
+import { 
+  getEvents, 
+  getEventById, 
+  getCustomQuestions,
+  createEvent, 
+  updateEvent, 
+  deleteEvent,
+  applyToEvent,
+  joinEvent,
+  publishEvent,
+  getAutoSave
+} from '../controllers/events.js';
 import { validate, eventSchema , eventDraftSchema} from '../middleware/validate.js';
 
 const router = express.Router();
 
+// Protected Organizer only route
+router.get('/autosave', checkJwt, ensureUser, isOrganizer, getAutoSave);
+
+// Public routes
 router.get('/', getEvents);
 router.get('/:id', getEventById);
-router.post('/', authenticateUser, isOrganizer, validate(eventSchema), createEvent);
-router.post('/draft', authenticateUser, isOrganizer, validate(eventDraftSchema), createEvent); 
-router.post('/:eventId/join', authenticateUser, joinEvent);
-router.put('/:eventId', updateEvent);
-router.delete('/:id', authenticateUser, isOrganizer, deleteEvent);
+router.get('/:eventId/custom-questions', getCustomQuestions);
+
+// Protected routes
+router.use(checkJwt);
+router.use(ensureUser);
+
+// Organizer routes
+router.post('/', isOrganizer, createEvent);
+router.post('/draft', isOrganizer, validate(eventDraftSchema), createEvent);
+router.put('/:id', isOrganizer, updateEvent);
+router.delete('/:id', isOrganizer, deleteEvent);
+
+
+// Participant routes (require complete profile)
+router.post('/:id/apply', checkJwt, ensureUser, requireCompleteProfile, applyToEvent);
+router.post('/:id/join', joinEvent);
 
 export default router; 

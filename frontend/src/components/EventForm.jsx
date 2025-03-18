@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { uploadImage } from '../helpers/images';
+import { useNavigationAway  } from '../contexts/NavigationContext';
 
 const EventForm = ({
     mode,
@@ -10,10 +11,71 @@ const EventForm = ({
     }) => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
-  
+  const { setOnNavigateAway } = useNavigationAway();
+  const autoSaveFlag = useRef(true); 
+ 
   // This block of code stores the initalization of all the state variables (fields and entries) in the form
-  const [formData, setFormData] = useState(localFormData);
-  console.log(formData);
+  const [formData, setFormData] = useState({
+    ...localFormData,
+    customQuestions: localFormData.customQuestions || [],
+    eventBranding: {
+      ...localFormData.eventBranding,
+      logoUrl: null,  
+      banner: null 
+    }
+  });
+
+  const formDataRef = useRef(formData);
+  const [isReady, setIsReady] = useState(false);
+  
+  // Ensure formDataRef always has the latest value
+  useEffect(() => {
+    formDataRef.current = formData;
+    setIsReady(true);
+  }, [formData]);
+
+  const handleAutosave = async () => {
+    if (localFormData.id && autoSaveFlag.current === false) 
+      return;
+
+    try {
+      const { rsvpDaysBeforeDeadline = 0 } = formDataRef.current.eventTimeline || {};
+      const eventPayload = {
+        ...formDataRef.current,
+        status: 'AUTOSAVE',
+        eventTimeline: {
+          eventStart: formDataRef.current.eventTimeline.eventStart ? convertToFormattedIST(formDataRef.current.eventTimeline.eventStart): new Date().toISOString(),
+          eventEnd: formDataRef.current.eventTimeline.eventEnd ? convertToFormattedIST(formDataRef.current.eventTimeline.eventEnd): new Date().toISOString(),
+          applicationsStart: formDataRef.current.eventTimeline.applicationsStart ? convertToFormattedIST(formDataRef.current.eventTimeline.applicationsStart): new Date().toISOString(),
+          applicationsEnd: formDataRef.current.eventTimeline.applicationsEnd ? convertToFormattedIST(formDataRef.current.eventTimeline.applicationsEnd): new Date().toISOString(),
+          rsvpDaysBeforeDeadline
+        }
+      };
+
+      console.log("Autosaving with Payload:", eventPayload);
+      await apiCall(eventPayload);
+      console.log("Autosave Successful");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!isReady) return;
+    setOnNavigateAway(() => handleAutosave); 
+
+    return () => {
+      setOnNavigateAway(null);
+    };
+  }, [isReady]);
+
+  const convertToFormattedIST = (istDateString) => {
+    const date = new Date(istDateString);
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const adjustedTime = new Date(date.getTime() + istOffset);
+    const formattedDate = adjustedTime.toISOString();
+    return formattedDate;
+}
 
   // This block of code changes the state of the form data when the user types in the input fields
   const handleChange = (e, section = null) => {
@@ -51,7 +113,16 @@ const EventForm = ({
     });
   };
   
-  
+  const handleLinksChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      eventLinks: [{
+        ...prev.eventLinks[0],
+        [name]: value
+      }]
+    }));
+  };
 
   // This block of code changes the state of the form data when the user types in the input fields of an array
   const handleArrayChange = (e, section, index, subSection = null, subIndex = null) => {
@@ -199,162 +270,78 @@ const EventForm = ({
 
   // This block of code sends the form data to the backend to create a new event
   const handleSubmit = async (e) => {
-
     e.preventDefault();
     
-    const action = e.nativeEvent.submitter.value;
-
-    if(action === 'create'){
-      const validationCheck = createValidationErrorHandling(formData);
-      if(validationCheck === false){
-        return;
-      }
-    }
-
-    if(action === 'draft'){
-      const validationCheck = draftValidationErrorHandling();
-      if(validationCheck === false){
-        return;
-      }
-    }
-
-    const convertToFormattedIST = (istDateString) => {
-      const date = new Date(istDateString);
-      const istOffset = 5.5 * 60 * 60 * 1000;
-      const adjustedTime = new Date(date.getTime() + istOffset);
-      const formattedDate = adjustedTime.toISOString();
-      return formattedDate;
-  }
-
-    // Sanitize form data into a structured payload before sending the API request
-    const payload = {
-      id: formData.id ? formData.id : null,
-      name: formData.name,     // Event name is a mandatory field
-      type: formData.type,
-      mode: formData.mode,
-      tagline: formData.tagline || null,
-      about: formData.about || null, 
-      maxParticipants: parseInt(formData.maxParticipants, 10) || null,
-      minTeamSize: parseInt(formData.minTeamSize, 10) || null,
-      maxTeamSize: parseInt(formData.maxTeamSize, 10) || null,
-      eventTimeline: {         // Event timeline is a mandatory field
-        eventStart: formData.eventTimeline.eventStart ? convertToFormattedIST(formData.eventTimeline.eventStart) : null,
-        eventEnd: formData.eventTimeline.eventEnd ? convertToFormattedIST(formData.eventTimeline.eventEnd) : null,
-        applicationsStart: formData.eventTimeline.applicationsStart ? convertToFormattedIST(formData.eventTimeline.applicationsStart) : null,
-        applicationsEnd: formData.eventTimeline.applicationsEnd ? convertToFormattedIST(formData.eventTimeline.applicationsEnd) : null,
-        timezone: formData.eventTimeline.timezone,
-        rsvpDeadlineDays: parseInt(formData.eventTimeline.rsvpDeadlineDays, 10) || 0
-      },
-      ...(formData.eventLinks.contactEmail && {
-        eventLinks: {
-          websiteUrl: formData.eventLinks.websiteUrl || null,
-          micrositeUrl: formData.eventLinks.micrositeUrl || null,
-          contactEmail: formData.eventLinks.contactEmail,       // Contact email is a mandatory field
-          codeOfConductUrl: formData.eventLinks.codeOfConductUrl || null
-        }
-      }),
-      eventBranding: {
-        brandColor: formData.eventBranding.brandColor,
-        coverImage: {
-          filePath: formData.eventBranding.coverImage.filePath || null,
-          bucket: formData.eventBranding.coverImage.bucket || null,
-          publicUrl: formData.eventBranding.coverImage.publicUrl || null,
-        },
-        faviconImage: {
-          filePath: formData.eventBranding.faviconImage.filePath || null,
-          bucket: formData.eventBranding.faviconImage.bucket || null,
-          publicUrl: formData.eventBranding.faviconImage.publicUrl || null,
-        },
-        logoImage: {
-          filePath: formData.eventBranding.logoImage.filePath || null,
-          bucket: formData.eventBranding.logoImage.bucket || null,
-          publicUrl: formData.eventBranding.logoImage.publicUrl || null,
-        },
-      },
-      eventPeople: formData.eventPeople
-      .filter(person => person.name || person.bio || person.imageUrl || person.linkedinUrl)       // Event people are optional, but if provided, persons name must be present
-      .map(person => ({
-        name: person.name?.trim(),       
-        role: person.role ?? "JUDGE",
-        bio: person.bio || null,
-        imageUrl: person.imageUrl || null,
-        linkedinUrl: person.linkedinUrl || null,
-      })),
-      sponsors: formData.sponsors
-      .filter(sponsor => sponsor.name || sponsor.logoUrl || sponsor.websiteUrl)       // Sponsors are optional, but if provided, each sponsor must have a name
-      .map(sponsor => ({
-        ...(mode === 2 && sponsor.id ? { id: sponsor.id } : {}),
-        name: sponsor.name.trim(),
-        logoUrl: sponsor.logoUrl || null,
-        websiteUrl: sponsor.websiteUrl || null,
-        tier: sponsor.tier ?? "GOLD"
-      })
-      ),
-      tracks: formData.tracks
-      .filter(track => {
-      const hasTrackDetails = track.name.trim() !== '' || track.description.trim() !== '';
-      const hasPrizes = track.prizes && track.prizes.some(prize => 
-        prize.title.trim() !== '' || (prize.description && prize.description.trim() !== '') || prize.value != 0
-      );
-
-      // Include the track if it has either track details or valid prizes
-      return hasTrackDetails || hasPrizes;
-    })
-    .map(track => ({
-      ...track,
-      description: ( track.description && track.description.trim() )!== '' ? track.description : null,
-      prizes: track.prizes
-        .filter(prize => prize.title.trim() !== '' || (prize.description && prize.description.trim() !== '') || prize.value != 0)  // If any details of a prize is provided, only then considered
-        .map(prize => ({
-          ...prize,
-          description: (prize.description && prize.description.trim() !== '') ? prize.description : null,
-          value: parseInt(prize.value, 10) || 0
-        }))
-    })),
-    applicationForm: {
-      contactRequired: formData.applicationForm.contactRequired || false,
-      educationRequired: formData.applicationForm.educationRequired || false,
-      experienceRequired: formData.applicationForm.experienceRequired || false,
-      profilesRequired: formData.applicationForm.profilesRequired || false,
-      tShirtSizeRequired: formData.applicationForm.tShirtSizeRequired || false
-    },
-    customQuestions: formData.customQuestions
-    .filter(question => question.questionText.trim() !== '') // Include only if questionText exists
-    .map(question => ({
-      id : question.id,
-      questionText: question.questionText.trim(), 
-      questionType: question.questionType ? question.questionType : 'TEXT',
-      options: question.options || null,
-      isRequired: question.isRequired || false 
-    }))
-
-    };
-  
-    e.preventDefault();
-
+    autoSaveFlag.current = false;
     setError('');
-    console.log("gg");
-    console.log(payload);
-    if ( action === 'draft') {
-      payload.status = 'DRAFT';
-      try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/draft`, payload, { withCredentials: true });
-        console.log('Event draft made:', response.data);
-        navigate('/events');
-      } catch (error) {
-        console.error('Error creating event draft:', error);
-        setError(error.response?.data?.error || 'An error occurred while creating event draft. Please try again.');
-      }
-    } else {
-      payload.status = 'PUBLISHED';
-      try {
-        const response = await apiCall(payload);
-        console.log('API call response:', response);
-      } catch (error) {
-          console.error('Error during API call:', error);
-      }
+  
+    try {
+      // Create a deep copy of formData to avoid mutation
+      const submissionData = JSON.parse(JSON.stringify(formData));
+  
+      // Format event timeline dates into ISO format
+      submissionData.eventTimeline = {
+        eventStart: convertToFormattedIST(formData.eventTimeline.eventStart),
+        eventEnd: convertToFormattedIST(formData.eventTimeline.eventEnd),
+        applicationsStart: convertToFormattedIST(formData.eventTimeline.applicationsStart),
+        applicationsEnd: convertToFormattedIST(formData.eventTimeline.applicationsEnd),
+        rsvpDaysBeforeDeadline: parseInt(formData.eventTimeline.rsvpDaysBeforeDeadline) || 7
+      };
+  
+      // Format branding data
+      submissionData.eventBranding = {
+        brandColor: formData.eventBranding.brandColor,
+        logoImage: formData.eventBranding.logoImage?.publicUrl || null,
+        coverImage: formData.eventBranding.coverImage?.publicUrl || null,
+        faviconImage: formData.eventBranding.faviconImage?.publicUrl || null
+      };
+  
+      // Format links data
+      submissionData.eventLinks = [{
+        websiteUrl: formData.eventLinks[0]?.websiteUrl || null,
+        micrositeUrl: formData.eventLinks[0]?.micrositeUrl || null,
+        contactEmail: formData.eventLinks[0]?.contactEmail || null,
+        socialLinks: formData.eventLinks[0]?.socialLinks || {}
+      }];
+  
+      // Set event status to PUBLISHED
+      submissionData.status = 'PUBLISHED';
+  
+      // Make the API call
+      await apiCall(submissionData);
+  
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setError(error.message || 'Failed to create event');
     }
-    
+  };
+  
+
+  const handleSaveAsDraft = async (e) => {
+
+    autoSaveFlag.current = false;
+    e.preventDefault();
+    setError('');
+
+    try {
+      const { rsvpDaysBeforeDeadline = 0 } = formData.eventTimeline || {};
+      const eventPayload = {
+        ...formData,
+        status: 'DRAFT',
+        eventTimeline: {
+          eventStart: convertToFormattedIST(formData.eventTimeline.eventStart),
+          eventEnd: convertToFormattedIST(formData.eventTimeline.eventEnd),
+          applicationsStart: convertToFormattedIST(formData.eventTimeline.applicationsStart),
+          applicationsEnd: convertToFormattedIST(formData.eventTimeline.applicationsEnd),
+          rsvpDaysBeforeDeadline
+        }
+      };
+
+      await apiCall(eventPayload);
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      setError(error.message || 'Failed to save draft');
+    }
   };
 
   // To switch between different modules in the create event page
@@ -428,7 +415,7 @@ const EventForm = ({
             filePath: filePath,
             bucket: bucket,
             publicUrl: publicUrl,
-          }
+          },
         },
       }));
     }
@@ -492,6 +479,11 @@ const EventForm = ({
     setErrorMessage(""); // Clear error message on remove
   };
 
+  // Add this function to safely get image URLs
+  const getImageUrl = (image) => {
+    if (!image) return '';
+    return typeof image === 'string' ? image : image.publicUrl || '';
+  };
 
   // This block of code returns the form to be displayed on the page (every element is a part of the form)
   return (
@@ -633,13 +625,15 @@ const EventForm = ({
         </div>
 
         <div style={fieldStyle(1)}>
-          <label htmlFor="type" className="block text-sm font-medium text-gray-700">Event Type</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Event Type
+          </label>
           <select
-            id="type"
             name="type"
-            value={formData.type} 
+            value={formData.type}
             onChange={handleChange}
-            className={inputFieldStyle}
+            required
+            className="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-black focus:border-transparent"
           >
             <option value="HACKATHON">Hackathon</option>
             <option value="GENERAL_EVENT">General Event</option>
@@ -691,7 +685,7 @@ const EventForm = ({
               type="number"
               id="maxParticipants"
               name="maxParticipants"
-              value={formData.maxParticipants || ''}
+              value={formData.maxParticipants}
               onChange={handleChange}
               min="0"
               className={inputFieldStyle}
@@ -703,7 +697,7 @@ const EventForm = ({
               type="number"
               id="minTeamSize"
               name="minTeamSize"
-              value={formData.minTeamSize || 1}
+              value={formData.minTeamSize}
               onChange={handleChange}
               min="1"
               className={inputFieldStyle}
@@ -715,9 +709,9 @@ const EventForm = ({
               type="number"
               id="maxTeamSize"
               name="maxTeamSize"
-              value={formData.maxTeamSize || 4}
+              value={formData.maxTeamSize}
               onChange={handleChange}
-              min="1"
+              max="100"
               className={inputFieldStyle}
             />
           </div>
@@ -774,25 +768,14 @@ const EventForm = ({
               />
             </div>
           </div>
-          <div style={fieldStyle(2)}>
-            <label htmlFor="timezone" className="block text-sm font-medium text-gray-700">Timezone</label>
-            <input
-              type="text"
-              id="timezone"
-              name="timezone"
-              value={formData.eventTimeline.timezone}
-              onChange={(e) => handleChange(e, 'eventTimeline')}
-              className={inputFieldStyle}
-              disabled
-            />
-          </div>
+          
           <div style={fieldStyle(2)}>
             <label htmlFor="rsvpDeadlineDays" className="block text-sm font-medium text-gray-700">RSVP Deadline (days before event)</label>
             <input
               type="number"
-              id="rsvpDeadlineDays"
-              name="rsvpDeadlineDays"
-              value={formData.eventTimeline.rsvpDeadlineDays || 7}
+              id="rsvpDaysBeforeDeadline"
+              name="rsvpDaysBeforeDeadline"
+              value={formData.eventTimeline.rsvpDaysBeforeDeadline}
               onChange={(e) => handleChange(e, 'eventTimeline')}
               min="0"
               className={inputFieldStyle}
@@ -812,8 +795,8 @@ const EventForm = ({
               type="url"
               id="websiteUrl"
               name="websiteUrl"
-              value={formData.eventLinks.websiteUrl || ''}
-              onChange={(e) => handleChange(e, 'eventLinks')}
+              value={formData.eventLinks[0]?.websiteUrl || ''}
+              onChange={(e) => handleLinksChange(e)}
               className={inputFieldStyle}
             />
           </div>
@@ -823,8 +806,8 @@ const EventForm = ({
               type="url"
               id="micrositeUrl"
               name="micrositeUrl"
-              value={formData.eventLinks.micrositeUrl || ''}
-              onChange={(e) => handleChange(e, 'eventLinks')}
+              value={formData.eventLinks[0]?.micrositeUrl || ''}
+              onChange={(e) => handleLinksChange(e)}
               className={inputFieldStyle}
             />
           </div>
@@ -834,8 +817,8 @@ const EventForm = ({
               type="email"
               id="contactEmail"
               name="contactEmail"
-              value={formData.eventLinks.contactEmail || ''}
-              onChange={(e) => handleChange(e, 'eventLinks')}
+              value={formData.eventLinks[0]?.contactEmail || ''}
+              onChange={(e) => handleLinksChange(e)}
               className={inputFieldStyle}
             />
           </div>
@@ -860,7 +843,7 @@ const EventForm = ({
               type="color"
               id="brandColor"
               name="brandColor"
-              value={formData.eventBranding.brandColor}
+              value={formData.eventBranding.brandColor || '#000000'}
               onChange={(e) => handleChange(e, 'eventBranding')}
               className={inputFieldStyle}
             />
@@ -896,19 +879,19 @@ const EventForm = ({
                 <label htmlFor="logoFile" className="cursor-pointer">
                   {dragActive
                   ? 'Drop the file here...'
-                  : formData.eventBranding.logoImage
-                  ? `Selected File: ${formData.eventBranding.logoImage}`
-                  : 'Click or drag to upload a logo file'}
+                  : getImageUrl(formData.eventBranding.logoImage)
+                    ? `Selected File: ${getImageUrl(formData.eventBranding.logoImage)}`
+                    : 'Click or drag to upload a logo file'}
                 </label>
               </div>
               {/* Error Message */}
               {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
 
               {/* File Preview */}
-              {formData.eventBranding.logoImage.publicUrl && (
+              {getImageUrl(formData.eventBranding.logoImage) && (
               <div className="mt-4">
               <img
-                src={formData.eventBranding.logoImage.publicUrl}
+                src={getImageUrl(formData.eventBranding.logoImage)}
                 alt="Logo Preview"
                 className="w-32 h-32 object-contain mx-auto border border-gray-300 rounded-md"
               />
@@ -920,60 +903,6 @@ const EventForm = ({
               </button>
             </div>
               )}
-          </div>
-
-          <div className="p-4 border rounded-lg shadow-md bg-white">
-            <h2 className="text-lg font-medium mb-4 text-gray-700">Upload Favicon</h2>
-
-            <label htmlFor="faviconFile" className="block text-sm font-medium text-gray-700 mt-2 mb-2">
-              Favicon File (Upload or Drag & Drop)
-            </label>
-
-            <p className="text-sm text-gray-500 mb-2">
-              Maximum file size: <strong>2MB</strong>
-            </p>
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, 'faviconImage')}
-              className={`border-2 border-dashed p-4 rounded-lg text-center cursor-pointer ${
-                dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-              }`}
-            >
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleFileChange(e, 'faviconImage')}
-                className="hidden"
-                id="faviconFile"
-              />
-              <label htmlFor="faviconFile" className="cursor-pointer">
-                {dragActive
-                  ? 'Drop the file here...'
-                  : formData.eventBranding.faviconImage
-                  ? `Selected File: ${formData.eventBranding.faviconImage}`
-                  : 'Click or drag to upload a favicon file'}
-              </label>
-            </div>
-            {/* Error Message */}
-            {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
-
-            {/* File Preview */}
-            {formData.eventBranding.faviconImage.publicUrl && (
-              <div className="mt-4">
-                <img
-                  src={formData.eventBranding.faviconImage.publicUrl}
-                  alt="Favicon Preview"
-                  className="w-32 h-32 object-contain mx-auto border border-gray-300 rounded-md"
-                />
-                <button
-                  onClick={() => handleRemoveImage('faviconImage')}
-                  className="mt-2 px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 mb-2"
-                >
-                  Remove Image
-                </button>
-              </div>
-            )}
           </div>
 
           <div className="p-4 border rounded-lg shadow-md bg-white">
@@ -1003,8 +932,8 @@ const EventForm = ({
               <label htmlFor="coverImageFile" className="cursor-pointer">
                 {dragActive
                   ? 'Drop the file here...'
-                  : formData.eventBranding.coverImage
-                  ? `Selected File: ${formData.eventBranding.coverImage}`
+                  : getImageUrl(formData.eventBranding.coverImage)
+                  ? `Selected File: ${getImageUrl(formData.eventBranding.coverImage)}`
                   : 'Click or drag to upload a cover image file'}
               </label>
             </div>
@@ -1012,10 +941,10 @@ const EventForm = ({
             {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
 
             {/* File Preview */}
-            {formData.eventBranding.coverImage.publicUrl && (
+            {getImageUrl(formData.eventBranding.coverImage) && (
               <div className="mt-4">
                 <img
-                  src={formData.eventBranding.coverImage.publicUrl}
+                  src={getImageUrl(formData.eventBranding.coverImage)}
                   alt="Cover Image Preview"
                   className="w-2/3 h-64 object-contain mx-auto border border-gray-300 rounded-md"
                 />
@@ -1097,7 +1026,7 @@ const EventForm = ({
                     />
                     <input
                       type="number"
-                      value={prize.value || 0}
+                      value={prize.value}
                       onChange={(e) => handleArrayChange(e, 'tracks', trackIndex, 'prizes', prizeIndex)}
                       name="value"
                       placeholder="Prize Value"
@@ -1142,9 +1071,9 @@ const EventForm = ({
               />
               <input
                 type="url"
-                value={sponsor.logoUrl || ''}
+                value={sponsor.logo || ''}
                 onChange={(e) => handleArrayChange(e, 'sponsors', index)}
-                name="logoUrl"
+                name="logo"
                 placeholder="Sponsor Logo URL"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
@@ -1199,18 +1128,18 @@ const EventForm = ({
               />
               <input
                 type="url"
-                value={person.imageUrl || ''}
+                value={person.avatar || ''}
                 onChange={(e) => handleArrayChange(e, 'eventPeople', index)}
-                name="imageUrl"
-                placeholder="Image URL"
+                name="avatar"
+                placeholder="Avatar URL"
                 className="input-field mt-2 mr-4 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               <input
                 type="url"
-                value={person.linkedinUrl || ''}
+                value={person.socialLinks || ''}
                 onChange={(e) => handleArrayChange(e, 'eventPeople', index)}
-                name="linkedinUrl"
-                placeholder="LinkedIn URL"
+                name="socialLinks"
+                placeholder="Social Links"
                 className="input-field mt-2 rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               />
               <button
@@ -1327,7 +1256,7 @@ const EventForm = ({
             </label>
 
             {/*Custom Questions*/}
-            {formData.customQuestions?.map((question, index) => (
+            {(formData.customQuestions || []).map((question, index) => (
               <div key={index} className="border p-4 rounded mt-4">
                 <input
                   type="text"
@@ -1430,11 +1359,14 @@ const EventForm = ({
               onClick={() => {
                 const newQuestion = {
                   questionText: '',
-                  questionType: '',
+                  questionType: 'TEXT',
                   options: [],
                   isRequired: false,
                 };
-                setFormData({ ...formData, customQuestions: [...formData.customQuestions, newQuestion] });
+                setFormData(prev => ({
+                  ...prev,
+                  customQuestions: [...(prev.customQuestions || []), newQuestion]
+                }));
               }}
               className="mt-4 text-blue-500"
             >
@@ -1443,14 +1375,21 @@ const EventForm = ({
             
         </div>
       </div>
-      <div className="flex">
-          { formData.status === 'DRAFT' &&
-          <button type="submit" className="btn-primary ml-auto mr-3" name="action" value="draft"  style={fieldStyle(7)}>
-           Draft
-          </button>}
-          <button type="submit" className="btn-primary" name="action" value="create"  style={fieldStyle(7)}>
-            { (mode === 1 || formData.status === 'DRAFT') ? 'Create Event' : 'Edit Event'}
-          </button>
+      <div className="flex justify-end gap-4 mt-6">
+        <button
+          type="button"
+          onClick={handleSaveAsDraft}
+          className="px-4 py-2 text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
+        >
+          Save as Draft
+        </button>
+        <button
+          type="submit"
+          onClick={handleSubmit}
+          className="px-4 py-2 text-white bg-black rounded hover:bg-gray-900"
+        >
+          {mode === 1 ? 'Create Event' : 'Update Event'}
+        </button>
       </div>
 
 

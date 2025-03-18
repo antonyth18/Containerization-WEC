@@ -1,21 +1,156 @@
 import prisma from '../config/database.js';
 
-/**
- * Get all events with related data - Public
- */
+export const createEvent = async (req, res) => {
+  try {
+    const userId = req.auth.payload.sub;
+    const eventData = req.body;
+
+    // Find user first
+    const user = await prisma.user.findUnique({
+      where: { auth0Id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Validate user role
+    if (user.role !== 'ORGANIZER' && user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Unauthorized. Only organizers can create events.' });
+    }
+
+    // delete previous autosave
+    if(req.body.id){
+      const eventDelete = await prisma.event.delete({
+        where : { id : req.body.id}
+      });
+    }
+
+    console.log('Full eventData:', JSON.stringify(eventData, null, 2));
+    console.log('Event Branding Data:', JSON.stringify(eventData.eventBranding, null, 2));
+    console.log('Logo Image Public URL:', eventData.eventBranding?.logoImage?.publicUrl);
+    console.log('Cover Image Public URL:', eventData.eventBranding?.coverImage?.publicUrl);
+
+    const event = await prisma.event.create({
+      data: {
+        name: eventData.name,
+        tagline: eventData.tagline || null,
+        about: eventData.about || null,
+        type: eventData.type || 'HACKATHON',
+        maxTeamSize: eventData.maxTeamSize ? parseInt(eventData.maxTeamSize) : null,
+        maxParticipants: eventData.maxParticipants ? parseInt(eventData.maxParticipants) : null,
+        minTeamSize: eventData.minTeamSize ? parseInt(eventData.minTeamSize) : null,
+        mode: eventData.mode,
+        status: eventData.status || 'PUBLISHED',
+        createdById: user.id,
+        
+        timeline: {
+          create: {
+            eventStart: eventData.eventTimeline.eventStart,
+            eventEnd: eventData.eventTimeline.eventEnd,
+            applicationsStart: eventData.eventTimeline.applicationsStart,
+            applicationsEnd: eventData.eventTimeline.applicationsEnd,
+            rsvpDaysBeforeDeadline: parseInt(eventData.eventTimeline.rsvpDaysBeforeDeadline)
+          }
+        },
+        
+        branding: {
+          create: {
+            logoUrl: eventData.eventBranding.logoImage || null, 
+            coverUrl: eventData.eventBranding.coverImage || null,
+            brandColor: eventData.eventBranding.brandColor || '#000000'
+          }
+        },
+        
+        links: {
+          create: {
+            websiteUrl: eventData.eventLinks[0].websiteUrl || null,
+            micrositeUrl: eventData.eventLinks[0].micrositeUrl || null,
+            contactEmail: eventData.eventLinks[0].contactEmail || null,
+            socialLinks: eventData.eventLinks[0].socialLinks || {}
+          }
+        },
+        
+        tracks: {
+          create: eventData.tracks.map(track => ({
+            name: track.name,
+            description: track.description,
+            prizes: {
+              create: track.prizes?.map(prize => ({
+                title: prize.title,
+                description: prize.description,
+                value: parseFloat(prize.value) || 0
+              })) || []
+            }
+          }))
+        },
+        
+        sponsors: {
+          create: eventData.sponsors.map(sponsor => ({
+            name: sponsor.name,
+            websiteUrl: sponsor.websiteUrl || '',
+            logoUrl: sponsor.logoUrl || null,
+            tier: sponsor.tier || 'GOLD'  // Assuming GOLD is a valid tier in your schema
+          }))
+        },
+        
+        eventPeople: {
+          create: eventData.eventPeople.map(person => ({
+            name: person.name,
+            role: person.role || 'JUDGE',
+            imageUrl: person.avatar || null,     
+            description: person.bio || null,     
+            socialLinks: person.socialLinks || null
+          }))
+        },
+
+        applicationForm: {
+          create: {
+            educationRequired: eventData.applicationForm?.educationRequired || false,
+            experienceRequired: eventData.applicationForm?.experienceRequired || false,
+            profilesRequired: eventData.applicationForm?.profilesRequired || false,
+            contactRequired: eventData.applicationForm?.contactRequired || false,
+            tShirtSizeRequired: eventData.applicationForm?.tShirtSizeRequired || false,
+          }
+        },
+
+        customQuestions: {
+          create: eventData.customQuestions.map(question => ({
+            questionText: question.questionText,
+            questionType: question.questionType,
+            options: question.options,
+            isRequired: question.isRequired
+          }))
+        }
+      },
+      include: {
+        timeline: true,
+        branding: true,
+        links: true,
+        tracks: {
+          include: {
+            prizes: true
+          }
+        },
+        sponsors: true,
+        eventPeople: true
+      }
+    });
+
+    res.status(201).json(event);
+  } catch (error) {
+    console.error('Create event error:', error);
+    res.status(500).json({ error: 'Failed to create event', details: error.message });
+  }
+};
+
 export const getEvents = async (req, res) => {
   try {
     const events = await prisma.event.findMany({
       include: {
-        eventTimeline: true,
-        eventLinks: true,
-        eventBranding: {
-          include: {
-            coverImage: true,
-            faviconImage: true,
-            logoImage: true,
-          }
-        },
+        timeline: true,
+        branding: true,
+        links: true,
         tracks: {
           include: {
             prizes: true
@@ -24,34 +159,37 @@ export const getEvents = async (req, res) => {
         sponsors: true,
         eventPeople: true,
         applicationForm: true,
-        customQuestions: true
+        customQuestions: true,
+        createdBy: {
+          select: {
+            id: true,
+            username: true,
+            profile: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     });
+
     res.json(events);
   } catch (error) {
-    throw error;
+    console.error('Error fetching events:', error);
+    res.status(500).json({ error: 'Failed to fetch events' });
   }
 };
 
-/**
- * Get event details using event id
- */
 export const getEventById = async (req, res) => {
-  const { id } = req.params;
-  
   try {
+    const { id } = req.params;
+    
     const event = await prisma.event.findUnique({
       where: { id: parseInt(id) },
       include: {
-        eventTimeline: true,
-        eventLinks: true,
-        eventBranding: {
-          include: {
-            coverImage: true,
-            faviconImage: true,
-            logoImage: true,
-          }
-        },
+        timeline: true,
+        branding: true,
+        links: true,
         tracks: {
           include: {
             prizes: true
@@ -59,8 +197,15 @@ export const getEventById = async (req, res) => {
         },
         sponsors: true,
         eventPeople: true,
+        customQuestions: true,
         applicationForm: true,
-        customQuestions: true
+        createdBy: {
+          select: {
+            id: true,
+            username: true,
+            profile: true
+          }
+        }
       }
     });
 
@@ -68,556 +213,497 @@ export const getEventById = async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
 
-    const independentPrizes = await prisma.prize.findMany({
-      where: { trackId: null,
-        eventId: event.id,
-       },
-    });
-
-    if(independentPrizes.length === 0) {
-      res.json(event);
-    } else { 
-        const eventUpdated = {
-        ...event,
-        tracks: [
-          ...event.tracks,
-          ...independentPrizes.map((prize) => ({
-            name: '',
-            description: '',
-            prizes: [prize]
-          }))
-        ]
-        };
-        res.json(eventUpdated);
-    }
-  
-
+    res.json(event);
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching event:', error);
     res.status(500).json({ error: 'Failed to fetch event' });
   }
 };
 
-/**
- * Create new event or a draft - Admin/Organizer only
- */
-export const createEvent = async (req, res) => {
+export const getCustomQuestions = async (req, res) => {
   try {
-    const {
-      id,
-      name,
-      type,
-      mode,
-      tagline,
-      about,
-      maxParticipants,
-      minTeamSize,
-      maxTeamSize,
-      eventTimeline,
-      eventLinks,
-      eventBranding,
-      status,
-      tracks,
-      sponsors,
-      eventPeople,
-      applicationForm,
-      customQuestions,
-    } = req.body;
+    const { eventId } = req.params; // Extract eventId from URL
 
-    const tracksUpdated = tracks.map(({ id, prizes, ...rest }) => ({
-      ...rest,
-      prizes: prizes.map(({ trackId, ...prizeRest }) => prizeRest),
-    }));
-  
+    const questions = await prisma.customQuestion.findMany({
+      where: { eventId: parseInt(eventId) }, // Filter by eventId
+      select: { 
+        questionText: true,
+        questionType: true,
+        options: true,
+        isRequired: true
+      }
+    });
+
+    res.json(questions); // Return questions as JSON
+  } catch (error) {
+    console.error("Error fetching questions:", error);
+    res.status(500).json({ error: "Failed to fetch questions" });
+  }
+};
+
+export const getAutoSave = async (req, res) => {
+  try {
+
+    const userId = req.user.id;
     
-    if(id !== null){
-      const deleteEvent = await prisma.event.delete({
-        where: {
-          id: parseInt(id),
+    const event = await prisma.event.findFirst({
+      where: {
+        AND: [
+          { status: 'AUTOSAVE' },
+          { createdById: userId }
+        ]
+      },
+      include: {
+        timeline: true,
+        branding: true,
+        links: true,
+        tracks: {
+          include: {
+            prizes: true
+          }
         },
-      });
+        sponsors: true,
+        eventPeople: true,
+        customQuestions: true,
+        applicationForm: true,
+        createdBy: {
+          select: {
+            id: true,
+            username: true,
+            profile: true
+          }
+        }
+      }
+    });
+
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
     }
-    
-    const transaction = await prisma.$transaction(async (prisma) => {
-      const event = await prisma.event.create({
-        data: {
-          name,
-          type,
-          mode,
-          tagline,
-          about,
-          maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
-          minTeamSize: minTeamSize ? parseInt(minTeamSize) : null,
-          maxTeamSize: maxTeamSize ? parseInt(maxTeamSize) : null,
-          status: status,
-          createdById: req.session.userId,
-          eventTimeline: { create: eventTimeline },
-          eventLinks: { create: eventLinks },
-          eventBranding: {
-            create: {
-              ...eventBranding,
-              coverImage: eventBranding.coverImage ? {
-                create: eventBranding.coverImage
-              } : undefined,
-              faviconImage: eventBranding.faviconImage ? {
-                create: eventBranding.faviconImage
-              } : undefined,
-              logoImage: eventBranding.logoImage ? {
-                create: eventBranding.logoImage
-              } : undefined
-            }
-          },
-          applicationForm: {
-            create: {
-              educationRequired: applicationForm.educationRequired,
-              experienceRequired: applicationForm.experienceRequired,
-              profilesRequired: applicationForm.profilesRequired,
-              contactRequired: applicationForm.contactRequired,
-              tShirtSizeRequired: applicationForm.tShirtSizeRequired
-            }
-          }
-        }
-      });
 
-      if (tracksUpdated && tracksUpdated.length > 0) {
-        await Promise.all(
-          tracksUpdated.map(async (track) => {
-            // Adds only prizes in case track name is empty
-            if (track.name.trim() === '' && track.prizes && track.prizes.length > 0) {
-              await Promise.all(
-                track.prizes.map(async (prize) => {
-                  if (prize.title.trim() !== '') {
-                    await prisma.prize.create({
-                      data: {
-                        ...prize,
-                        trackId: null,
-                        eventId: event.id,
-                      }
-                    });
-                  }
-                })
-              );
-            } else if (track.name.trim() !== '') {
-              const createdTrack = await prisma.track.create({
-                data: {
-                  ...track,
-                  eventId: event.id,
-                  prizes: {
-                    create: track.prizes.map(prize => ({
-                      ...prize,
-                      eventId: event.id,
-                    }))
-                  }
-                }
-              });
-            }
-          })
-        );
-      } 
-
-      if (sponsors && sponsors.length > 0 ) {
-        await prisma.sponsor.createMany({
-          data: sponsors.map(sponsor => ({
-            ...sponsor,
-            eventId: event.id
-          }))
-        });
-      }
-
-      if (eventPeople && eventPeople.length > 0 ) {
-        await prisma.eventPerson.createMany({
-          data: eventPeople.map(person => ({
-            ...person,
-            eventId: event.id
-          }))
-        });
-      }
-
-      // Take the customQuestions as list of JSON object of questionText, questionType, options, isReqiured
-      if (customQuestions && customQuestions.length > 0 ) {
-        await prisma.customQuestion.createMany({
-          data: customQuestions.map(question => ({
-            ...question,
-            eventId: event.id
-          }))
-        });
-      }
-
-      return event;
-    });
-
-    res.status(201).json(transaction);
+    res.json(event);
   } catch (error) {
-    throw error;
+    console.error('Error fetchingas event:', error);
+    res.status(500).json({ error: 'Failed to fetch event' });
   }
 };
 
-/**
- * Update event details based on event id - Admin/Organizer only
- */
 export const updateEvent = async (req, res) => {
-  const { eventId } = req.params;
-  const {
-    name,
-    type,
-    mode,
-    tagline,
-    about,
-    maxParticipants,
-    minTeamSize,
-    maxTeamSize,
-    eventTimeline,
-    eventLinks,
-    eventBranding,
-    tracks,
-    status,
-    sponsors,
-    eventPeople,
-    applicationForm,
-    customQuestions
-  } = req.body;
-
-  const tracksUpdated = tracks.map(({ id, prizes, ...rest }) => ({
-    ...rest,
-    prizes: prizes.map(({ trackId, ...prizeRest }) => prizeRest),
-  }));
-
   try {
-    const transaction = await prisma.$transaction( async (prisma) => {
+    const { id } = req.params;
+    const userId = req.auth.payload.sub;
+    const updateData = req.body;
 
-      const event = await prisma.event.update({
-        where : {
-          id: parseInt(eventId)
-        },
-        data : {
-          name,
-          type,
-          mode,
-          tagline,
-          about,
-          maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
-          minTeamSize: minTeamSize ? parseInt(minTeamSize) : null,
-          maxTeamSize: maxTeamSize ? parseInt(maxTeamSize) : null,
-          status: status,
-          eventTimeline: eventTimeline ? {
-            update: {
-              where: {
-                eventId: parseInt(eventId)
-              },
-              data: eventTimeline
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { auth0Id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Find event
+    const event = await prisma.event.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        createdBy: true
+      }
+    });
+
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    // Check if user owns the event
+    if (event.createdBy.auth0Id !== userId) {
+      return res.status(403).json({ error: 'Not authorized to update this event' });
+    }
+
+    // If it's just a status update
+    if (Object.keys(updateData).length === 1 && updateData.status) {
+      const updatedEvent = await prisma.event.update({
+        where: { id: parseInt(id) },
+        data: { status: updateData.status },
+        include: {
+          timeline: true,
+          branding: true,
+          links: true,
+          tracks: {
+            include: {
+              prizes: true
             }
-          } : undefined,
-          eventLinks: eventLinks ? {
-          upsert: {
-            where: {
-              eventId: parseInt(eventId),
-            },
-            create: {
-              ...eventLinks,
-            },
-            update: {
-              ...eventLinks,
-            },
           },
-        }
-      : undefined,
-          eventBranding: eventBranding ? { 
-            update : {
-              where : {
-                eventId: parseInt(eventId)
-              },
-              data: {
-                ...eventBranding,
-                coverImage: eventBranding.coverImage ? {
-                  upsert: {
-                    where: {
-                      id: eventBranding.coverImage.id
-                    },
-                    create: eventBranding.coverImage,
-                    update: eventBranding.coverImage
-                  }
-                } : undefined,
-                faviconImage: eventBranding.faviconImage ? {
-                  upsert: {
-                    where: {
-                      id: eventBranding.faviconImage.id
-                    },
-                    create: eventBranding.faviconImage,
-                    update: eventBranding.faviconImage
-                  }
-                } : undefined,
-                logoImage: eventBranding.logoImage ? {
-                  upsert: {
-                    where: {
-                      id: eventBranding.logoImage.id
-                    },
-                    create: eventBranding.logoImage,
-                    update: eventBranding.logoImage
-                  }
-                } : undefined,
-              }
+          sponsors: true,
+          eventPeople: true,
+          customQuestions: true,
+          applicationForm: true,
+          createdBy: {
+            select: {
+              id: true,
+              username: true,
+              profile: true
             }
-           } : undefined,
-           applicationForm: {
-            upsert: {
-              where: {
-                eventId: parseInt(eventId),
-              },
-              create: {
-                educationRequired: applicationForm.educationRequired,
-                experienceRequired: applicationForm.experienceRequired,
-                profilesRequired: applicationForm.profilesRequired,
-                contactRequired: applicationForm.contactRequired,
-                tShirtSizeRequired: applicationForm.tShirtSizeRequired,
-              },
-              update: {
-                educationRequired: applicationForm.educationRequired,
-                experienceRequired: applicationForm.experienceRequired,
-                profilesRequired: applicationForm.profilesRequired,
-                contactRequired: applicationForm.contactRequired,
-                tShirtSizeRequired: applicationForm.tShirtSizeRequired,
-              },
-            },
           }
         }
       });
 
-      const getIdsToDelete = async (modelName, items) => {
+      return res.json(updatedEvent);
+    }
 
-        const existingIds = await prisma[modelName].findMany({
-          where: { eventId: parseInt(eventId) },
-          select: { id: true },
-        });
+    // Handle full event update
+    const updatedEvent = await prisma.event.update({
+      where: { id: parseInt(id) },
+      data: {
+        name: updateData.name,
+        tagline: updateData.tagline || null,
+        about: updateData.about || null,
+        type: updateData.type || 'HACKATHON',
+        maxParticipants: updateData.maxParticipants,
+        minTeamSize: updateData.minTeamSize,
+        maxTeamSize: updateData.maxTeamSize,
+        mode: updateData.mode,
+        status: updateData.status || event.status, // Keep existing status if not specified
 
-        const incomingIds = items
-        .filter((item) => item.id)
-        .map((item) => item.id);
-
-        const idsToDelete = existingIds
-        .map(items => items.id)
-        .filter((id) => !incomingIds.includes(id)
-        );
-
-        return idsToDelete;
-
-      }
-
-      await prisma.track.deleteMany({
-        where: {
-          eventId : parseInt(eventId),
+        timeline: {
+          update: {
+            eventStart: updateData.eventTimeline.eventStart,
+            eventEnd: updateData.eventTimeline.eventEnd,
+            applicationsStart: updateData.eventTimeline.applicationsStart,
+            applicationsEnd: updateData.eventTimeline.applicationsEnd,
+            rsvpDaysBeforeDeadline: updateData.eventTimeline.rsvpDaysBeforeDeadline
+          }
         },
-      });
 
-      await prisma.prize.deleteMany({
-        where: {
-          eventId : parseInt(eventId),
+        branding: {
+          update: {
+            logoUrl: updateData.eventBranding?.logoImage?.publicUrl || null,
+            coverUrl: updateData.eventBranding?.coverImage?.publicUrl || null,
+            brandColor: updateData.eventBranding?.brandColor || '#000000'
+          }
         },
-      });
 
-      if (tracksUpdated && tracksUpdated.length > 0) {
-        await Promise.all(
-          tracksUpdated.map(async (track) => {
-            // Adds only prizes in case track name is empty
-            if (track.name.trim() === '' && track.prizes && track.prizes.length > 0) {
-              await Promise.all(
-                track.prizes.map(async (prize) => {
-                  if (prize.title.trim() !== '') {
-                    await prisma.prize.create({
-                      data: {
-                        ...prize,
-                        trackId: null,
-                        eventId: parseInt(eventId)
-                      }
-                    });
-                  }
-                })
-              );
-            } else if (track.name.trim() !== '') {
-              const createdTrack = await prisma.track.create({
-                data: {
-                  ...track,
-                  eventId: parseInt(eventId),
-                  prizes: {
-                    create: track.prizes.map(prize => ({
-                      ...prize,
-                      eventId: parseInt(eventId),
-                    }))
-                  }
-                }
-              });
-            }
-          })
-        );
+        links: {
+          update: {
+            websiteUrl: updateData.eventLinks[0]?.websiteUrl || '',
+            micrositeUrl: updateData.eventLinks[0]?.micrositeUrl || '',
+            contactEmail: updateData.eventLinks[0]?.contactEmail || '',
+            socialLinks: updateData.eventLinks[0]?.socialLinks || null
+          }
+        }
+      },
+      include: {
+        timeline: true,
+        branding: true,
+        links: true,
+        tracks: {
+          include: {
+            prizes: true
+          }
+        },
+        sponsors: true,
+        eventPeople: true,
+        createdBy: {
+          select: {
+            id: true,
+            username: true,
+            profile: true
+          }
+        }
       }
-
-      
-      const sponsorsToDelete = await getIdsToDelete('sponsor', sponsors);
-
-      if (sponsorsToDelete.length > 0) {
-        await prisma.sponsor.deleteMany({
-          where: {
-            id : { in: sponsorsToDelete},
-          },
-        });
-      }
-
-      if (sponsors && sponsors.length > 0) {
-        await Promise.all(
-          sponsors.map(async (sponsor) => {
-            //deals with updation of existing sponsors
-            if (sponsor.id) {
-              await prisma.sponsor.update({
-                where: {
-                  id: sponsor.id,
-                },
-                data: {
-                  name: sponsor.name,
-                  logoUrl: sponsor.logoUrl,
-                  websiteUrl: sponsor.websiteUrl,
-                  tier: sponsor.tier,
-                },
-              });
-            } else {
-              //deals with adding new sponsors
-              await prisma.sponsor.create({
-                data: {
-                  name: sponsor.name,
-                  logoUrl: sponsor.logoUrl,
-                  websiteUrl: sponsor.websiteUrl,
-                  tier: sponsor.tier,
-                  eventId: parseInt(eventId),
-                },
-              });
-            }
-          })
-        );
-      }
-
-      const eventPeopleToDelete = await getIdsToDelete('eventPerson', eventPeople);
-
-      if (eventPeopleToDelete.length > 0) {
-        await prisma.eventPerson.deleteMany({
-          where: {
-            id : { in: eventPeopleToDelete},
-          },
-        });
-      }
-
-      if (eventPeople && eventPeople.length > 0) {
-        await Promise.all(
-          eventPeople.map(async (eventPeople) => {
-            //deals with updation of existing event people
-            if (eventPeople.id) {
-              await prisma.eventPerson.update({
-                where: {
-                  id: eventPeople.id,
-                },
-                data: {
-                  name: eventPeople.name,
-                  role: eventPeople.role,
-                  bio: eventPeople.bio,
-                  imageUrl: eventPeople.imageUrl,
-                  linkedUrl: eventPeople.linkedUrl,
-                },
-              });
-            } else {
-              //deals with adding new event people
-              await prisma.eventPerson.create({
-                data: {
-                  name: eventPeople.name,
-                  role: eventPeople.role,
-                  bio: eventPeople.bio,
-                  imageUrl: eventPeople.imageUrl,
-                  linkedUrl: eventPeople.linkedUrl,
-                  eventId: parseInt(eventId),
-                },
-              });
-            }
-          })
-        );
-      }
-      
-      const customQuestionsToDelete = await getIdsToDelete('customQuestion' , customQuestions);
-
-      if (customQuestionsToDelete.length > 0) {
-        await prisma.customQuestion.deleteMany({
-          where: {
-            id : { in: customQuestionsToDelete},
-          },
-        });
-      }
-
-      if(customQuestions && customQuestions.length > 0) {
-        await Promise.all(
-          customQuestions.map((question) =>
-            prisma.customQuestion.upsert({
-              where: {
-                id: question.id ? question.id : 0,
-              },
-              create: {
-                ...question,
-                eventId : parseInt(eventId),
-              },
-              update: {
-                ...question,
-              },
-            })
-          )
-        );
-      }
-
     });
 
-    res.status(201).json(transaction);
+    res.json(updatedEvent);
+  } catch (error) {
+    console.error('Error updating event:', error);
+    res.status(500).json({ error: 'Failed to update event', details: error.message });
   }
-  catch (error) {
-    throw error;
-  }
-
 };
 
-/**
- * Delete an event using event id - Admin/Organizer only
- */
 export const deleteEvent = async (req, res) => {
-  const { id } = req.params;
-
   try {
-    const deleteEvent = await prisma.event.delete({
-      where : {
-        id: parseInt(id),
+    const { id } = req.params;
+    const userId = req.auth.payload.sub;
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { auth0Id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Find event with its creator
+    const event = await prisma.event.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        createdBy: true
       }
     });
 
-    res.status(201).json(deleteEvent);
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
 
+    // Check if user owns the event
+    if (event.createdBy.auth0Id !== userId) {
+      return res.status(403).json({ error: 'Not authorized to delete this event' });
+    }
+
+    // Delete all related records and the event itself
+    await prisma.$transaction([
+      // Delete applications first
+      prisma.application.deleteMany({
+        where: { eventId: parseInt(id) }
+      }),
+
+      // Delete prizes
+      prisma.prize.deleteMany({
+        where: {
+          track: {
+            eventId: parseInt(id)
+          }
+        }
+      }),
+
+      // Delete tracks
+      prisma.track.deleteMany({
+        where: { eventId: parseInt(id) }
+      }),
+
+      // Delete timeline
+      prisma.eventTimeline.deleteMany({
+        where: { eventId: parseInt(id) }
+      }),
+
+      // Delete branding
+      prisma.eventBranding.deleteMany({
+        where: { eventId: parseInt(id) }
+      }),
+
+      // Delete links
+      prisma.eventLink.deleteMany({
+        where: { eventId: parseInt(id) }
+      }),
+
+      // Delete sponsors
+      prisma.sponsor.deleteMany({
+        where: { eventId: parseInt(id) }
+      }),
+
+      // Delete event people
+      prisma.eventPerson.deleteMany({
+        where: { eventId: parseInt(id) }
+      }),
+
+      // Finally delete the event
+      prisma.event.delete({
+        where: { id: parseInt(id) }
+      })
+    ]);
+
+    res.json({ message: 'Event deleted successfully' });
   } catch (error) {
-    throw error;
+    console.error('Error deleting event:', error);
+    res.status(500).json({ error: 'Failed to delete event', details: error.message });
   }
+};
 
-}
-
-/**
- * Join an event - Participant only
- */
 export const joinEvent = async (req, res) => {
-  const { eventId } = req.params;
-  const userId = req.session.userId;
-  const { applicationDetails } = req.body;
+  // ... existing joinEvent code ...
+};
 
+// Add the missing applyToEvent function
+export const applyToEvent = async (req, res) => {
   try {
+    console.log("Received request body:", req.body);
+
+    const { id: eventId } = req.params;
+    const auth0Id = req.auth.payload.sub;
+    const { userData, responses, team, mode } = req.body;
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { auth0Id: auth0Id }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    let existingTeam;
+
+    // Check if the team already exists using the hashCode
+    if(mode === 'create'){
+        existingTeam = await prisma.team.findUnique({
+        where: { 
+          hashCode: team.hash
+        }
+       });
+
+        if (!existingTeam) {
+          // If the team doesn't exist, create it
+          existingTeam = await prisma.team.create({
+            data: {
+              eventId: parseInt(eventId),
+              name: team.name,
+              hashCode: team.hash,
+            }
+          });
+        } else {
+          return res.status(500).json({ error: 'Generate a new hash.' }); //Incase hash is already in use
+        }
+
+
+        // Add the user as a member of the team if not already a member
+        const existingTeamMember = await prisma.teamMember.findFirst({
+          where: {
+            teamId: existingTeam.id,
+            userId: user.id
+          }
+        });
+
+        if (!existingTeamMember) {
+          await prisma.teamMember.create({
+            data: {
+              teamId: existingTeam.id,
+              userId: user.id,
+              role: 'LEADER' // Set default role, change as needed
+            }
+          });
+        } else {
+          return res.status(500).json({ error: 'Already in the team' });
+        }
+    } else if (mode === 'join'){
+        existingTeam = await prisma.team.findUnique({
+        where: { 
+          hashCode: team.hash,
+          eventId: parseInt(eventId) 
+        }
+        });
+
+        if (!existingTeam) {
+          // If the team user is trying to join does not exist, send error
+          return res.status(500).json({ error: 'Team does not exist' });
+        }
+
+        let presentInTeam = await prisma.teamMember.count({
+          where : {
+            teamId: existingTeam.id,
+            userId: user.id
+          }
+        });
+
+        //If user is already part of the team
+        if(presentInTeam > 0){
+          return res.status(500).json({ error: 'Registrant is already a part of the team.' });
+        }
+
+        let maxTeamSize = await prisma.event.findUnique({
+          where : {id : parseInt(eventId)},
+          select: { maxTeamSize: true } 
+        });
+
+        let currentTeamSize = await prisma.teamMember.count({
+          where : { teamId: existingTeam.id}
+        });
+
+        //to check for maximum allowed participants in a team
+        if(currentTeamSize === maxTeamSize.maxTeamSize){
+          return res.status(500).json({ error: 'Team is at maximum capacity' });
+        }
+
+        await prisma.teamMember.create({
+          data: {
+            teamId: existingTeam.id,
+            userId: user.id,
+            role: 'MEMBER' // Set default role, change as needed
+          }
+        });
+
+    }
+
+
+
+    // Create application with team reference
     const application = await prisma.application.create({
       data: {
         eventId: parseInt(eventId),
-        userId,
+        userId: user.id,
+        teamId: existingTeam.id, // Link application to team
         status: 'PENDING',
-        rsvpStatus: 'PENDING',
-        applicationDetails
+        userData: userData,
+        responses: responses || {}
+      },
+      include: {
+        team: true // Include team details in response
       }
     });
 
     res.status(201).json(application);
   } catch (error) {
-    throw error;
+    console.error('Error in applyToEvent:', error);
+    res.status(500).json({ error: 'Failed to submit application' });
   }
-}; 
+};
+
+
+export const publishEvent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.auth.payload.sub;
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { auth0Id: userId },
+      include: {
+        events: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Find event
+    const event = await prisma.event.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        createdBy: true
+      }
+    });
+
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    // Check if user owns the event
+    if (event.createdBy.auth0Id !== userId) {
+      return res.status(403).json({ error: 'Not authorized to publish this event' });
+    }
+
+    // Update event status
+    const updatedEvent = await prisma.event.update({
+      where: { id: parseInt(id) },
+      data: { status: 'PUBLISHED' },
+      include: {
+        timeline: true,
+        branding: true,
+        links: true,
+        tracks: {
+          include: {
+            prizes: true
+          }
+        },
+        sponsors: true,
+        eventPeople: true
+      }
+    });
+
+    res.json(updatedEvent);
+  } catch (error) {
+    console.error('Error publishing event:', error);
+    res.status(500).json({ error: 'Failed to publish event' });
+  }
+};
+

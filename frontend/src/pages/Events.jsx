@@ -8,11 +8,13 @@ import { EditBtn } from '../svg/EditBtn';
 import { DeleteBtn } from '../svg/DeleteBtn';
 import AlertDialog from '../components/AlertDialog';
 import { deleteImage } from '../helpers/images';
+import {useAuth0} from "@auth0/auth0-react";
+import { toast } from 'react-hot-toast';
 
 
 const Events = () => {
   const [events, setEvents] = useState([]);
-  const { user } = useAuth();
+  const { user, getAccessToken } = useAuth();
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [applicationResponses, setApplicationResponses] = useState({});
   const navigate = useNavigate();
@@ -22,8 +24,10 @@ const Events = () => {
   const [drafts, setDrafts] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
-
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+
   
 
   useEffect(() => {
@@ -32,14 +36,20 @@ const Events = () => {
 
   const fetchEvents = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`, { withCredentials: true });
+      setLoading(true);
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/events`,
+        { withCredentials: true }
+      );
       const eventList = response.data;
       const draftedEvents = eventList.filter(event => event.status === 'DRAFT');
       const completeEvents = eventList.filter(event => event.status === 'PUBLISHED');
       setDrafts(draftedEvents);
       
       if(searchWord !== '') {
-        const searchedEventList = events.filter(event => event.name.toLowerCase().includes(searchWord.toLowerCase()));
+        const searchedEventList = eventList.filter(event => 
+          event.name.toLowerCase().includes(searchWord.toLowerCase())
+        );
         setEvents(searchedEventList);
       } else {
         if(selected === 'Hackathons') {
@@ -58,11 +68,11 @@ const Events = () => {
           setEvents(completeEvents);
         }
       }
-      console.log(user);
-      console.log(events);
-      console.log('fetched events!');
-    } catch (error) {
-      console.error('Error fetching events:', error);
+    } catch (err) {
+      console.error('Error fetching events:', err);
+      setError('Failed to load events');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -99,26 +109,61 @@ const Events = () => {
     navigate(`/edit-event/${id}`);
   }
 
-  const handleEventDeleteClick = async (event) => {
+  const handleDeleteClick = (event) => {
+    setEventToDelete(event);
+    setIsDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
     try {
-      console.log(event);
-      await deleteImage(event.eventBranding.coverImage);
-      await deleteImage(event.eventBranding.faviconImage);
-      await deleteImage(event.eventBranding.logoImage);
-      const response = await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${event.id}`, { withCredentials: true });
-      console.log('Event deleted:', response.data);
-      setSelected("All");
-      fetchEvents();
+      const token = await getAccessToken();
+      await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/events/${eventToDelete.id}`, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          withCredentials: true
+        }
+      );
+
+      // Delete associated images if they exist
+      if (eventToDelete.branding?.logoUrl) {
+        await deleteImage(eventToDelete.branding.logoUrl);
+      }
+      if (eventToDelete.branding?.coverUrl) {
+        await deleteImage(eventToDelete.branding.coverUrl);
+      }
+      
+      fetchEvents(); // Refresh the events list
+      setIsDialogOpen(false);
+      setEventToDelete(null);
+      // Add success toast notification
+      toast.success('Event deleted successfully');
     } catch (error) {
       console.error('Error deleting event:', error);
-      setError(error.response?.data?.error || 'An error occurred while deleting event. Please try again.');
+      // Add error toast notification
+      toast.error('Failed to delete event. Please try again.');
     }
-  }
+  };
+
+  const handlePublishEvent = async (eventId) => {
+    try {
+      await axios.put(
+        `${import.meta.env.VITE_API_URL}/api/events/${eventId}`,
+        { status: 'PUBLISHED' },
+        { withCredentials: true }
+      );
+      fetchEvents(); // Refresh the events list
+    } catch (error) {
+      console.error('Error publishing event:', error);
+    }
+  };
 
   function SegmentedControl() {
     return (
       <div className="flex items-center justify-center mb-10 gap-2">
-
         <button
           onClick={() => setSelected("All")}
           className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
@@ -129,7 +174,7 @@ const Events = () => {
         >
           All
         </button>
-  
+
         <button
           onClick={() => setSelected("Hackathons")}
           className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
@@ -140,7 +185,7 @@ const Events = () => {
         >
           Hackathons
         </button>
-  
+
         <button
           onClick={() => setSelected("General Events")}
           className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
@@ -164,6 +209,7 @@ const Events = () => {
             Created Events
           </button>
         )}
+        
         {!!drafts.length && (
           <button
             onClick={() => setSelected("Drafts")}
@@ -180,96 +226,100 @@ const Events = () => {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div className="flex flex-col mt-24 mb-16 mx-20">
-      <h2 className="text-4xl font-semibold mb-8 text-center">Events</h2>
-      <input 
-        type="text" 
-        name="search" 
-        onChange={(e) => setSearchWord(e.target.value)}
-        className="mx-auto px-4 rounded-3xl border mb-6 w-[30%] outline-none focus:ring-1 focus:ring-black focus:border-black placeholder-gray-400" 
-        placeholder="🔍 Search for an event..."
-      />
-      <SegmentedControl />
-      <div className="flex flex-wrap gap-y-12 justify-evenly">
-        {events.map(event => (
-          <div key={event.id} className="border flex flex-col p-6 w-[40%] shadow-xl border-t-black border-solid border-4 rounded-2xl" >
-            <div className='flex justify-between'>
-              <h3 className="text-2xl font-bold mb-2">{event.name}</h3>
-              <div className='flex gap-5'>
-                {user && user.id === event.createdById && (
-                    <EditBtn className="w-6 h-6 cursor-pointer hover:bg-gray-200 rounded-sm" onClick={() => handleEventEditClick(event.id)}/>
-                )}  
-                {user && user.id === event.createdById && (
-                    <DeleteBtn className="w-6 h-6 cursor-pointer hover:bg-gray-200 rounded-sm" onClick={() => {
-                      setIsDialogOpen(true)
-                      setEventToDelete(event);
-                    }}/>
-                )}
-                <>
-                  <AlertDialog
-                    isOpen={isDialogOpen}
-                    onClose={() => setIsDialogOpen(false)}
-                    onConfirm={() => {
-                      console.log(eventToDelete);
-                      handleEventDeleteClick(eventToDelete);
-                      console.log('Confirmed');
-                    }}
-                    title="Delete Item"
-                    message="Are you sure you want to delete this item? This action cannot be undone."
-                    confirmText="Delete"
-                    cancelText="Cancel"
-                  />
-                </>
-              </div>
-              
-            </div>
-           
-            <p className=' max-w-fit bg-gray-300 px-2 py-1 rounded-md text-center text-white text-sm mb-6'>{event.type}</p>
-            <p className=' text-sm font-medium'>Tagline</p>
-            <p className=' text-gray-500 italic mb-6'>{event.tagline}</p>
-            
-            <div className='flex items-center justify-between'>
-              <p className='rounded-lg text-center px-4 py-2 border-solid border-2 text-sm'>{event.mode}</p>
-              <p className='rounded-lg text-center px-4 py-2 border-solid border-2 text-sm'>Starts: {new Date(event.eventTimeline.eventStart).toLocaleDateString()}</p>
-              <Button
-                onClick={() => handleEventViewClick(event.id)}
-                className="mt-2"
-              >
-                Apply now
-              </Button>
-            </div>
-
-          </div>
-        ))}
+    <div className="container mx-auto px-4 py-16">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Events</h1>
       </div>
 
-      {selectedEvent && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 className="text-lg font-bold mb-4">Join {selectedEvent.name}</h3>
-            <form onSubmit={(e) => { e.preventDefault(); handleJoinEvent(selectedEvent.id); }}>
-              {/* Simple application details since we don't have questions in schema */}
-              <div className="mb-4">
-                <label className="block mb-2">Why do you want to join this event?</label>
-                <textarea
-                  className="w-full px-3 py-2 border rounded"
-                  onChange={(e) => handleApplicationChange(selectedEvent.id, 'reason', e.target.value)}
+      <SegmentedControl />
+
+      {events.length === 0 ? (
+        <p className="text-gray-500 text-center py-8">No events found</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {events.map((event) => (
+            <div
+              key={event.id}
+              className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer"
+              onClick={() => handleEventViewClick(event.id)}
+            >
+              {event.branding?.coverUrl && (
+                <img
+                  src={event.branding.coverUrl}
+                  alt={event.name}
+                  className="w-full h-48 object-cover"
                 />
+              )}
+              <div className="p-4">
+                <h2 className="text-xl font-semibold mb-2">{event.name}</h2>
+                <p className="text-gray-600 mb-2">{event.tagline}</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">
+                    {new Date(event.timeline.eventStart).toLocaleDateString()}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 rounded text-sm ${
+                      event.status === 'DRAFT' ? 'bg-gray-100' : 'bg-green-100'
+                    }`}>
+                      {event.status}
+                    </span>
+                    {event.createdById === user?.id && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEventEditClick(event.id);
+                          }}
+                          className="p-2 hover:bg-gray-100 rounded-full"
+                        >
+                          <EditBtn />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(event);
+                          }}
+                          className="p-2 hover:bg-gray-100 rounded-full"
+                        >
+                          <DeleteBtn />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-end">
-                <button type="button" onClick={() => setSelectedEvent(null)} className="mr-2 px-4 py-2 bg-gray-300 rounded">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded">Submit Application</button>
-              </div>
-            </form>
-          </div>
+            </div>
+          ))}
         </div>
       )}
+
+      <AlertDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Event"
+        message="Are you sure you want to delete this event? This action cannot be undone."
+      />
     </div>
-    </>
-    
   );
 };
 

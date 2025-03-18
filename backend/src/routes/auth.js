@@ -1,12 +1,14 @@
 import express from 'express';
-import { register, login, logout, getCurrentUser } from '../controllers/auth.js';
-import { authenticateUser } from '../middleware/auth.js';
+import { register, getCurrentUser, updateUser } from '../controllers/auth.js';
+import { checkJwt } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Public routes
 router.post('/register', register);
-router.post('/login', login);
-router.post('/logout', logout);
-router.get('/user', authenticateUser, getCurrentUser);
+
+// Protected routes
+router.get('/user', checkJwt, getCurrentUser);
+router.put('/user', checkJwt, updateUser);
 
 export default router; 

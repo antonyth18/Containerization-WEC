@@ -1,106 +1,75 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
 import { authAPI } from '../api/api';
-import { useLocation } from 'react-router-dom';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export const useAuth = () => useContext(AuthContext);
-
-/**
- * Authentication context provider component
- * Manages global authentication state and methods
- */
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const location = useLocation();
+  const { 
+    isAuthenticated, 
+    user: auth0User, 
+    isLoading,
+    loginWithRedirect, 
+    logout,
+    getAccessTokenSilently 
+  } = useAuth0();
 
-  /**
-   * Check current authentication status
-   */
-  const checkAuthStatus = async () => {
-    try {
-      const { data } = await authAPI.getCurrentUser();
-      console.log('User data:', data);
-      setUser(data);
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Only check auth status for protected routes
-    const publicPaths = ['/', '/login', '/register'];
-    if (!publicPaths.includes(location.pathname)) {
-      checkAuthStatus();
-    } else {
-      // For public routes, just set loading to false
-      setLoading(false);
-    }
-  }, [location.pathname]);
+    const initAuth = async () => {
+      if (isAuthenticated && auth0User) {
+        try {
+          const token = await getAccessTokenSilently();
+          localStorage.setItem('auth0_token', token);
 
-  /**
-   * Login user with email and password
-   * @param {string} email User's email
-   * @param {string} password User's password
-   */
-  const login = async (email, password) => {
-    try {
-      const { data } = await authAPI.login(email, password);
-      setUser(data.user);
-      return data.user;
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
-    }
-  };
+          const userData = await authAPI.register(auth0User);
+          
+          // Set default role as ORGANIZER for testing
+          const userWithRole = {
+            ...userData,
+            role: userData.role || 'ORGANIZER', // Default to ORGANIZER if no role
+            isProfileComplete: !!(userData?.profile?.firstName && 
+              userData?.profile?.lastName && 
+              userData?.profile?.bio && 
+              userData?.profile?.phone)
+          };
+          
+          setUser(userWithRole);
+        } catch (error) {
+          console.error('Error initializing auth:', error);
+        }
+      }
+    };
 
-  /**
-   * Register new user
-   * @param {string} email User's email
-   * @param {string} username User's username
-   * @param {string} password User's password
-   * @param {string} role User's role
-   */
-  const register = async (email, username, password, role) => {
-    try {
-      const { data } = await authAPI.register({ email, username, password, role });
-      setUser(data.user);
-      return data.user;
-    } catch (error) {
-      console.error('Registration failed:', error);
-      throw error;
-    }
-  };
-
-  /**
-   * Logout current user
-   */
-  const logout = async () => {
-    try {
-      await authAPI.logout();
-      setUser(null);
-    } catch (error) {
-      console.error('Logout failed:', error);
-      throw error;
-    }
-  };
+    initAuth();
+  }, [isAuthenticated, auth0User, getAccessTokenSilently]);
 
   const value = {
+    isAuthenticated,
     user,
-    login,
-    register,
-    logout,
-    loading
+    isLoading,
+    login: loginWithRedirect,
+    logout: () => {
+      localStorage.removeItem('auth0_token');
+      logout({ returnTo: window.location.origin });
+    },
+    getAccessToken: getAccessTokenSilently
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
 
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export default AuthProvider;

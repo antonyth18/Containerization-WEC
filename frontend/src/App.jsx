@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { Auth0Provider } from '@auth0/auth0-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -11,29 +12,26 @@ import CreateEvent from './components/CreateEvent';
 import Profile from './pages/Profile';
 import EventDetails from './pages/EventDetails';
 import EditEvent from './components/EditEvent';
-
-
+import ApplyForm from "./pages/ApplyForEvent";  // Import the component
+import { NavigationProvider } from './contexts/NavigationContext';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
-  const { user, loading } = useAuth();
-  console.log('User:', user);
+  const { isAuthenticated, isLoading, user } = useAuth();
 
-  if (loading) {
-    return null;
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
-  if (!user) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
   
-  if (requiredRole) {
-    const hasPermission = requiredRole === 'ADMIN' ? 
-      (user.role === 'ADMIN' || user.role === 'ORGANIZER') : 
-      user.role === requiredRole;
-      
-    if (!hasPermission) {
-      return <Navigate to="/" replace />;
-    }
+  // Debug log
+  console.log('User role:', user?.role, 'Required role:', requiredRole);
+  
+  if (requiredRole && (!user || user.role !== requiredRole)) {
+    console.log('Role mismatch, redirecting to home');
+    return <Navigate to="/" replace />;
   }
   
   return children;
@@ -42,28 +40,67 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 const App = () => {
   return (
     <Router>
-      <AuthProvider>
-        <div className="App min-h-screen flex flex-col">
-          <Navbar />
-          <main className="flex-grow">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
-              <Route path="/events/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
-              <Route path="/edit-event/:id" element={<ProtectedRoute><EditEvent /></ProtectedRoute>} />
-              <Route path="/create-event" element={
-                <ProtectedRoute requiredRole="ADMIN">
-                  <CreateEvent />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-      </AuthProvider>
+      <NavigationProvider>
+      <Auth0Provider
+        domain={import.meta.env.VITE_AUTH0_DOMAIN}
+        clientId={import.meta.env.VITE_AUTH0_CLIENT_ID}
+        authorizationParams={{
+          redirect_uri: window.location.origin,
+          audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+          scope: import.meta.env.VITE_AUTH0_SCOPE
+        }}
+        cacheLocation="localstorage"
+      >
+        <AuthProvider>
+          <div className="App min-h-screen flex flex-col">
+            <Navbar />
+            <main className="flex-grow">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/events" element={<Events />} />
+                <Route 
+                  path="/create-event" 
+                  element={
+                    <ProtectedRoute requiredRole="ORGANIZER">
+                      <CreateEvent />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/events/:id" element={<EventDetails />} />
+                <Route 
+                  path="/edit-event/:id" 
+                  element={
+                    <ProtectedRoute requiredRole="ORGANIZER">
+                      <EditEvent />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/profile" 
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/edit-profile" 
+                  element={
+                    <ProtectedRoute>
+                      <Profile initialEditMode={true} />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/events/:id/apply" element={<ApplyForm />} />  {/* NEW ROUTE */}
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        </AuthProvider>
+      </Auth0Provider>
+      </NavigationProvider>
     </Router>
   );
 };

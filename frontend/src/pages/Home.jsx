@@ -1,6 +1,7 @@
 import React from 'react';
 import Button from '../components/Button';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 // Testimonial marquee component
 const TestimonialMarquee = () => (
@@ -362,6 +363,14 @@ const DecorativeSVGs = () => (
 );
 
 const Home = () => {
+  const { isAuthenticated, user } = useAuth();
+  
+  // Check if profile is incomplete
+  const isProfileIncomplete = user && (!user.profile?.firstName || 
+    !user.profile?.lastName || 
+    !user.profile?.bio || 
+    !user.profile?.phone);
+
   return (
     <>
       <div className="min-h-screen bg-white relative overflow-hidden">
@@ -420,10 +429,25 @@ const Home = () => {
                 <Button variant="primary" to="/events" className="w-full sm:w-auto text-sm md:text-base py-2.5 md:py-3">
                   Browse Events
                 </Button>
-                <Button variant="secondary" to="/create-event" className="w-full sm:w-auto text-sm md:text-base py-2.5 md:py-3">
-                  Start Creating
-                </Button>
+                {isAuthenticated && user?.role === 'ORGANIZER' && (
+                  <Button variant="secondary" to="/create-event" className="w-full sm:w-auto text-sm md:text-base py-2.5 md:py-3">
+                    Start Creating
+                  </Button>
+                )}
               </div>
+
+              {isAuthenticated && isProfileIncomplete && (
+                <div className="mt-8 p-4 bg-yellow-50 rounded-lg">
+                  <p className="text-yellow-800 mb-4">
+                    Please complete your profile to get the most out of Orbis
+                  </p>
+                  <Link to="/profile">
+                    <Button variant="primary">
+                      Complete Your Profile
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>

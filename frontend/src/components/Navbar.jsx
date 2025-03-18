@@ -4,10 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 import Button from './Button';
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { isAuthenticated, logout, user, login } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const canCreateEvent = user?.role === 'ADMIN' || user?.role === 'ORGANIZER';
+  const canCreateEvent = user?.role === 'ORGANIZER';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -81,19 +81,15 @@ const Navbar = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-6">
-            {user ? (
+            {isAuthenticated ? (
               <>
-                
-                {canCreateEvent && (
-                  <Button variant="secondary" to="/create-event">Create Event</Button>
-                )}
                 <Button variant="text" to="/profile">Profile</Button>
-                <Button variant="primary" onClick={logout}>Logout</Button>
+                <Button variant="primary" onClick={() => logout()}>Logout</Button>
               </>
             ) : (
               <>
-                <Button variant="text" to="/login">Login</Button>
-                <Button variant="primary" to="/register">Register</Button>
+                <Button variant="text" onClick={() => login()}>Login</Button>
+                <Button variant="primary" onClick={() => login({ screen_hint: 'signup' })}>Register</Button>
               </>
             )}
           </div>
@@ -128,51 +124,22 @@ const Navbar = () => {
               </a>
               
               <div className="pt-6 border-t mt-4">
-                {user ? (
+                {isAuthenticated && (
                   <div className="space-y-4 p-4">
-                    {canCreateEvent && (
-                      <Button 
-                        variant="secondary" 
-                        to="/create-event" 
-                        className="w-full bg-white"
-                        onClick={() => handleMobileMenuClick()}
-                      >
-                        Create Event
-                      </Button>
-                    )}
-                    <Button 
-                      variant="text" 
-                      to="/profile" 
+                    <Button
+                      variant="text"
+                      to="/profile"
                       className="w-full bg-white hover:bg-gray-50"
                       onClick={() => handleMobileMenuClick()}
                     >
                       Profile
                     </Button>
-                    <Button 
+                    <Button
                       variant="primary" 
                       onClick={() => handleMobileMenuClick(logout)}
                       className="w-full"
                     >
                       Logout
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4 p-4">
-                    <Button 
-                      variant="text" 
-                      to="/login" 
-                      className="w-full bg-white hover:bg-gray-50"
-                      onClick={() => handleMobileMenuClick()}
-                    >
-                      Login
-                    </Button>
-                    <Button 
-                      variant="primary" 
-                      to="/register" 
-                      className="w-full"
-                      onClick={() => handleMobileMenuClick()}
-                    >
-                      Register
                     </Button>
                   </div>
                 )}
