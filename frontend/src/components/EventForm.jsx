@@ -44,10 +44,10 @@ const EventForm = ({
         ...formDataRef.current,
         status: 'AUTOSAVE',
         eventTimeline: {
-          eventStart: new Date().toISOString(),
-          eventEnd: new Date().toISOString(),
-          applicationsStart: new Date().toISOString(),
-          applicationsEnd: new Date().toISOString(),
+          eventStart: formDataRef.current.eventTimeline.eventStart ? convertToFormattedIST(formDataRef.current.eventTimeline.eventStart): new Date().toISOString(),
+          eventEnd: formDataRef.current.eventTimeline.eventEnd ? convertToFormattedIST(formDataRef.current.eventTimeline.eventEnd): new Date().toISOString(),
+          applicationsStart: formDataRef.current.eventTimeline.applicationsStart ? convertToFormattedIST(formDataRef.current.eventTimeline.applicationsStart): new Date().toISOString(),
+          applicationsEnd: formDataRef.current.eventTimeline.applicationsEnd ? convertToFormattedIST(formDataRef.current.eventTimeline.applicationsEnd): new Date().toISOString(),
           rsvpDaysBeforeDeadline
         }
       };
@@ -68,6 +68,14 @@ const EventForm = ({
       setOnNavigateAway(null);
     };
   }, [isReady]);
+
+  const convertToFormattedIST = (istDateString) => {
+    const date = new Date(istDateString);
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const adjustedTime = new Date(date.getTime() + istOffset);
+    const formattedDate = adjustedTime.toISOString();
+    return formattedDate;
+}
 
   // This block of code changes the state of the form data when the user types in the input fields
   const handleChange = (e, section = null) => {
@@ -273,10 +281,10 @@ const EventForm = ({
   
       // Format event timeline dates into ISO format
       submissionData.eventTimeline = {
-        eventStart: new Date(formData.eventTimeline.eventStart).toISOString(),
-        eventEnd: new Date(formData.eventTimeline.eventEnd).toISOString(),
-        applicationsStart: new Date(formData.eventTimeline.applicationsStart).toISOString(),
-        applicationsEnd: new Date(formData.eventTimeline.applicationsEnd).toISOString(),
+        eventStart: convertToFormattedIST(formData.eventTimeline.eventStart),
+        eventEnd: convertToFormattedIST(formData.eventTimeline.eventEnd),
+        applicationsStart: convertToFormattedIST(formData.eventTimeline.applicationsStart),
+        applicationsEnd: convertToFormattedIST(formData.eventTimeline.applicationsEnd),
         rsvpDaysBeforeDeadline: parseInt(formData.eventTimeline.rsvpDaysBeforeDeadline) || 7
       };
   
@@ -321,10 +329,10 @@ const EventForm = ({
         ...formData,
         status: 'DRAFT',
         eventTimeline: {
-          eventStart: new Date(formData.eventTimeline.eventStart).toISOString(),
-          eventEnd: new Date(formData.eventTimeline.eventEnd).toISOString(),
-          applicationsStart: new Date(formData.eventTimeline.applicationsStart).toISOString(),
-          applicationsEnd: new Date(formData.eventTimeline.applicationsEnd).toISOString(),
+          eventStart: convertToFormattedIST(formData.eventTimeline.eventStart),
+          eventEnd: convertToFormattedIST(formData.eventTimeline.eventEnd),
+          applicationsStart: convertToFormattedIST(formData.eventTimeline.applicationsStart),
+          applicationsEnd: convertToFormattedIST(formData.eventTimeline.applicationsEnd),
           rsvpDaysBeforeDeadline
         }
       };

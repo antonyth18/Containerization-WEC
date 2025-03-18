@@ -250,11 +250,13 @@ const EventDetails = () => {
                         year: 'numeric',
                           month: 'short',
                           day: 'numeric',
+                          timeZone: 'UTC',
                         })}{' '}
                         at{' '}
                         {new Date(event.timeline.eventStart).toLocaleTimeString('en-US', {
                           hour: '2-digit',
                           minute: '2-digit',
+                          timeZone: 'UTC',
                         })}
                       </dd>
                    </div>
@@ -270,11 +272,13 @@ const EventDetails = () => {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
+                        timeZone: 'UTC',
                         })}{' '}
                         at{' '}
                       {new Date(event.timeline.eventEnd).toLocaleTimeString('en-US', {
                         hour: '2-digit',
                         minute: '2-digit',
+                        timeZone: 'UTC',
                       })}
                     </dd>
                   </div>
@@ -295,11 +299,13 @@ const EventDetails = () => {
                         year: 'numeric',
                           month: 'short',
                           day: 'numeric',
+                          timeZone: 'UTC',
                         })}{' '}
                         at{' '}
                         {new Date(event.timeline.applicationsStart).toLocaleTimeString('en-US', {
                           hour: '2-digit',
                           minute: '2-digit',
+                          timeZone: 'UTC',
                         })}
                       </dd>
                    </div>
@@ -315,11 +321,13 @@ const EventDetails = () => {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
+                      timeZone: 'UTC',
                       })}{' '}
                       at{' '}
                     {new Date(event.timeline.applicationsEnd).toLocaleTimeString('en-US', {
                       hour: '2-digit',
                       minute: '2-digit',
+                      timeZone: 'UTC',
                     })}
                   </dd>
                 </div>
