@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { authAPI } from '../api/api';
-import Button from '../components/Button';
+import { authAPI, profileAPI } from '../api/api';
+import { useNavigate, Link } from 'react-router-dom';
 
-const Profile = () => {
+const Profile = ({ initialEditMode = false }) => {
   const { user: auth0User, isLoading } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(initialEditMode);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     profile: {},
     education: [],
@@ -68,9 +69,21 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log("Submitting form data:", formData);
+      
+      // Use authAPI instead of profileAPI since the endpoint might be different
       const response = await authAPI.updateUser(formData);
+      
       setProfile(response);
       setIsEditing(false);
+      console.log("Profile updated successfully", response);
+      // Show success message
+      alert('Profile updated successfully!');
+      
+      // If we were on the edit page, navigate back to profile
+      if (initialEditMode) {
+        navigate('/profile');
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
       alert('Failed to update profile. Please try again.');
@@ -103,6 +116,12 @@ const Profile = () => {
     }
   }
 
+  // Function to toggle edit mode
+  const toggleEdit = () => {
+    console.log("Toggle edit mode, current state:", isEditing);
+    setIsEditing(!isEditing);
+  };
+
   // Check if profile is complete
   const isProfileComplete = profile?.profile?.firstName && 
     profile?.profile?.lastName && 
@@ -110,7 +129,7 @@ const Profile = () => {
     profile?.profile?.phone;
 
   return (
-    <div className="container-width pt-24 pb-12">
+    <div className="container-width pt-48 pb-12">
       <div className="max-w-4xl mx-auto">
         {!isEditing ? (
           <div className="mt-8">
@@ -124,9 +143,12 @@ const Profile = () => {
             
             <div className="flex justify-between items-center mb-8">
               <h1 className="text-3xl font-bold">Profile</h1>
-              <Button onClick={() => setIsEditing(true)}>
+              <button 
+                onClick={toggleEdit}
+                className="px-6 py-2.5 rounded-full text-sm font-medium bg-black text-white hover:bg-gray-900 cursor-pointer"
+              >
                 {isProfileComplete ? 'Edit Profile' : 'Complete Profile'}
-              </Button>
+              </button>
             </div>
             
             {/* Basic Info */}
@@ -285,14 +307,17 @@ const Profile = () => {
             )}
           </div>
         ) : (
-          <div>
+          <div className="mt-8">
             <div className="flex justify-between items-center mb-8">
               <h1 className="text-3xl font-bold">
                 {isProfileComplete ? 'Edit Profile' : 'Complete Your Profile'}
               </h1>
-              <Button variant="text" onClick={() => setIsEditing(false)}>
+              <button 
+                onClick={toggleEdit}
+                className="px-6 py-2.5 rounded-full text-sm font-medium text-gray-600 hover:text-black cursor-pointer"
+              >
                 Cancel
-              </Button>
+              </button>
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-6 bg-white shadow-xl rounded-2xl p-8">
@@ -553,9 +578,12 @@ const Profile = () => {
               </div>
 
               <div className="flex justify-end mt-6">
-                <Button type="submit">
+                <button 
+                  type="submit"
+                  className="px-6 py-2.5 rounded-full text-sm font-medium bg-black text-white hover:bg-gray-900"
+                >
                   Save Changes
-                </Button>
+                </button>
               </div>
             </form>
           </div>

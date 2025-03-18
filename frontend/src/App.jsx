@@ -85,6 +85,14 @@ const App = () => {
                     </ProtectedRoute>
                   } 
                 />
+                <Route 
+                  path="/edit-profile" 
+                  element={
+                    <ProtectedRoute>
+                      <Profile initialEditMode={true} />
+                    </ProtectedRoute>
+                  } 
+                />
                 <Route path="/events/:id/apply" element={<ApplyForm />} />  {/* NEW ROUTE */}
               </Routes>
             </main>

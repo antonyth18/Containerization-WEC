@@ -4,9 +4,8 @@ import { authenticateUser, checkJwt } from '../middleware/auth.js';
 
 const router = express.Router();
 
-
-
+// Both routes should use authentication
 router.get('/profile', checkJwt, getProfile);
-router.put('/edit-profile', updateProfile);
+router.put('/profile', checkJwt, updateProfile); // Endpoint path must match frontend
 
 export default router; 

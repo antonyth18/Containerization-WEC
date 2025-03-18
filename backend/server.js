@@ -31,7 +31,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes); // Remove checkJwt from public routes
 app.use('/api/teams', checkJwt, teamRoutes);
 app.use('/api/projects', checkJwt, projectRoutes);
-app.use('/api/profiles', checkJwt, profileRoutes);
+app.use('/api', checkJwt, profileRoutes); // Changed from '/api/profiles' to '/api' to match frontend calls
 
 // Error handling
 app.use(errorHandler);
