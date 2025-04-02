@@ -9,9 +9,10 @@ const EventDetails = () => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user } = useAuth();
+  const { user, getAccessToken } = useAuth();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('overview'); 
+  const [appStatus, setAppStatus] = useState(null)
 
   useEffect(() => {
     fetchEvent();
@@ -25,6 +26,25 @@ const EventDetails = () => {
         { withCredentials: true }
       );
       setEvent(response.data);
+
+      const token = await getAccessToken();
+      const appResponse = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/events/${id}/application`,
+          { 
+              headers: {
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+              },
+              withCredentials: true 
+          }
+      );
+      console.log(appResponse)
+      const application = appResponse.data
+      if(application) {
+        console.log(application);
+        setAppStatus(application.status);
+      }
+      
     } catch (err) {
       console.error('Error fetching event:', err);
       setError('Failed to load event details');
@@ -345,12 +365,26 @@ const EventDetails = () => {
             </div>
             
             <div className="flex justify-center mt-4">
-            <button   
-              className="btn-primary"
-              onClick={() => navigate(`/events/${event.id}/apply`)}
-            >
-              Apply now
-            </button>
+                    {appStatus ?
+                      <div
+                      className={`px-6 py-3 font-medium ${
+                        appStatus === "ACCEPTED"
+                          ? "bg-green-600 text-white rounded-xl"
+                          : appStatus === "PENDING"
+                          ? "bg-yellow-600 text-white rounded-xl"
+                          : "bg-red-600 text-white rounded-xl"
+                      }`}
+                    >
+                      {appStatus}
+                    </div>
+                      :
+                      <button   
+                        className="btn-primary"
+                        onClick={() => navigate(`/events/${event.id}/apply`)}
+                      >
+                        Apply now
+                      </button>
+                    }
             </div>
             
           </div>

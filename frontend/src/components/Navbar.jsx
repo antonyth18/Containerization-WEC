@@ -77,6 +77,9 @@ const Navbar = () => {
             <a href="/#testimonials" className="text-sm text-gray-500 hover:text-black transition-colors tracking-wide">
               Testimonials
             </a>
+            {isAuthenticated && <Link to="/org-dashboard" className="text-sm text-gray-500 hover:text-black transition-colors tracking-wide">
+              Organiser Dashboard
+            </Link>}
           </div>
 
           {/* Desktop Auth Buttons */}

@@ -25,6 +25,7 @@ export const checkJwt = auth({
 
 // Check if user exists and create if not
 export const ensureUser = async (req, res, next) => {
+    
   try {
     if (!req.auth?.payload?.sub) {
       return res.status(401).json({ error: 'No valid token provided' });

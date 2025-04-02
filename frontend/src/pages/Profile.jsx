@@ -22,7 +22,9 @@ const Profile = ({ initialEditMode = false }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        console.log(auth0User)
         const userData = await authAPI.getCurrentUser();
+        console.log(userData);
         setProfile(userData);
         setFormData({
           profile: userData.profile || {},
@@ -30,7 +32,7 @@ const Profile = ({ initialEditMode = false }) => {
           experience: userData.experience || [],
           skills: userData.skills || [],
           socialProfiles: userData.socialProfiles || [],
-          projects: userData.projects || []
+          projects: userData.projects || [],
         });
       } catch (err) {
         console.error('Error fetching profile:', err);
