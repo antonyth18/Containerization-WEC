@@ -14,6 +14,7 @@ const EventDashboard = () => {
     const { user, getAccessToken } = useAuth();
     const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState('overview');
+    const [acceptedApps, setAcceptedApps] = useState([]);
 
     useEffect(() => {
         fetchEvent();
@@ -26,7 +27,9 @@ const EventDashboard = () => {
             `${import.meta.env.VITE_API_URL}/api/events/${id}`,
             { withCredentials: true }
             );
-            setEvent(response.data);
+            const eventResponse = response.data;
+            setEvent(eventResponse);
+            setAcceptedApps(eventResponse.applications.filter((app) => app.status === 'ACCEPTED'));
             console.log(response.data)
         } catch (err) {
             console.error('Error fetching event:', err);
@@ -72,11 +75,11 @@ const EventDashboard = () => {
     const ApplicationsTable = ({ applications }) => {
         const [selectedApp, setSelectedApp] = useState(null);
         const handleAccept = async () => {
-            selectedApp.status = "ACCEPTED";
+            console.log(selectedApp)
             const token = await getAccessToken();
             const response = await axios.put(
                 `${import.meta.env.VITE_API_URL}/api/events/${id}/application`,
-                selectedApp,
+                {...selectedApp, status: "ACCEPTED"},
                 { 
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -86,7 +89,9 @@ const EventDashboard = () => {
                 }
             );
             console.log(response.data);
+            selectedApp.status = 'ACCEPTED'
             console.log(`Application ${selectedApp.id} Accepted`);
+            setAcceptedApps([...acceptedApps, selectedApp]);
             setSelectedApp(null);
         };
       
@@ -95,7 +100,7 @@ const EventDashboard = () => {
             const token = await getAccessToken();
             const response = await axios.put(
                 `${import.meta.env.VITE_API_URL}/api/events/${id}/application`,
-                selectedApp,
+                {...selectedApp, status: "REJECTED"},
                 { 
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -104,6 +109,7 @@ const EventDashboard = () => {
                     withCredentials: true 
                 }
             );
+            selectedApp.status = 'REJECTED'
             console.log(response.data);
             console.log(`Application ${selectedApp.id} Rejected`);
             setSelectedApp(null);
@@ -219,6 +225,43 @@ const EventDashboard = () => {
           </div>
         );
       };
+
+    const AcceptedTable = ({ applications }) => {
+        
+        return (
+          <div className="overflow-x-auto shadow-lg rounded-lg">
+            <table className="w-full border-collapse bg-white shadow-md rounded-lg">
+              {/* Table Headers */}
+              <thead>
+                <tr className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+                  <th className="px-6 py-4 text-left font-semibold">Participant Name</th>
+                  <th className="px-6 py-4 text-left font-semibold">Team</th>
+                  <th className="px-6 py-4 text-left font-semibold">Date</th>
+                </tr>
+              </thead>
+      
+              {/* Table Body */}
+              <tbody>
+                {applications.map((app) => (
+                  <tr
+                    key={app.id}
+                    className="border-b hover:bg-gray-100 even:bg-gray-50 cursor-pointer transition duration-200"
+                  >
+                    <td className="px-6 py-4 text-gray-800">
+                      {app.userData.firstName + " " + app.userData.lastName}
+                    </td>
+                    <td className="px-6 py-4 text-gray-700">{app.team ? app.team.name : "N/A"}</td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {new Date(app.createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      };
+      
       
       
 
@@ -277,6 +320,16 @@ const EventDashboard = () => {
                         }
                     </div>
                 )}
+
+                {activeSection === 'admin' && (
+                    <div>
+                        {acceptedApps.length ?
+                            <AcceptedTable applications={acceptedApps} />
+                            :
+                            <p>Go Accept Some Applicants!</p> 
+                        }
+                    </div>
+                )}  
             </div>
         </>
     )

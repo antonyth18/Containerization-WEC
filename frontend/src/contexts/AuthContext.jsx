@@ -23,7 +23,9 @@ export const AuthProvider = ({ children }) => {
           const token = await getAccessTokenSilently();
           localStorage.setItem('auth0_token', token);
 
+          console.log(auth0User);
           const userData = await authAPI.register(auth0User);
+          console.log(userData)
           
           // Set default role as ORGANIZER for testing
           const userWithRole = {

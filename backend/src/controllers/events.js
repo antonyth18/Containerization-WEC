@@ -769,7 +769,7 @@ export const updateApplication = async (req, res) => {
     // Extract Auth0 ID from token
     const auth0Id = req.auth?.payload?.sub;
     const eventId = parseInt(req.params.eventId, 10);
-    const { status, responses, teamId } = req.body;
+    const { userId, status, responses, teamId } = req.body;
 
     if (!auth0Id) {
       return res.status(401).json({ error: "Unauthorized: No Auth0 ID found" });
@@ -778,24 +778,16 @@ export const updateApplication = async (req, res) => {
     if (isNaN(eventId)) {
       return res.status(400).json({ error: "Invalid event ID" });
     }
-
-    // Find the user in the database
-    const user = await prisma.user.findUnique({
-      where: { auth0Id },
-      select: { id: true },
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
+    
     // Find the application belonging to the user and event
     const application = await prisma.application.findFirst({
       where: {
-        userId: user.id,
+        userId,
         eventId,
       },
     });
+
+    console.log(application)
 
     if (!application) {
       return res.status(404).json({ error: "Application not found" });

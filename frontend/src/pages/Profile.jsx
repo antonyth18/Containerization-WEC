@@ -23,6 +23,7 @@ const Profile = ({ initialEditMode = false }) => {
     const fetchProfile = async () => {
       try {
         console.log(auth0User)
+        console.log('fetching profiles...')
         const userData = await authAPI.getCurrentUser();
         console.log(userData);
         setProfile(userData);
@@ -143,7 +144,7 @@ const Profile = ({ initialEditMode = false }) => {
               </div>
             )}
             
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-8 mt-20">
               <h1 className="text-3xl font-bold">Profile</h1>
               <button 
                 onClick={toggleEdit}

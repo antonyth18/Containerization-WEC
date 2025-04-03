@@ -31,13 +31,9 @@ export const register = async (req, res) => {
           profile: {
             upsert: {
               create: {
-                firstName: auth0User.given_name || '',
-                lastName: auth0User.family_name || '',
                 avatarUrl: auth0User.picture || null
               },
               update: {
-                firstName: auth0User.given_name || '',
-                lastName: auth0User.family_name || '',
                 avatarUrl: auth0User.picture || null
               }
             }
@@ -58,8 +54,6 @@ export const register = async (req, res) => {
           status: 'ACTIVE',
           profile: {
             create: {
-              firstName: auth0User.given_name || '',
-              lastName: auth0User.family_name || '',
               avatarUrl: auth0User.picture || null
             }
           }
