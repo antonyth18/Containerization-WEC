@@ -47,6 +47,7 @@ const OrganiserDashboard = () => {
       setDrafts(draftedEvents);
       const createdEvents = completeEvents.filter(event => event.createdById === user.id);
       setEvents(createdEvents);  
+      console.log(createdEvents)
       
     } catch (err) {
       console.error('Error fetching events:', err);

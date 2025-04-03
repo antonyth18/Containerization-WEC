@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from "lucide-react";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, Legend } from "recharts";
 
 const EventDashboard = () => {
 
@@ -261,6 +262,106 @@ const EventDashboard = () => {
           </div>
         );
       };
+
+
+      const OverviewSection = ({ applications }) => {
+        // Calculate Stats
+        const totalApplications = applications.length;
+        const accepted = applications.filter((app) => app.status === "ACCEPTED").length;
+        const rejected = applications.filter((app) => app.status === "REJECTED").length;
+        const pending = applications.filter((app) => app.status === "PENDING").length;
+      
+        // Pie Chart Data
+        const statusData = [
+          { name: "Accepted", value: accepted },
+          { name: "Rejected", value: rejected },
+          { name: "Pending", value: pending },
+        ];
+        const COLORS = ["#34D399", "#EF4444", "#FACC15"];
+      
+        // Applications Over Time (Line Chart)
+        const applicationsOverTime = applications.reduce((acc, app) => {
+          const date = new Date(app.createdAt).toLocaleDateString();
+          acc[date] = (acc[date] || 0) + 1;
+          return acc;
+        }, {});
+        const lineChartData = Object.entries(applicationsOverTime).map(([date, count]) => ({ date, count }));
+      
+        // Applicants by Team (Bar Chart)
+        const teamData = applications.reduce((acc, app) => {
+          const teamName = app.team ? app.team.name : "No Team";
+          acc[teamName] = (acc[teamName] || 0) + 1;
+          return acc;
+        }, {});
+        const barChartData = Object.entries(teamData).map(([team, count]) => ({ team, count }));
+      
+        return (
+          <div className="p-8 bg-white shadow-lg rounded-lg">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-gray-100 p-6 rounded-lg text-center shadow-md">
+                <h3 className="text-lg font-semibold text-gray-700">Total Applications</h3>
+                <p className="text-3xl font-bold text-gray-900">{totalApplications}</p>
+              </div>
+              <div className="bg-green-100 p-6 rounded-lg text-center shadow-md">
+                <h3 className="text-lg font-semibold text-green-700">Accepted</h3>
+                <p className="text-3xl font-bold text-green-600">{accepted}</p>
+              </div>
+              <div className="bg-red-100 p-6 rounded-lg text-center shadow-md">
+                <h3 className="text-lg font-semibold text-red-700">Rejected</h3>
+                <p className="text-3xl font-bold text-red-600">{rejected}</p>
+              </div>
+            </div>
+      
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Pie Chart for Application Status */}
+              <div className="bg-white p-6 shadow-md rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Application Status Breakdown</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie data={statusData} cx="50%" cy="50%" outerRadius={100} fill="#8884d8" dataKey="value" label>
+                      {statusData.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+      
+              {/* Line Chart for Applications Over Time */}
+              <div className="bg-white p-6 shadow-md rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Applications Over Time</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={lineChartData}>
+                    <XAxis dataKey="date" stroke="#555" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="count" stroke="#4F46E5" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+      
+            {/* Bar Chart for Applicants by Team */}
+            <div className="bg-white p-6 shadow-md rounded-lg mt-8">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Applicants by Team</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={barChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="team" stroke="#555" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="count" fill="#6366F1" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        );
+      };
       
       
       
@@ -308,6 +409,18 @@ const EventDashboard = () => {
                     </nav>
                 </div>
 
+                {activeSection === 'overview' && (
+                    <div>
+                        {event.applications.length ?
+                            <div>
+                                <OverviewSection applications={event.applications} />
+                            </div>
+                            :
+                            <p>Theres nothing to visualise :/</p>
+                        }
+                    </div>
+                )}
+
                 {activeSection === 'review' && (
                     <div>
                         {event.applications.length ?
@@ -324,7 +437,11 @@ const EventDashboard = () => {
                 {activeSection === 'admin' && (
                     <div>
                         {acceptedApps.length ?
-                            <AcceptedTable applications={acceptedApps} />
+                            <div>
+                                <div className='mb-4 font-semibold text-lg'>Number of Participants : {acceptedApps.length}</div>
+                                <AcceptedTable applications={acceptedApps} />
+                            </div>
+                            
                             :
                             <p>Go Accept Some Applicants!</p> 
                         }
