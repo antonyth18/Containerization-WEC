@@ -10,7 +10,9 @@ import {
   applyToEvent,
   joinEvent,
   publishEvent,
-  getAutoSave
+  getAutoSave,
+  getApplication,
+  updateApplication
 } from '../controllers/events.js';
 import { validate, eventSchema , eventDraftSchema} from '../middleware/validate.js';
 
@@ -19,10 +21,13 @@ const router = express.Router();
 // Protected Organizer only route
 router.get('/autosave', checkJwt, ensureUser, isOrganizer, getAutoSave);
 
+
 // Public routes
 router.get('/', getEvents);
 router.get('/:id', getEventById);
 router.get('/:eventId/custom-questions', getCustomQuestions);
+
+
 
 // Protected routes
 router.use(checkJwt);
@@ -38,5 +43,10 @@ router.delete('/:id', isOrganizer, deleteEvent);
 // Participant routes (require complete profile)
 router.post('/:id/apply', checkJwt, ensureUser, requireCompleteProfile, applyToEvent);
 router.post('/:id/join', joinEvent);
+
+// Application routes
+router.get('/:eventId/application', checkJwt, ensureUser, getApplication)
+//router.delete('/application/:id', deleteApplication)
+router.put('/:eventId/application', checkJwt, ensureUser, updateApplication)
 
 export default router; 

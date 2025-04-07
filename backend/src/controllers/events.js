@@ -159,6 +159,11 @@ export const getEvents = async (req, res) => {
         sponsors: true,
         eventPeople: true,
         applicationForm: true,
+        applications: {
+          include: {
+            team: true // Include team details in response
+          }
+        },
         customQuestions: true,
         createdBy: {
           select: {
@@ -199,6 +204,11 @@ export const getEventById = async (req, res) => {
         eventPeople: true,
         customQuestions: true,
         applicationForm: true,
+        applications: {
+          include: {
+            team: true // Include team details in response
+          }
+        },
         createdBy: {
           select: {
             id: true,
@@ -707,3 +717,143 @@ export const publishEvent = async (req, res) => {
   }
 };
 
+export const getApplication = async (req, res) => {
+  try {
+    // Extract user ID from Auth0 token
+    const auth0Id = req.auth.payload.sub; 
+    const eventId = parseInt(req.params.eventId, 10);
+
+    if (!auth0Id) {
+      return res.status(401).json({ error: "Unauthorized: No user ID found" });
+    }
+
+    if (isNaN(eventId)) {
+      return res.status(400).json({ error: "Invalid event ID" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { auth0Id },
+      select: { id: true }, // Only fetch the user ID
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Fetch the specific application related to the user and event
+    const application = await prisma.application.findFirst({
+      where: {
+        userId: user.id, 
+        eventId, 
+      },
+      include: {
+        event: true,
+        team: true,
+      },
+    });
+
+
+    if (!application) {
+      return res.status(200).json({ error: "Application not found for this user and event" });
+    }
+
+    res.status(200).json(application);
+  } catch (error) {
+    console.error("Error fetching application:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+export const updateApplication = async (req, res) => {
+  try {
+    // Extract Auth0 ID from token
+    const auth0Id = req.auth?.payload?.sub;
+    const eventId = parseInt(req.params.eventId, 10);
+    const { userId, status, responses, teamId } = req.body;
+
+    if (!auth0Id) {
+      return res.status(401).json({ error: "Unauthorized: No Auth0 ID found" });
+    }
+
+    if (isNaN(eventId)) {
+      return res.status(400).json({ error: "Invalid event ID" });
+    }
+    
+    // Find the application belonging to the user and event
+    const application = await prisma.application.findFirst({
+      where: {
+        userId,
+        eventId,
+      },
+    });
+
+    console.log(application)
+
+    if (!application) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    // Update the application
+    const updatedApplication = await prisma.application.update({
+      where: { id: application.id },
+      data: {
+        status: status || application.status,
+        responses: responses || application.responses,
+        teamId: teamId !== undefined ? teamId : application.teamId,
+      },
+    });
+
+    res.status(200).json(updatedApplication);
+  } catch (error) {
+    console.error("Error updating application:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// export const deleteApplication = async (req, res) => {
+//   try {
+//     // Extract user ID from Auth0 token
+//     const auth0Id = req.auth?.payload?.sub;
+//     const eventId = parseInt(req.params.eventId, 10);
+
+//     if (!auth0Id) {
+//       return res.status(401).json({ error: "Unauthorized: No user ID found" });
+//     }
+
+//     if (isNaN(eventId)) {
+//       return res.status(400).json({ error: "Invalid event ID" });
+//     }
+
+//     // Find the user based on auth0Id
+//     const user = await prisma.user.findUnique({
+//       where: { auth0Id },
+//       select: { id: true },
+//     });
+
+//     if (!user) {
+//       return res.status(404).json({ error: "User not found" });
+//     }
+
+//     // Check if the application exists
+//     const application = await prisma.application.findFirst({
+//       where: {
+//         userId: user.id,
+//         eventId,
+//       },
+//     });
+
+//     if (!application) {
+//       return res.status(404).json({ error: "Application not found" });
+//     }
+
+//     // Delete the application
+//     await prisma.application.delete({
+//       where: { id: application.id },
+//     });
+
+//     res.status(200).json({ message: "Application deleted successfully" });
+//   } catch (error) {
+//     console.error("Error deleting application:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// };

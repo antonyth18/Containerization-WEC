@@ -31,13 +31,9 @@ export const register = async (req, res) => {
           profile: {
             upsert: {
               create: {
-                firstName: auth0User.given_name || '',
-                lastName: auth0User.family_name || '',
                 avatarUrl: auth0User.picture || null
               },
               update: {
-                firstName: auth0User.given_name || '',
-                lastName: auth0User.family_name || '',
                 avatarUrl: auth0User.picture || null
               }
             }
@@ -58,8 +54,6 @@ export const register = async (req, res) => {
           status: 'ACTIVE',
           profile: {
             create: {
-              firstName: auth0User.given_name || '',
-              lastName: auth0User.family_name || '',
               avatarUrl: auth0User.picture || null
             }
           }
@@ -79,6 +73,7 @@ export const register = async (req, res) => {
 
 export const getCurrentUser = async (req, res) => {
   try {
+    console.log(req.auth.payload.sub);
     const user = await prisma.user.findUnique({
       where: { auth0Id: req.auth.payload.sub },
       include: {
@@ -89,6 +84,7 @@ export const getCurrentUser = async (req, res) => {
         socialProfiles: true
       }
     });
+    console.log(user)
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -117,7 +113,7 @@ export const updateUser = async (req, res) => {
       country: userData.profile.country,
       city: userData.profile.city
     } : {};
-
+    
     const updatedUser = await prisma.user.update({
       where: { auth0Id: userId },
       data: {
@@ -168,7 +164,7 @@ export const updateUser = async (req, res) => {
         socialProfiles: true
       }
     });
-
+    console.log(updatedUser)
     res.json(updatedUser);
   } catch (error) {
     console.error('Update user error:', error);
