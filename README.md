@@ -49,7 +49,12 @@ This platform features:
    DATABASE_URL="your-supabase-postgres-connection-string"
    PORT=4000
    NODE_ENV=development
-   CORS_ORIGIN=http://localhost:3000
+   
+   # Use your frontend deployment URL in production
+   CORS_ORIGIN="https://your-frontend-domain.com"
+   # For local development
+   # CORS_ORIGIN="http://localhost:3000"
+   
    AUTH0_ISSUER_BASE_URL="your-auth0-issuer-url"
    AUTH0_AUDIENCE="your-auth0-audience"
    AUTH0_CLIENT_SECRET="your-auth0-client-secret"
@@ -68,7 +73,7 @@ This platform features:
    ```bash
    npm run dev
    ```
-   The backend will run on http://localhost:4000
+   The backend will run on http://localhost:4000 in development
 
 6. **Frontend Setup** (in a new terminal)
    ```bash
@@ -79,7 +84,10 @@ This platform features:
 7. **Frontend Environment Configuration**
    Create a `.env` file in the frontend directory with the following variables:
    ```
-   VITE_API_URL=http://localhost:4000
+   # Use your backend deployment URL in production
+   VITE_API_URL="https://your-backend-domain.com"
+   # For local development 
+   # VITE_API_URL="http://localhost:4000"
    
    # Supabase
    VITE_SUPABASE_URL="your-supabase-url"
@@ -91,13 +99,25 @@ This platform features:
    VITE_AUTH0_CLIENT_ID="your-auth0-client-id"
    VITE_AUTH0_AUDIENCE="your-auth0-audience"
    VITE_AUTH0_SCOPE="openid profile email"
+   VITE_AUTH0_REDIRECT_URI="https://your-frontend-domain.com"
    ```
 
 8. **Start the Frontend Server**
    ```bash
    npm run dev
    ```
-   The frontend will run on http://localhost:3000
+   The frontend will run on http://localhost:3000 in development
+
+## Deployment Configuration
+
+When deploying to production:
+
+1. Update all environment variables to use your production URLs
+2. Make sure your Auth0 application has the correct:
+   - Allowed Callback URLs
+   - Allowed Logout URLs
+   - Allowed Web Origins
+   - Set to your production domain
 
 ## Working with Prisma
 

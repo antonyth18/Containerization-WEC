@@ -38,7 +38,11 @@ app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`- Local: http://localhost:${PORT}`);
+  if (process.env.SERVER_URL) {
+    console.log(`- Production: ${process.env.SERVER_URL}`);
+  }
 });
 
 // Graceful shutdown

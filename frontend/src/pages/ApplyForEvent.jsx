@@ -50,7 +50,7 @@ const ApplyForEvent = () => {
   useEffect(() => {
     const fetchEventDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:4000/api/events/${id}`);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}`);
         setEvent(response.data); // Store event data
       } catch (err) {
         console.error("Error fetching event details:", err);
@@ -80,7 +80,7 @@ const ApplyForEvent = () => {
   useEffect(() => {
     const fetchCustomQuestions = async () => {
       try {
-        const response = await axios.get(`http://localhost:4000/api/events/${id}/custom-questions`);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}/custom-questions`);
         setQuestions(response.data); // Store custom questions
       } catch (err) {
         console.error("Error fetching custom questions:", err);
@@ -192,9 +192,24 @@ const ApplyForEvent = () => {
         console.log("Response from backend:", response.data);
         alert("Application submitted successfully!");
       } catch (error) {
-        console.error('Error:', error.response?.data.error);
-        setErrorMessage(error.response?.data?.error || 'An unexpected error occurred.');
-        setIsDialogOpen(true);
+        console.error('Error:', error.response?.data);
+        
+        // Handle profile incomplete error specifically
+        if (error.response?.data?.isProfileIncomplete) {
+          setErrorMessage(
+            "Your profile is incomplete. Please complete your profile information before applying for this event."
+          );
+          setIsDialogOpen(true);
+          
+          // Add a redirect button in the dialog
+          setTimeout(() => {
+            navigate('/profile');
+          }, 3000); // Redirect after 3 seconds
+        } else {
+          // Handle other errors
+          setErrorMessage(error.response?.data?.error || 'An unexpected error occurred.');
+          setIsDialogOpen(true);
+        }
       }
     };
 
@@ -212,10 +227,16 @@ const ApplyForEvent = () => {
       <AlertDialog
         isOpen={isDialogOpen}
         onClose={handleClose}
-        onConfirm={handleClose} // Dismiss the dialog
-        title="Alert"
+        onConfirm={() => {
+          // If it's a profile error, redirect to profile
+          if (errorMessage.includes("profile is incomplete")) {
+            navigate('/profile');
+          }
+          handleClose();
+        }}
+        title={errorMessage.includes("profile is incomplete") ? "Profile Incomplete" : "Alert"}
         message={errorMessage}
-        confirmText="OK"
+        confirmText={errorMessage.includes("profile is incomplete") ? "Go to Profile" : "OK"}
         cancelText="Close"
       />
 

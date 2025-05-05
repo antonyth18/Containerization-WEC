@@ -99,11 +99,28 @@ export const isOrganizer = (req, res, next) => {
 
 // Check if profile is complete
 export const requireCompleteProfile = (req, res, next) => {
-  if (!req.user?.profile?.firstName || !req.user?.profile?.lastName) {
+  // Check for all essential profile fields
+  const { profile } = req.user || {};
+  
+  if (!profile || !profile.firstName || !profile.lastName || !profile.phone) {
+    console.log('Profile incomplete. Missing required fields:', { 
+      hasProfile: !!profile,
+      hasFirstName: !!profile?.firstName,
+      hasLastName: !!profile?.lastName,
+      hasPhone: !!profile?.phone
+    });
+    
     return res.status(403).json({ 
-      error: 'Profile incomplete',
-      isProfileIncomplete: true
+      error: 'Profile incomplete. Please complete your profile before applying.',
+      isProfileIncomplete: true,
+      missingFields: {
+        firstName: !profile?.firstName,
+        lastName: !profile?.lastName,
+        phone: !profile?.phone
+      },
+      redirectTo: '/profile'
     });
   }
+  
   next();
 }; 
