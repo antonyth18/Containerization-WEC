@@ -1,3 +1,4 @@
+version: "3.9"
 
 services:
   db:
@@ -15,10 +16,6 @@ services:
   backend:
     build: ./backend
     container_name: orbis-backend
-    env_file:
-      - ./backend/.env
-    depends_on:
-      - db
     expose:
       - "4000"
     networks:
@@ -27,12 +24,22 @@ services:
   frontend:
     build: ./frontend
     container_name: orbis-frontend
-    env_file:
-      - ./frontend/.env
+    expose:
+      - "80"
+    networks:
+      - orbis-network
+
+  nginx:
+    image: nginx:latest
+    container_name: orbis-nginx
     ports:
       - "80:80"
       - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
     depends_on:
+      - frontend
       - backend
     networks:
       - orbis-network
@@ -43,4 +50,3 @@ volumes:
 networks:
   orbis-network:
     driver: bridge
-
