@@ -113,29 +113,29 @@ VITE_AUTH0_REDIRECT_URI="https://your-frontend-domain.com"
 
 ---
 
-# Docker Setup Overview
+## Docker Setup Overview
 
-## ⚙️ Backend (`backend/Dockerfile`)
+### Backend (`backend/Dockerfile`)
 
 - **Base Image:** `node:20-alpine`  
 - Installs dependencies and starts the Express server.  
 - Connects to PostgreSQL via environment variables.
 
-## Frontend (`frontend/Dockerfile`)
+### Frontend (`frontend/Dockerfile`)
 
 - **Base Image:** `node:20-alpine`  
 - Builds the Vite app and serves it via the development server.  
 - Communicates with the backend through the Nginx reverse proxy.
 
 
-## Database
+### Database
 
 - Uses the official **PostgreSQL 16-alpine** image.  
 - Persistent data stored in a **named Docker volume** (`pgdata`).  
 - Accessible internally only through the Docker network.
 
 
-## Nginx
+### Nginx
 
 - Acts as a **reverse proxy**:
   - `/` → Frontend  
@@ -145,7 +145,7 @@ VITE_AUTH0_REDIRECT_URI="https://your-frontend-domain.com"
 
 ---
 
-# Docker Compose Configuration
+## Docker Compose Configuration
 
 All services are defined in `docker-compose.yml`:
 
@@ -158,7 +158,7 @@ All services are defined in `docker-compose.yml`:
 
 ---
 
-# SSL Setup
+## SSL Setup
 
 Self-signed certificates are stored in:
    nginx/ssl/cert.pem
@@ -173,7 +173,7 @@ openssl req -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 36
 
 ---
 
-# Key Takeaways
+## Key Takeaways
 
 - Learned how to **containerize multi-service applications**.  
 - Configured **internal networking** and **environment variables**.  
@@ -182,7 +182,7 @@ openssl req -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 36
 
 ---
 
-# Conclusion
+## Conclusion
 
 This project demonstrates a complete, working example of **containerization and orchestration** using **Docker** and **Nginx**.  
 It connects multiple services into a **cohesive, reproducible environment** suitable for **local development** and **testing**.
