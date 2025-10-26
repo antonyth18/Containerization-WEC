@@ -65,6 +65,12 @@ docker exec -it <container_name> sh
 
 ### 3. Access the Application
 
+Create a .env file in this format:
+
+POSTGRES_USER="YOUR_POSTGRES_USER"
+POSTGRES_PASSWORD="YOUR_POSTGRES_PASSWORD"
+POSTGRES_DB="YOUR_POSTGRES_DB_NAME"
+
 Once all containers are up and running, open your browser and visit:
 
 - **HTTP:** [http://localhost](http://localhost)  
